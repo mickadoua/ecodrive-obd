@@ -73,7 +73,7 @@ fun Dashboard(
             TripChart(state.samples)
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Legend(Palette.Green, "L/100 km")
+                Legend(Palette.Green, "L/100 km, couleur = éco-conduite")
                 Legend(Palette.Blue, "Relief")
             }
         }

@@ -42,8 +42,8 @@ fun VehicleScreen(
     onSave: (VehicleProfile) -> Unit,
     autoStart: @Composable () -> Unit,
 ) {
-    var draft by remember(profile) { mutableStateOf(profile) }
-    var yearText by remember(profile) { mutableStateOf(profile.year?.toString() ?: "") }
+    val draft = profile
+    var yearText by remember { mutableStateOf(profile.year?.toString() ?: "") }
 
     Column(
         Modifier.fillMaxSize().background(Palette.Background).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp),
@@ -61,8 +61,8 @@ fun VehicleScreen(
                 )
                 Spacer(Modifier.height(8.dp))
                 Chip("Utiliser", true) {
-                    draft = draft.copy(make = detected.make, year = detected.modelYear ?: draft.year)
-                    yearText = draft.year?.toString() ?: ""
+                    onSave(draft.copy(make = detected.make, year = detected.modelYear ?: draft.year))
+                    yearText = (detected.modelYear ?: draft.year)?.toString() ?: ""
                 }
                 Spacer(Modifier.height(6.dp))
                 Text("Le numéro VIN n'est ni stocké ni envoyé : seuls la marque et l'année en sont déduites.", color = Palette.Muted, fontSize = 11.sp)
@@ -70,13 +70,13 @@ fun VehicleScreen(
         }
 
         Card {
-            OutlinedTextField(draft.make, { draft = draft.copy(make = it) }, Modifier.fillMaxWidth(), label = { Text("Marque") }, singleLine = true)
+            OutlinedTextField(draft.make, { onSave(draft.copy(make = it)) }, Modifier.fillMaxWidth(), label = { Text("Marque") }, singleLine = true)
             Spacer(Modifier.height(8.dp))
-            OutlinedTextField(draft.model, { draft = draft.copy(model = it) }, Modifier.fillMaxWidth(), label = { Text("Modèle et motorisation") }, singleLine = true)
+            OutlinedTextField(draft.model, { onSave(draft.copy(model = it)) }, Modifier.fillMaxWidth(), label = { Text("Modèle et motorisation") }, singleLine = true)
             Spacer(Modifier.height(8.dp))
             OutlinedTextField(
                 yearText,
-                { yearText = it.filter(Char::isDigit).take(4); draft = draft.copy(year = yearText.toIntOrNull()) },
+                { yearText = it.filter(Char::isDigit).take(4); onSave(draft.copy(year = yearText.toIntOrNull())) },
                 Modifier.fillMaxWidth(), label = { Text("Année") }, singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             )
@@ -86,14 +86,14 @@ fun VehicleScreen(
             Text("Carburant", color = Palette.Text, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Chip("Essence", draft.fuel == FuelType.GASOLINE) { draft = draft.copy(fuel = FuelType.GASOLINE) }
-                Chip("Diesel", draft.fuel == FuelType.DIESEL) { draft = draft.copy(fuel = FuelType.DIESEL) }
+                Chip("Essence", draft.fuel == FuelType.GASOLINE) { onSave(draft.copy(fuel = FuelType.GASOLINE)) }
+                Chip("Diesel", draft.fuel == FuelType.DIESEL) { onSave(draft.copy(fuel = FuelType.DIESEL)) }
             }
             Spacer(Modifier.height(14.dp))
             Text("Cylindrée : %.1f L".format(draft.displacementL), color = Palette.Text, fontWeight = FontWeight.SemiBold)
             Slider(
                 value = draft.displacementL.toFloat(),
-                onValueChange = { draft = draft.copy(displacementL = (it * 10).roundToInt() / 10.0) },
+                onValueChange = { onSave(draft.copy(displacementL = (it * 10).roundToInt() / 10.0)) },
                 valueRange = 0.8f..3.0f,
                 steps = 21,
                 colors = SliderDefaults.colors(thumbColor = Palette.Green, activeTrackColor = Palette.Green),
@@ -103,11 +103,11 @@ fun VehicleScreen(
             Text("Catégorie", color = Palette.Text, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(8.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                CarSegment.entries.forEach { s -> Chip(s.label, draft.segment == s) { draft = draft.copy(segment = s) } }
+                CarSegment.entries.forEach { s -> Chip(s.label, draft.segment == s) { onSave(draft.copy(segment = s)) } }
             }
         }
 
-        Chip(if (draft == profile) "Enregistré" else "Enregistrer", draft != profile) { onSave(draft) }
+        Text("Enregistré automatiquement", color = Palette.Muted, fontSize = 12.sp)
         autoStart()
         Spacer(Modifier.height(16.dp))
     }

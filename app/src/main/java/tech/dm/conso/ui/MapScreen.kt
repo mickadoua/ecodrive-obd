@@ -46,7 +46,13 @@ import org.osmdroid.views.overlay.Polyline
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import tech.dm.conso.data.GeoPoint
+import tech.dm.conso.data.RoadName
+import tech.dm.conso.data.RoadStats
 import tech.dm.conso.data.Segment
+import tech.dm.conso.data.cell
+import tech.dm.conso.data.groupByRoad
+import tech.dm.conso.data.fallbackRoad
+import androidx.compose.runtime.LaunchedEffect
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -71,9 +77,18 @@ fun excessColor(ratio: Double): Color = when {
 }
 
 @Composable
-fun MapScreen(segments: List<Segment>, current: GeoPoint?, focusKey: String?) {
+fun MapScreen(
+    segments: List<Segment>,
+    roadNames: Map<String, RoadName>,
+    unresolvable: Set<String>,
+    current: GeoPoint?,
+    focusKey: String?,
+    resolveRoads: suspend (List<Segment>) -> Unit,
+) {
     var period by remember { mutableStateOf(MapPeriod.LAST) }
-    var focus by remember(focusKey) { mutableStateOf(segments.lastOrNull { it.key == focusKey }) }
+    var focus by remember(focusKey) {
+        mutableStateOf(segments.filter { it.key == focusKey }.takeIf { it.isNotEmpty() }?.let { RoadStats(RoadName("Portion du classement", null), it) })
+    }
 
     val shown = remember(segments, period) {
         val days = period.days
@@ -84,11 +99,9 @@ fun MapScreen(segments: List<Segment>, current: GeoPoint?, focusKey: String?) {
             segments.filter { it.startedAt >= since }
         }
     }
-    val hotspots = remember(shown) {
-        shown.filter { it.distanceKm > 0.05 && it.excessRatio > 1.25 }
-            .sortedByDescending { it.surplusL100 * it.distanceKm.coerceAtMost(0.3) }
-            .take(8)
-    }
+    LaunchedEffect(shown) { resolveRoads(shown) }
+    val roads = remember(shown, roadNames, unresolvable) { groupByRoad(shown, roadNames, unresolvable) }
+    val pending = remember(shown, roadNames, unresolvable) { shown.count { it.cell() !in roadNames && it.cell() !in unresolvable } }
 
     Column(Modifier.fillMaxSize().background(Palette.Background).padding(horizontal = 16.dp, vertical = 12.dp)) {
         Text("Surconsommation", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Palette.Text)
@@ -101,10 +114,13 @@ fun MapScreen(segments: List<Segment>, current: GeoPoint?, focusKey: String?) {
         Box(
             Modifier
                 .fillMaxWidth()
-                .height(360.dp)
+                .height(320.dp)
                 .clip(RoundedCornerShape(24.dp))
         ) {
-            OsmMap(shown, current, focus) { focus = it }
+            OsmMap(shown, current, focus?.segments.orEmpty()) { s ->
+                val road = roadNames[s.cell()] ?: fallbackRoad(s).takeIf { s.cell() in unresolvable }
+                focus = if (road != null) roads.firstOrNull { it.road == road } ?: RoadStats(road, listOf(s)) else RoadStats(RoadName("Portion", null), listOf(s))
+            }
             Row(
                 Modifier
                     .align(Alignment.BottomStart)
@@ -120,58 +136,54 @@ fun MapScreen(segments: List<Segment>, current: GeoPoint?, focusKey: String?) {
             }
         }
         Spacer(Modifier.height(12.dp))
-        focus?.let { SegmentDetail(it) } ?: Text(
-            if (hotspots.isEmpty()) "Aucun point de surconsommation sur la période." else "Points noirs",
-            color = Palette.Text, fontWeight = FontWeight.SemiBold,
-        )
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text("Par route", color = Palette.Text, fontWeight = FontWeight.SemiBold, fontSize = 17.sp)
+            Spacer(Modifier.width(8.dp))
+            Text(
+                if (pending > 0) "recherche des noms de route…" else "moyenne sur chaque route, pire en premier",
+                color = Palette.Muted, fontSize = 12.sp,
+            )
+        }
         Spacer(Modifier.height(8.dp))
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(hotspots) { s ->
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(Palette.Surface)
-                        .clickable { focus = s }
-                        .padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(Modifier.width(84.dp)) {
-                        Text("%+.1f".format(s.surplusL100), color = excessColor(s.excessRatio), fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                        Text("L/100 en trop", color = Palette.Muted, fontSize = 10.sp)
-                    }
-                    Column {
-                        Text("%.1f réel · %.1f attendu".format(s.l100, s.expectedL100), color = Palette.Text, fontSize = 14.sp)
-                        Text(
-                            "pente %+.1f %% · %.0f km/h · %s".format(s.avgGrade * 100, s.avgSpeedKmh, dayFmt.format(Instant.ofEpochMilli(s.startedAt))),
-                            color = Palette.Muted, fontSize = 12.sp,
-                        )
-                    }
-                }
+            if (roads.isEmpty() && pending == 0) {
+                item { Text("Aucune route d'au moins 300 m sur la période.", color = Palette.Muted, fontSize = 13.sp) }
             }
+            items(roads) { r -> RoadRow(r, selected = focus?.road == r.road) { focus = if (focus?.road == r.road) null else r } }
         }
     }
 }
 
 @Composable
-private fun SegmentDetail(s: Segment) {
-    Column(
+private fun RoadRow(r: RoadStats, selected: Boolean, onClick: () -> Unit) {
+    Row(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(Palette.SurfaceHigh)
-            .padding(12.dp)
+            .background(if (selected) Palette.SurfaceHigh else Palette.Surface)
+            .clickable(onClick = onClick)
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            "Portion sélectionnée · %+.1f L/100 vs attendu".format(s.surplusL100),
-            color = excessColor(s.excessRatio), fontWeight = FontWeight.SemiBold,
-        )
-        Text(
-            "%.1f L/100 réel, %.1f attendu · pente %+.1f %% · %.0f km/h · %.0f m".format(
-                s.l100, s.expectedL100, s.avgGrade * 100, s.avgSpeedKmh, s.distanceKm * 1000
-            ),
-            color = Palette.Muted, fontSize = 12.sp,
-        )
+        Column(Modifier.width(76.dp)) {
+            Text("%+.1f".format(r.surplusL100), color = excessColor(r.excessRatio), fontWeight = FontWeight.Bold, fontSize = 20.sp)
+            Text("L/100 en +", color = Palette.Muted, fontSize = 10.sp)
+        }
+        Spacer(Modifier.width(8.dp))
+        Column(Modifier.weight(1f)) {
+            Text(r.road.name, color = Palette.Text, fontSize = 15.sp, fontWeight = FontWeight.Medium, maxLines = 1)
+            Text(
+                listOfNotNull(
+                    r.road.locality,
+                    "%.1f km".format(r.distanceKm),
+                    "%.1f réel / %.1f attendu".format(r.l100, r.expectedL100),
+                ).joinToString(" · "),
+                color = Palette.Muted, fontSize = 12.sp,
+            )
+            if (r.wastedL > 0.01) {
+                Text("%.2f L de trop · %.0f km/h moyen".format(r.wastedL, r.avgSpeedKmh), color = Palette.Muted, fontSize = 12.sp)
+            }
+        }
     }
 }
 
@@ -200,7 +212,7 @@ private fun LegendDot(color: Color, label: String) {
 }
 
 @Composable
-private fun OsmMap(segments: List<Segment>, current: GeoPoint?, focus: Segment?, onSelect: (Segment) -> Unit) {
+private fun OsmMap(segments: List<Segment>, current: GeoPoint?, focus: List<Segment>, onSelect: (Segment) -> Unit) {
     val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val map = remember {
@@ -237,7 +249,7 @@ private fun OsmMap(segments: List<Segment>, current: GeoPoint?, focus: Segment?,
             m.overlays += Polyline(m).apply {
                 setPoints(s.points.map { OsmPoint(it.lat, it.lon) })
                 outlinePaint.color = excessColor(s.excessRatio).toArgb()
-                outlinePaint.strokeWidth = if (s == focus) 22f else 12f
+                outlinePaint.strokeWidth = if (s in focus) 22f else 12f
                 outlinePaint.strokeCap = Paint.Cap.ROUND
                 setOnClickListener { _, _, _ -> onSelect(s); true }
             }
@@ -251,9 +263,10 @@ private fun OsmMap(segments: List<Segment>, current: GeoPoint?, focus: Segment?,
             }
         }
         when {
-            focus != null -> {
-                val mid = focus.points[focus.points.size / 2]
-                m.controller.animateTo(OsmPoint(mid.lat, mid.lon), 17.0, 600L)
+            focus.isNotEmpty() && fitted.value != focus -> {
+                fitted.value = focus
+                val pts = focus.flatMap { it.points }.map { OsmPoint(it.lat, it.lon) }
+                m.post { m.zoomToBoundingBox(BoundingBox.fromGeoPointsSafe(pts).increaseByScale(1.4f), true) }
             }
             fitted.value != segments.firstOrNull() && segments.isNotEmpty() -> {
                 fitted.value = segments.firstOrNull()

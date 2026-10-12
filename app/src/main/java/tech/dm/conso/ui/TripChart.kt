@@ -31,7 +31,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
@@ -202,15 +201,16 @@ private fun DrawScope.drawChart(
     }
     drawText(measurer, "L/100 km", Offset(left, -4f), label)
 
-    val path = Path()
-    var started = false
-    visible.forEach { s ->
-        val c = s.l100()
-        if (c == null) { started = false; return@forEach }
-        val px = x(s.wallMs)
-        if (!started) { path.moveTo(px, yC(c)); started = true } else path.lineTo(px, yC(c))
+    visible.zipWithNext { a, b ->
+        val ca = a.l100() ?: return@zipWithNext
+        val cb = b.l100() ?: return@zipWithNext
+        val score = listOfNotNull(a.ecoScore, b.ecoScore).average().takeIf { !it.isNaN() }
+        drawLine(
+            score?.let(Palette::forScore) ?: Palette.Muted,
+            Offset(x(a.wallMs), yC(ca)), Offset(x(b.wallMs), yC(cb)),
+            strokeWidth = 5f, cap = StrokeCap.Round,
+        )
     }
-    drawPath(path, Brush.verticalGradient(listOf(Palette.Red, Palette.Yellow, Palette.Green), 0f, bottom), style = Stroke(4f, cap = StrokeCap.Round))
 
     for (i in 0..3) {
         val t = startMs + spanMs * i / 3
@@ -230,7 +230,7 @@ private fun DrawScope.drawChart(
     val lines = listOfNotNull(
         clock.format(Instant.ofEpochMilli(sel.wallMs)),
         sel.l100()?.let { "%.1f L/100 km".format(it) } ?: sel.litersPerHour?.let { "%.1f L/h (arrêt)".format(it) },
-        "%.0f km/h".format(sel.speedKmh),
+        "%.0f km/h".format(sel.speedKmh) + (sel.ecoScore?.let { " · éco %.0f".format(it) } ?: ""),
         sel.altitudeM?.let { "alt. %.0f m · pente %+.1f %%".format(it, sel.grade * 100) },
     )
     val box = measurer.measure(lines.joinToString("\n"), TextStyle(color = Palette.Text, fontSize = 11.sp, lineHeight = 15.sp))

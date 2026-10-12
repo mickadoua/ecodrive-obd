@@ -43,6 +43,7 @@ data class Sample(
     val litersPerHour: Double?,
     val altitudeM: Double?,
     val grade: Double,
+    val ecoScore: Double?,
 )
 
 data class LiveState(
@@ -77,6 +78,7 @@ class TelemetryRepository(context: Context) {
 
     val history = DailyHistory(File(appContext.filesDir, "history.json"))
     val segments = SegmentStore(File(appContext.filesDir, "segments.jsonl"))
+    val roads = RoadNames(appContext, File(appContext.filesDir, "roads.json"))
     private val _historyVersion = MutableStateFlow(0)
     val historyVersion: StateFlow<Int> = _historyVersion.asStateFlow()
 
@@ -180,6 +182,7 @@ class TelemetryRepository(context: Context) {
         var distanceM = 0.0
         var lastSave = lastTime
         var lastSampleAt = 0L
+        var ecoTrend: Double? = null
 
         while (scope.isActive) {
             val speed = elm.query(Pids.SPEED)?.let(Pids::speedKmh) ?: 0.0
@@ -217,6 +220,7 @@ class TelemetryRepository(context: Context) {
             history.add(LocalDate.now(), fuelStep, stepM / 1000.0, if (speed >= 3) eco.score else null)
             if (lh != null) tripBuilder.add(wall, loc, stepM / 1000.0, fuelStep, eco.expectedLh * dt / 3600.0, g)
 
+            if (speed >= 3) ecoTrend = ecoTrend?.let { it + (eco.instantScore - it) * 0.2 } ?: eco.instantScore
             val takeSample = now - lastSampleAt >= SAMPLE_PERIOD_MS
             if (takeSample) lastSampleAt = now
             _state.update { s ->
@@ -232,7 +236,7 @@ class TelemetryRepository(context: Context) {
                     location = loc,
                     altitudeSource = altitudeSource,
                     eco = eco,
-                    samples = if (takeSample) (s.samples + Sample(wall, speed, lh, alt, g)).takeLast(MAX_SAMPLES) else s.samples,
+                    samples = if (takeSample) (s.samples + Sample(wall, speed, lh, alt, g, ecoTrend)).takeLast(MAX_SAMPLES) else s.samples,
                 )
             }
 

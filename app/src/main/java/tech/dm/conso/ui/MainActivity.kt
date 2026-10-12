@@ -75,6 +75,8 @@ class MainActivity : ComponentActivity() {
                 val state by telemetry.state.collectAsStateWithLifecycle()
                 val version by telemetry.historyVersion.collectAsStateWithLifecycle()
                 val profile by telemetry.profile.collectAsStateWithLifecycle()
+                val roadNames by telemetry.roads.names.collectAsStateWithLifecycle()
+                val unresolvable by telemetry.roads.unresolvable.collectAsStateWithLifecycle()
                 var tab by rememberSaveable { mutableStateOf(Tab.DASHBOARD) }
                 var focusKey by remember { mutableStateOf<String?>(null) }
                 val days = remember(version, state.tripKm.toInt()) { telemetry.history.lastDays(7) }
@@ -124,7 +126,7 @@ class MainActivity : ComponentActivity() {
                                 onConnectClick = ::requestPermissionsThenPick,
                                 onDisconnect = telemetry::disconnect,
                             )
-                            Tab.MAP -> MapScreen(segments, state.location, focusKey)
+                            Tab.MAP -> MapScreen(segments, roadNames, unresolvable, state.location, focusKey, telemetry.roads::resolve)
                             Tab.LEADERBOARD -> LeaderboardScreen(
                                 portions = portions,
                                 models = models,
