@@ -4,6 +4,8 @@ import android.graphics.Color as AndroidColor
 import android.graphics.Paint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,12 +56,14 @@ import tech.dm.conso.data.groupByRoad
 import tech.dm.conso.data.fallbackRoad
 import androidx.compose.runtime.LaunchedEffect
 import java.time.Instant
+import java.time.LocalDate
+import androidx.compose.runtime.saveable.rememberSaveable
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import org.osmdroid.util.GeoPoint as OsmPoint
 
-private enum class MapPeriod(val label: String, val days: Long?) {
-    LAST("Dernier trajet", null), WEEK("7 jours", 7), ALL("Tout", 3650)
+private enum class MapPeriod(val label: String) {
+    TODAY("Aujourd'hui"), LAST("Dernier trajet"), WEEK("7 jours"), ALL("Tout")
 }
 
 private val DARK_TILES = ColorMatrixColorFilter(
@@ -85,18 +89,20 @@ fun MapScreen(
     focusKey: String?,
     resolveRoads: suspend (List<Segment>) -> Unit,
 ) {
-    var period by remember { mutableStateOf(MapPeriod.LAST) }
+    var period by rememberSaveable { mutableStateOf(MapPeriod.TODAY) }
     var focus by remember(focusKey) {
         mutableStateOf(segments.filter { it.key == focusKey }.takeIf { it.isNotEmpty() }?.let { RoadStats(RoadName("Portion du classement", null), it) })
     }
 
     val shown = remember(segments, period) {
-        val days = period.days
-        if (days == null) {
-            segments.lastOrNull()?.tripId?.let { trip -> segments.filter { it.tripId == trip } }.orEmpty()
-        } else {
-            val since = System.currentTimeMillis() - days * 86_400_000
-            segments.filter { it.startedAt >= since }
+        when (period) {
+            MapPeriod.LAST -> segments.lastOrNull()?.tripId?.let { trip -> segments.filter { it.tripId == trip } }.orEmpty()
+            MapPeriod.TODAY -> {
+                val since = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                segments.filter { it.startedAt >= since }
+            }
+            MapPeriod.WEEK -> segments.filter { it.startedAt >= System.currentTimeMillis() - 7 * 86_400_000L }
+            MapPeriod.ALL -> segments
         }
     }
     LaunchedEffect(shown) { resolveRoads(shown) }
@@ -107,7 +113,7 @@ fun MapScreen(
         Text("Surconsommation", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Palette.Text)
         Text("Consommation réelle comparée à l'attendu selon vitesse et dénivelé", color = Palette.Muted, fontSize = 13.sp)
         Spacer(Modifier.height(10.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             MapPeriod.entries.forEach { p -> Chip(p.label, p == period) { period = p; focus = null } }
         }
         Spacer(Modifier.height(10.dp))

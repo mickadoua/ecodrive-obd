@@ -64,7 +64,8 @@ class RoadNames(private val context: Context, private val file: File) {
             return
         }
         val geocoder = Geocoder(context, Locale.FRANCE)
-        for (s in missing.take(MAX_PER_PASS)) {
+        for ((i, s) in missing.withIndex()) {
+            if (i > 0 && i % SAVE_EVERY == 0) save()
             val mid = s.points[s.points.size / 2]
             val address = withTimeoutOrNull(LOOKUP_TIMEOUT_MS) { runCatching { lookup(geocoder, mid) }.getOrNull() }
             if (address == null) {
@@ -108,7 +109,7 @@ class RoadNames(private val context: Context, private val file: File) {
     private fun withLock(block: () -> Unit) = synchronized(this) { block() }
 
     companion object {
-        private const val MAX_PER_PASS = 60
+        private const val SAVE_EVERY = 20
         private const val LOOKUP_TIMEOUT_MS = 5_000L
     }
 }
