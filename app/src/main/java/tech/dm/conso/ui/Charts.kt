@@ -17,7 +17,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
@@ -25,8 +24,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tech.dm.conso.data.DayStats
-import tech.dm.conso.data.Sample
-import tech.dm.conso.obd.FuelCalculator
 import java.time.format.TextStyle
 import java.util.Locale
 
@@ -41,54 +38,6 @@ fun ArcGauge(fraction: Float, color: Color, modifier: Modifier = Modifier, strok
             Brush.sweepGradient(listOf(color.copy(alpha = 0.6f), color, color.copy(alpha = 0.6f))),
             135f, 270f * fraction.coerceIn(0f, 1f), false, topLeft, arcSize,
             style = Stroke(strokeWidth, cap = StrokeCap.Round),
-        )
-    }
-}
-
-@Composable
-fun LiveChart(samples: List<Sample>, modifier: Modifier = Modifier) {
-    val points = samples.map { s ->
-        Triple(s.timeMs, s.litersPerHour?.let { FuelCalculator.per100km(it, s.speedKmh) }, s.altitudeM)
-    }
-    val altitudes = points.mapNotNull { it.third }
-    Canvas(modifier) {
-        if (points.size < 2) return@Canvas
-        val t0 = points.first().first.toFloat()
-        val span = (points.last().first - points.first().first).coerceAtLeast(1).toFloat()
-        fun x(t: Long) = (t - t0) / span * size.width
-
-        if (altitudes.size >= 2) {
-            val minA = altitudes.min()
-            val rangeA = (altitudes.max() - minA).coerceAtLeast(10.0)
-            val area = Path()
-            var started = false
-            points.forEach { (t, _, a) ->
-                if (a == null) return@forEach
-                val y = size.height - ((a - minA) / rangeA * size.height * 0.45).toFloat()
-                if (!started) { area.moveTo(x(t), size.height); started = true }
-                area.lineTo(x(t), y)
-            }
-            area.lineTo(x(points.last().first), size.height)
-            area.close()
-            drawPath(area, Brush.verticalGradient(listOf(Palette.Blue.copy(alpha = 0.45f), Palette.Blue.copy(alpha = 0.05f))))
-        }
-
-        val maxC = 20.0
-        for (level in listOf(5.0, 10.0, 15.0)) {
-            val y = size.height - (level / maxC * size.height).toFloat()
-            drawLine(Palette.Outline, Offset(0f, y), Offset(size.width, y), strokeWidth = 1f)
-        }
-        val path = Path()
-        var started = false
-        points.forEach { (t, c, _) ->
-            if (c == null) { started = false; return@forEach }
-            val y = size.height - (c.coerceAtMost(maxC) / maxC * size.height).toFloat()
-            if (!started) { path.moveTo(x(t), y); started = true } else path.lineTo(x(t), y)
-        }
-        drawPath(
-            path,
-            Brush.verticalGradient(listOf(Palette.Red, Palette.Yellow, Palette.Green), 0f, size.height),
-            style = Stroke(5f, cap = StrokeCap.Round),
         )
     }
 }

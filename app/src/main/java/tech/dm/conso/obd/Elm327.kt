@@ -19,6 +19,8 @@ class Elm327(private val transport: ObdTransport) {
         return parseResponse(raw, pid)
     }
 
+    suspend fun readVin(): String? = runCatching { Vin.parse(transport.send("0902", 5_000)) }.getOrNull()
+
     fun close() = transport.close()
 
     private suspend fun discoverSupportedPids() {

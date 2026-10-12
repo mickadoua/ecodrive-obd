@@ -3,7 +3,9 @@ package tech.dm.conso.obd
 import android.os.SystemClock
 import kotlinx.coroutines.delay
 import tech.dm.conso.eco.VehicleModel
-import tech.dm.conso.data.AltitudeSource
+import tech.dm.conso.data.Geo
+import tech.dm.conso.data.GeoPoint
+import tech.dm.conso.data.PositionSource
 import kotlin.math.PI
 import kotlin.math.max
 import kotlin.math.min
@@ -11,7 +13,7 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.random.Random
 
-class SimulatedElm327(private val clock: () -> Long = SystemClock::elapsedRealtime) : ObdTransport, AltitudeSource {
+class SimulatedElm327(private val clock: () -> Long = SystemClock::elapsedRealtime) : ObdTransport, PositionSource {
     private data class Leg(val targetKmh: Double, val seconds: Double, val accel: Double)
 
     private val legs = listOf(
@@ -30,7 +32,12 @@ class SimulatedElm327(private val clock: () -> Long = SystemClock::elapsedRealti
     private var fuelLh = model.idleLh
     private var rpm = 800.0
 
+    private var position = START
+    private var bearing = 40.0
+
     override val altitudeM: Double? get() = terrain(distanceM)
+    override val location: GeoPoint? get() = position
+    override val hasPreciseAltitude = true
 
     override suspend fun open() {
         lastTick = clock()
@@ -41,6 +48,7 @@ class SimulatedElm327(private val clock: () -> Long = SystemClock::elapsedRealti
         step()
         val cmd = command.uppercase().replace(" ", "")
         if (cmd.startsWith("AT")) return if (cmd == "ATZ") "ELM327 v1.5\r\r" else "OK\r\r"
+        if (cmd == "0902") return Vin.encodeForSimulator(SIM_VIN)
         if (!cmd.startsWith("01") || cmd.length != 4) return "?\r\r"
         val pid = cmd.substring(2).toInt(16)
         val payload = when {
@@ -81,6 +89,8 @@ class SimulatedElm327(private val clock: () -> Long = SystemClock::elapsedRealti
         speedMs = max(0.0, speedMs + accel * dt)
         val before = terrain(distanceM)
         distanceM += speedMs * dt
+        bearing = 40.0 + 70.0 * sin(distanceM / 3000.0 * PI)
+        position = Geo.offset(position, speedMs * dt, bearing)
         val grade = if (speedMs * dt > 0.01) (terrain(distanceM) - before) / (speedMs * dt) else 0.0
 
         val power = model.tractionPowerW(speedMs, grade, accel)
@@ -96,6 +106,11 @@ class SimulatedElm327(private val clock: () -> Long = SystemClock::elapsedRealti
     }
 
     private fun terrain(d: Double) = 180.0 + 30.0 * sin(d / 2000.0 * PI) + 5.0 * sin(d / 500.0 * PI)
+
+    companion object {
+        val START = GeoPoint(45.1885, 5.7245)
+        const val SIM_VIN = "UU1SDENL5K6012345"
+    }
 
     private fun hex1(v: Double) = "%02X".format(v.roundToInt().coerceIn(0, 255))
     private fun hex2(v: Double) = "%04X".format(v.roundToInt().coerceIn(0, 65535))

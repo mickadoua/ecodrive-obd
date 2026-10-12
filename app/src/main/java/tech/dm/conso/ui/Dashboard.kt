@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -59,8 +57,6 @@ fun Dashboard(
         Modifier
             .fillMaxSize()
             .background(Palette.Background)
-            .statusBarsPadding()
-            .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -72,9 +68,9 @@ fun Dashboard(
         HeroCard(state)
         EcoCard(state)
         Card {
-            SectionTitle("En direct", "5 dernières minutes")
+            SectionTitle("Trajet", "consommation et relief")
             Spacer(Modifier.height(12.dp))
-            LiveChart(state.samples, Modifier.fillMaxWidth().height(150.dp))
+            TripChart(state.samples)
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Legend(Palette.Green, "L/100 km")
@@ -225,7 +221,10 @@ private fun GradeRow(state: LiveState) {
         Spacer(Modifier.width(6.dp))
         Text("%+.1f %%".format(pct), color = Palette.Text, fontWeight = FontWeight.Medium)
         Spacer(Modifier.width(10.dp))
-        Text(state.altitudeM?.let { "alt. %.0f m".format(it) } ?: "altitude inconnue", color = Palette.Muted, fontSize = 12.sp)
+        Text(
+            state.altitudeM?.let { "alt. %.0f m · %s".format(it, state.altitudeSource ?: "") } ?: "altitude en attente",
+            color = Palette.Muted, fontSize = 12.sp,
+        )
     }
 }
 
@@ -242,7 +241,7 @@ private fun Stat(label: String, value: String, unit: String) {
 }
 
 @Composable
-private fun SectionTitle(title: String, subtitle: String) {
+fun SectionTitle(title: String, subtitle: String) {
     Row(verticalAlignment = Alignment.Bottom) {
         Text(title, color = Palette.Text, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.width(8.dp))
@@ -260,7 +259,7 @@ private fun Legend(color: Color, label: String) {
 }
 
 @Composable
-private fun Card(content: @Composable () -> Unit) {
+fun Card(content: @Composable () -> Unit) {
     Column(
         Modifier
             .fillMaxWidth()

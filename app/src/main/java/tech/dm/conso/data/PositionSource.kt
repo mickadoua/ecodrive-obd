@@ -11,32 +11,34 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Looper
 
-interface AltitudeSource {
+data class GeoPoint(val lat: Double, val lon: Double)
+
+interface PositionSource {
     val altitudeM: Double?
+    val location: GeoPoint?
+    val hasPreciseAltitude: Boolean
     fun start() = Unit
     fun stop() = Unit
 }
 
-class DeviceAltitudeSource(context: Context) : AltitudeSource, SensorEventListener, LocationListener {
+class DevicePositionSource(context: Context) : PositionSource, SensorEventListener, LocationListener {
     private val sensors = context.getSystemService(SensorManager::class.java)
     private val locations = context.getSystemService(LocationManager::class.java)
     private val barometer = sensors.getDefaultSensor(Sensor.TYPE_PRESSURE)
 
     @Volatile private var baroAltitude: Double? = null
     @Volatile private var gpsAltitude: Double? = null
-
-    val usesBarometer get() = barometer != null
+    @Volatile override var location: GeoPoint? = null
+        private set
 
     override val altitudeM: Double? get() = baroAltitude ?: gpsAltitude
+    override val hasPreciseAltitude: Boolean get() = barometer != null
 
     @SuppressLint("MissingPermission")
     override fun start() {
-        if (barometer != null) {
-            sensors.registerListener(this, barometer, SensorManager.SENSOR_DELAY_UI)
-        } else {
-            runCatching {
-                locations.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000L, 0f, this, Looper.getMainLooper())
-            }
+        barometer?.let { sensors.registerListener(this, it, SensorManager.SENSOR_DELAY_UI) }
+        runCatching {
+            locations.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000L, 0f, this, Looper.getMainLooper())
         }
     }
 
@@ -52,8 +54,9 @@ class DeviceAltitudeSource(context: Context) : AltitudeSource, SensorEventListen
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
 
-    override fun onLocationChanged(location: Location) {
-        if (location.hasAltitude()) gpsAltitude = location.altitude
+    override fun onLocationChanged(l: Location) {
+        location = GeoPoint(l.latitude, l.longitude)
+        if (l.hasAltitude()) gpsAltitude = l.altitude
     }
 }
 

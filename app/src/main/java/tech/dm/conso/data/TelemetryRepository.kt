@@ -23,6 +23,8 @@ import tech.dm.conso.obd.FuelMethod
 import tech.dm.conso.obd.FuelType
 import tech.dm.conso.obd.Pids
 import tech.dm.conso.obd.SimulatedElm327
+import tech.dm.conso.obd.Vin
+import tech.dm.conso.obd.VinInfo
 import java.io.File
 import java.time.LocalDate
 import kotlin.coroutines.cancellation.CancellationException
@@ -35,14 +37,22 @@ sealed interface ObdSource {
     data class Bluetooth(val device: BluetoothDevice, override val label: String) : ObdSource
 }
 
-data class Sample(val timeMs: Long, val speedKmh: Double, val litersPerHour: Double?, val altitudeM: Double?)
+data class Sample(
+    val wallMs: Long,
+    val speedKmh: Double,
+    val litersPerHour: Double?,
+    val altitudeM: Double?,
+    val grade: Double,
+)
 
 data class LiveState(
     val status: ConnectionStatus = ConnectionStatus.DISCONNECTED,
     val sourceLabel: String? = null,
     val error: String? = null,
+    val retrying: Boolean = false,
     val method: FuelMethod = FuelMethod.NONE,
     val fuelType: FuelType = FuelType.GASOLINE,
+    val detectedVehicle: VinInfo? = null,
     val speedKmh: Double = 0.0,
     val rpm: Double? = null,
     val litersPerHour: Double? = null,
@@ -51,6 +61,8 @@ data class LiveState(
     val tripLiters: Double = 0.0,
     val altitudeM: Double? = null,
     val grade: Double = 0.0,
+    val location: GeoPoint? = null,
+    val altitudeSource: String? = null,
     val eco: EcoResult? = null,
     val samples: List<Sample> = emptyList(),
 ) {
@@ -64,15 +76,35 @@ class TelemetryRepository(context: Context) {
     val state: StateFlow<LiveState> = _state.asStateFlow()
 
     val history = DailyHistory(File(appContext.filesDir, "history.json"))
+    val segments = SegmentStore(File(appContext.filesDir, "segments.jsonl"))
     private val _historyVersion = MutableStateFlow(0)
     val historyVersion: StateFlow<Int> = _historyVersion.asStateFlow()
 
-    var displacementL = 1.6
+    private val profileStore = VehicleProfileStore(appContext)
+    private val _profile = MutableStateFlow(profileStore.load())
+    val profile: StateFlow<VehicleProfile> = _profile.asStateFlow()
+
+    private val terrain = TerrainElevation()
     private var job: Job? = null
 
-    fun connect(source: ObdSource) {
+    fun saveProfile(p: VehicleProfile) {
+        profileStore.save(p)
+        _profile.value = p
+    }
+
+    fun connect(source: ObdSource, retry: Boolean = false) {
+        if (retry && job?.isActive == true) return
         disconnect()
-        job = scope.launch { run(source) }
+        job = scope.launch {
+            var attempt = 0
+            while (true) {
+                val willRetry = retry && attempt + 1 < MAX_RETRIES
+                run(source, willRetry)
+                if (_state.value.status != ConnectionStatus.ERROR || !willRetry) break
+                attempt++
+                delay(RETRY_DELAY_MS)
+            }
+        }
     }
 
     fun disconnect() {
@@ -83,45 +115,71 @@ class TelemetryRepository(context: Context) {
         _state.update { it.copy(status = ConnectionStatus.DISCONNECTED) }
     }
 
-    private suspend fun run(source: ObdSource) {
+    private suspend fun run(source: ObdSource, willRetry: Boolean) {
         _state.value = LiveState(status = ConnectionStatus.CONNECTING, sourceLabel = source.label)
-        val altitude: AltitudeSource
+        val position: PositionSource
         val elm: Elm327
         when (source) {
-            is ObdSource.Simulator -> SimulatedElm327().let { altitude = it; elm = Elm327(it) }
+            is ObdSource.Simulator -> SimulatedElm327().let { position = it; elm = Elm327(it) }
             is ObdSource.Bluetooth -> {
-                altitude = DeviceAltitudeSource(appContext)
+                position = DevicePositionSource(appContext)
                 elm = Elm327(BluetoothTransport(source.device))
             }
+        }
+        val tripBuilder = SegmentBuilder(System.currentTimeMillis()) {
+            segments.append(it)
+            _historyVersion.update { v -> v + 1 }
         }
         try {
             elm.initialize()
             val fuelType = if (elm.supports(Pids.FUEL_TYPE)) {
                 elm.query(Pids.FUEL_TYPE)?.firstOrNull()?.let(FuelType::fromPid51) ?: FuelType.GASOLINE
-            } else FuelType.GASOLINE
+            } else _profile.value.fuel
+            val detected = elm.readVin()?.let(Vin::decode)
             val method = FuelCalculator.chooseMethod(elm::supports, fuelType)
-            _state.update { it.copy(status = ConnectionStatus.CONNECTED, method = method, fuelType = fuelType) }
-            altitude.start()
-            poll(elm, altitude, method, fuelType)
+            _state.update {
+                it.copy(status = ConnectionStatus.CONNECTED, method = method, fuelType = fuelType, detectedVehicle = detected)
+            }
+            position.start()
+            val terrainJob = if (position.hasPreciseAltitude) null else terrain.start(scope)
+            try {
+                poll(elm, position, method, fuelType, tripBuilder)
+            } finally {
+                terrainJob?.cancel()
+            }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            _state.update { it.copy(status = ConnectionStatus.ERROR, error = e.message ?: e.javaClass.simpleName) }
+            _state.update { it.copy(status = ConnectionStatus.ERROR, error = e.message ?: e.javaClass.simpleName, retrying = willRetry) }
         } finally {
-            altitude.stop()
+            tripBuilder.flush()
+            position.stop()
             elm.close()
             history.save()
         }
     }
 
-    private suspend fun poll(elm: Elm327, altitude: AltitudeSource, method: FuelMethod, fuelType: FuelType) {
-        val scorer = EcoScorer(fuel = fuelType)
+    private suspend fun poll(
+        elm: Elm327,
+        position: PositionSource,
+        method: FuelMethod,
+        fuelType: FuelType,
+        tripBuilder: SegmentBuilder,
+    ) {
+        val scorer = EcoScorer(_profile.value.vehicleModel, fuelType)
         val grade = GradeEstimator()
+        val terrainGrade = TerrainGrade(terrain)
+        val altitudeSource = when {
+            position is SimulatedElm327 -> "simulateur"
+            position.hasPreciseAltitude -> "baromètre"
+            else -> "modèle de terrain"
+        }
         var lastTime = SystemClock.elapsedRealtime()
         var lastSpeed = 0.0
         var accel = 0.0
         var distanceM = 0.0
         var lastSave = lastTime
+        var lastSampleAt = 0L
 
         while (scope.isActive) {
             val speed = elm.query(Pids.SPEED)?.let(Pids::speedKmh) ?: 0.0
@@ -133,25 +191,34 @@ class TelemetryRepository(context: Context) {
                     val map = elm.query(Pids.MAP)?.let(Pids::mapKpa)
                     val iat = elm.query(Pids.INTAKE_TEMP)?.let(Pids::intakeTempC)
                     if (map != null && iat != null && rpm != null) {
-                        FuelCalculator.fromMaf(FuelCalculator.mafFromSpeedDensity(rpm, map, iat, displacementL), fuelType)
+                        val maf = FuelCalculator.mafFromSpeedDensity(rpm, map, iat, _profile.value.displacementL)
+                        FuelCalculator.fromMaf(maf, fuelType)
                     } else null
                 }
                 FuelMethod.NONE -> null
             }
 
             val now = SystemClock.elapsedRealtime()
+            val wall = System.currentTimeMillis()
             val dt = ((now - lastTime) / 1000.0).coerceIn(0.0, 5.0)
             lastTime = now
             val stepM = speed / 3.6 * dt
             distanceM += stepM
             if (dt > 0) accel += ((speed - lastSpeed) / 3.6 / dt - accel) * 0.25
             lastSpeed = speed
-            val alt = altitude.altitudeM
-            val g = grade.update(distanceM, alt)
+            val loc = position.location
+            val (alt, g) = if (position.hasPreciseAltitude) {
+                position.altitudeM.let { it to grade.update(distanceM, it) }
+            } else {
+                terrainGrade.update(distanceM, loc)
+            }
             val eco = scorer.evaluate(speed, accel, g, rpm, lh)
             val fuelStep = (lh ?: 0.0) * dt / 3600.0
             history.add(LocalDate.now(), fuelStep, stepM / 1000.0, if (speed >= 3) eco.score else null)
+            if (lh != null) tripBuilder.add(wall, loc, stepM / 1000.0, fuelStep, eco.expectedLh * dt / 3600.0, g)
 
+            val takeSample = now - lastSampleAt >= SAMPLE_PERIOD_MS
+            if (takeSample) lastSampleAt = now
             _state.update { s ->
                 s.copy(
                     speedKmh = speed,
@@ -162,8 +229,10 @@ class TelemetryRepository(context: Context) {
                     tripLiters = s.tripLiters + fuelStep,
                     altitudeM = alt,
                     grade = g,
+                    location = loc,
+                    altitudeSource = altitudeSource,
                     eco = eco,
-                    samples = (s.samples + Sample(now, speed, lh, alt)).takeLast(MAX_SAMPLES),
+                    samples = if (takeSample) (s.samples + Sample(wall, speed, lh, alt, g)).takeLast(MAX_SAMPLES) else s.samples,
                 )
             }
 
@@ -177,7 +246,10 @@ class TelemetryRepository(context: Context) {
     }
 
     companion object {
-        const val MAX_SAMPLES = 300
+        const val MAX_SAMPLES = 4 * 3600
+        const val SAMPLE_PERIOD_MS = 1_000L
         const val POLL_INTERVAL_MS = 250L
+        const val MAX_RETRIES = 20
+        const val RETRY_DELAY_MS = 15_000L
     }
 }

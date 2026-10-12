@@ -1,0 +1,271 @@
+package tech.dm.conso.ui
+
+import android.graphics.Color as AndroidColor
+import android.graphics.Paint
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.BoundingBox
+import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Polyline
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import tech.dm.conso.data.GeoPoint
+import tech.dm.conso.data.Segment
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import org.osmdroid.util.GeoPoint as OsmPoint
+
+private enum class MapPeriod(val label: String, val days: Long?) {
+    LAST("Dernier trajet", null), WEEK("7 jours", 7), ALL("Tout", 3650)
+}
+
+private val DARK_TILES = ColorMatrixColorFilter(
+    ColorMatrix().apply { setSaturation(0f) }.apply {
+        postConcat(ColorMatrix(floatArrayOf(-0.85f, 0f, 0f, 0f, 235f, 0f, -0.85f, 0f, 0f, 240f, 0f, 0f, -0.85f, 0f, 250f, 0f, 0f, 0f, 1f, 0f)))
+    }
+)
+
+private val dayFmt = DateTimeFormatter.ofPattern("dd/MM HH:mm").withZone(ZoneId.systemDefault())
+
+fun excessColor(ratio: Double): Color = when {
+    ratio <= 1.1 -> Palette.Green
+    ratio <= 1.4 -> Palette.Yellow
+    else -> Palette.Red
+}
+
+@Composable
+fun MapScreen(segments: List<Segment>, current: GeoPoint?, focusKey: String?) {
+    var period by remember { mutableStateOf(MapPeriod.LAST) }
+    var focus by remember(focusKey) { mutableStateOf(segments.lastOrNull { it.key == focusKey }) }
+
+    val shown = remember(segments, period) {
+        val days = period.days
+        if (days == null) {
+            segments.lastOrNull()?.tripId?.let { trip -> segments.filter { it.tripId == trip } }.orEmpty()
+        } else {
+            val since = System.currentTimeMillis() - days * 86_400_000
+            segments.filter { it.startedAt >= since }
+        }
+    }
+    val hotspots = remember(shown) {
+        shown.filter { it.distanceKm > 0.05 && it.excessRatio > 1.25 }
+            .sortedByDescending { it.surplusL100 * it.distanceKm.coerceAtMost(0.3) }
+            .take(8)
+    }
+
+    Column(Modifier.fillMaxSize().background(Palette.Background).padding(horizontal = 16.dp, vertical = 12.dp)) {
+        Text("Surconsommation", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Palette.Text)
+        Text("Consommation réelle comparée à l'attendu selon vitesse et dénivelé", color = Palette.Muted, fontSize = 13.sp)
+        Spacer(Modifier.height(10.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            MapPeriod.entries.forEach { p -> Chip(p.label, p == period) { period = p; focus = null } }
+        }
+        Spacer(Modifier.height(10.dp))
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(360.dp)
+                .clip(RoundedCornerShape(24.dp))
+        ) {
+            OsmMap(shown, current, focus) { focus = it }
+            Row(
+                Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(10.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Palette.Surface.copy(alpha = 0.9f))
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                LegendDot(Palette.Green, "conforme")
+                LegendDot(Palette.Yellow, "un peu au-dessus")
+                LegendDot(Palette.Red, "nettement au-dessus")
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        focus?.let { SegmentDetail(it) } ?: Text(
+            if (hotspots.isEmpty()) "Aucun point de surconsommation sur la période." else "Points noirs",
+            color = Palette.Text, fontWeight = FontWeight.SemiBold,
+        )
+        Spacer(Modifier.height(8.dp))
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(hotspots) { s ->
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Palette.Surface)
+                        .clickable { focus = s }
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.width(84.dp)) {
+                        Text("%+.1f".format(s.surplusL100), color = excessColor(s.excessRatio), fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        Text("L/100 en trop", color = Palette.Muted, fontSize = 10.sp)
+                    }
+                    Column {
+                        Text("%.1f réel · %.1f attendu".format(s.l100, s.expectedL100), color = Palette.Text, fontSize = 14.sp)
+                        Text(
+                            "pente %+.1f %% · %.0f km/h · %s".format(s.avgGrade * 100, s.avgSpeedKmh, dayFmt.format(Instant.ofEpochMilli(s.startedAt))),
+                            color = Palette.Muted, fontSize = 12.sp,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SegmentDetail(s: Segment) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(Palette.SurfaceHigh)
+            .padding(12.dp)
+    ) {
+        Text(
+            "Portion sélectionnée · %+.1f L/100 vs attendu".format(s.surplusL100),
+            color = excessColor(s.excessRatio), fontWeight = FontWeight.SemiBold,
+        )
+        Text(
+            "%.1f L/100 réel, %.1f attendu · pente %+.1f %% · %.0f km/h · %.0f m".format(
+                s.l100, s.expectedL100, s.avgGrade * 100, s.avgSpeedKmh, s.distanceKm * 1000
+            ),
+            color = Palette.Muted, fontSize = 12.sp,
+        )
+    }
+}
+
+@Composable
+fun Chip(label: String, active: Boolean, onClick: () -> Unit) {
+    Text(
+        label,
+        Modifier
+            .clip(RoundedCornerShape(50))
+            .background(if (active) Palette.Green else Palette.SurfaceHigh)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        color = if (active) Palette.Background else Palette.Muted,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Medium,
+    )
+}
+
+@Composable
+private fun LegendDot(color: Color, label: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(8.dp).clip(CircleShape).background(color))
+        Spacer(Modifier.width(4.dp))
+        Text(label, color = Palette.Text, fontSize = 11.sp)
+    }
+}
+
+@Composable
+private fun OsmMap(segments: List<Segment>, current: GeoPoint?, focus: Segment?, onSelect: (Segment) -> Unit) {
+    val context = LocalContext.current
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val map = remember {
+        MapView(context).apply {
+            setTileSource(TileSourceFactory.MAPNIK)
+            setMultiTouchControls(true)
+            overlayManager.tilesOverlay.setColorFilter(DARK_TILES)
+            zoomController.setVisibility(org.osmdroid.views.CustomZoomButtonsController.Visibility.NEVER)
+            controller.setZoom(14.0)
+        }
+    }
+    val fitted = remember { mutableStateOf<Any?>(null) }
+
+    DisposableEffect(lifecycle) {
+        val observer = LifecycleEventObserver { _, e ->
+            when (e) {
+                Lifecycle.Event.ON_RESUME -> map.onResume()
+                Lifecycle.Event.ON_PAUSE -> map.onPause()
+                else -> Unit
+            }
+        }
+        lifecycle.addObserver(observer)
+        map.onResume()
+        onDispose {
+            lifecycle.removeObserver(observer)
+            map.onPause()
+            map.onDetach()
+        }
+    }
+
+    AndroidView({ map }, Modifier.fillMaxSize()) { m ->
+        m.overlays.clear()
+        segments.forEach { s ->
+            m.overlays += Polyline(m).apply {
+                setPoints(s.points.map { OsmPoint(it.lat, it.lon) })
+                outlinePaint.color = excessColor(s.excessRatio).toArgb()
+                outlinePaint.strokeWidth = if (s == focus) 22f else 12f
+                outlinePaint.strokeCap = Paint.Cap.ROUND
+                setOnClickListener { _, _, _ -> onSelect(s); true }
+            }
+        }
+        current?.let { p ->
+            m.overlays += Polyline(m).apply {
+                setPoints(listOf(OsmPoint(p.lat, p.lon), OsmPoint(p.lat + 0.00001, p.lon)))
+                outlinePaint.color = AndroidColor.WHITE
+                outlinePaint.strokeWidth = 26f
+                outlinePaint.strokeCap = Paint.Cap.ROUND
+            }
+        }
+        when {
+            focus != null -> {
+                val mid = focus.points[focus.points.size / 2]
+                m.controller.animateTo(OsmPoint(mid.lat, mid.lon), 17.0, 600L)
+            }
+            fitted.value != segments.firstOrNull() && segments.isNotEmpty() -> {
+                fitted.value = segments.firstOrNull()
+                val pts = segments.flatMap { it.points }
+                m.post {
+                    m.zoomToBoundingBox(
+                        BoundingBox.fromGeoPointsSafe(pts.map { OsmPoint(it.lat, it.lon) }).increaseByScale(1.2f), false
+                    )
+                }
+            }
+            segments.isEmpty() && current != null -> m.controller.setCenter(OsmPoint(current.lat, current.lon))
+        }
+        m.invalidate()
+    }
+}

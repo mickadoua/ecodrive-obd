@@ -25,6 +25,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
 import tech.dm.conso.BuildConfig
+import tech.dm.conso.auto.AutoStartStore
 import tech.dm.conso.ConsoApp
 import tech.dm.conso.data.ConnectionStatus
 import tech.dm.conso.data.ObdSource
@@ -46,6 +47,9 @@ class DashboardScreen(carContext: CarContext) : Screen(carContext) {
     private val telemetry = ConsoApp.instance.telemetry
 
     init {
+        if (telemetry.state.value.status == ConnectionStatus.DISCONNECTED) {
+            AutoStartStore(carContext).savedObdSource(carContext)?.let(::start)
+        }
         lifecycle.addObserver(object : DefaultLifecycleObserver {
             private var job: Job? = null
             override fun onStart(owner: LifecycleOwner) {
@@ -88,7 +92,9 @@ class DashboardScreen(carContext: CarContext) : Screen(carContext) {
             } else {
                 pane.addAction(
                     Action.Builder().setTitle("OBD").setBackgroundColor(CarColor.GREEN)
-                        .setOnClickListener { firstObdDevice()?.let(::start) ?: invalidate() }.build()
+                        .setOnClickListener {
+                            (AutoStartStore(carContext).savedObdSource(carContext) ?: firstObdDevice())?.let(::start) ?: invalidate()
+                        }.build()
                 )
                 pane.addAction(Action.Builder().setTitle("Démo").setOnClickListener { start(ObdSource.Simulator) }.build())
             }
