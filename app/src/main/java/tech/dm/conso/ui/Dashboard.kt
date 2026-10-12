@@ -52,6 +52,7 @@ fun Dashboard(
     days: List<DayStats>,
     onConnectClick: () -> Unit,
     onDisconnect: () -> Unit,
+    onDayClick: (DayStats) -> Unit,
 ) {
     Column(
         Modifier
@@ -81,11 +82,11 @@ fun Dashboard(
             val total = days.sumOf { it.distanceKm }
             val fuel = days.sumOf { it.fuelL }
             SectionTitle(
-                "7 derniers jours",
+                "7 derniers jours · touchez un jour",
                 if (total > 0.5) "%.0f km · %.1f L/100 km".format(total, fuel / total * 100) else "Aucun trajet",
             )
             Spacer(Modifier.height(12.dp))
-            DaysBarChart(days)
+            DaysBarChart(days, onDayClick = onDayClick)
         }
         if (state.status == ConnectionStatus.CONNECTED) {
             Text("Mesure : ${state.method.label}", color = Palette.Muted, fontSize = 12.sp)

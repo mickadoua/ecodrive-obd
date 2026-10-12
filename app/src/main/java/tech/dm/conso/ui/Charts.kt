@@ -1,6 +1,7 @@
 package tech.dm.conso.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,12 +44,15 @@ fun ArcGauge(fraction: Float, color: Color, modifier: Modifier = Modifier, strok
 }
 
 @Composable
-fun DaysBarChart(days: List<DayStats>, modifier: Modifier = Modifier) {
+fun DaysBarChart(days: List<DayStats>, modifier: Modifier = Modifier, onDayClick: (DayStats) -> Unit = {}) {
     val maxV = (days.mapNotNull { it.avgL100 }.maxOrNull() ?: 10.0).coerceAtLeast(8.0)
     Column(modifier) {
         Row(Modifier.fillMaxWidth().height(140.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             days.forEach { d ->
-                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    Modifier.weight(1f).clickable(enabled = d.distanceKm > 0.1) { onDayClick(d) },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
                     Text(
                         d.avgL100?.let { "%.1f".format(it) } ?: "",
                         color = Palette.Muted, fontSize = 11.sp, textAlign = TextAlign.Center,

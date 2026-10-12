@@ -161,7 +161,7 @@ fun MapScreen(
 }
 
 @Composable
-private fun RoadRow(r: RoadStats, selected: Boolean, onClick: () -> Unit) {
+internal fun RoadRow(r: RoadStats, selected: Boolean, onClick: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -209,7 +209,7 @@ fun Chip(label: String, active: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun LegendDot(color: Color, label: String) {
+internal fun LegendDot(color: Color, label: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(8.dp).clip(CircleShape).background(color))
         Spacer(Modifier.width(4.dp))
@@ -218,7 +218,7 @@ private fun LegendDot(color: Color, label: String) {
 }
 
 @Composable
-private fun OsmMap(segments: List<Segment>, current: GeoPoint?, focus: List<Segment>, onSelect: (Segment) -> Unit) {
+internal fun OsmMap(segments: List<Segment>, current: GeoPoint?, focus: List<Segment>, onSelect: (Segment) -> Unit) {
     val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val map = remember {

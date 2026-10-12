@@ -38,6 +38,7 @@ import tech.dm.conso.ConsoApp
 import tech.dm.conso.auto.AutoStartSettings
 import tech.dm.conso.auto.AutoStartStore
 import tech.dm.conso.data.ConnectionStatus
+import tech.dm.conso.data.DayStats
 import tech.dm.conso.data.ObdSource
 import tech.dm.conso.leaderboard.LeaderboardRepository
 import tech.dm.conso.leaderboard.MockLeaderboard
@@ -79,6 +80,7 @@ class MainActivity : ComponentActivity() {
                 val unresolvable by telemetry.roads.unresolvable.collectAsStateWithLifecycle()
                 var tab by rememberSaveable { mutableStateOf(Tab.DASHBOARD) }
                 var focusKey by remember { mutableStateOf<String?>(null) }
+                var selectedDay by remember { mutableStateOf<DayStats?>(null) }
                 val days = remember(version, state.tripKm.toInt()) { telemetry.history.lastDays(7) }
                 val segments = remember(version) { telemetry.segments.all() }
                 val myL100 = remember(version) {
@@ -103,7 +105,7 @@ class MainActivity : ComponentActivity() {
                             Tab.entries.forEach { t ->
                                 NavigationBarItem(
                                     selected = tab == t,
-                                    onClick = { tab = t },
+                                    onClick = { tab = t; selectedDay = null },
                                     icon = { Icon(t.icon, null) },
                                     label = { Text(t.label) },
                                     colors = NavigationBarItemDefaults.colors(
@@ -119,12 +121,16 @@ class MainActivity : ComponentActivity() {
                     },
                 ) { padding ->
                     Box(Modifier.padding(padding)) {
-                        when (tab) {
+                        val day = selectedDay
+                        if (day != null) {
+                            DayDetailScreen(day, segments, roadNames, unresolvable, telemetry.roads::resolve) { selectedDay = null }
+                        } else when (tab) {
                             Tab.DASHBOARD -> Dashboard(
                                 state = state,
                                 days = days,
                                 onConnectClick = ::requestPermissionsThenPick,
                                 onDisconnect = telemetry::disconnect,
+                                onDayClick = { selectedDay = it },
                             )
                             Tab.MAP -> MapScreen(segments, roadNames, unresolvable, state.location, focusKey, telemetry.roads::resolve)
                             Tab.LEADERBOARD -> LeaderboardScreen(
