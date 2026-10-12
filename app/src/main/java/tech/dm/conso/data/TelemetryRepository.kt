@@ -94,13 +94,13 @@ class TelemetryRepository(context: Context) {
         _profile.value = p
     }
 
-    fun connect(source: ObdSource, retry: Boolean = false) {
+    fun connect(source: ObdSource, retry: Boolean = false, maxAttempts: Int = MAX_RETRIES) {
         if (retry && job?.isActive == true) return
         disconnect()
         job = scope.launch {
             var attempt = 0
             while (true) {
-                val willRetry = retry && attempt + 1 < MAX_RETRIES
+                val willRetry = retry && attempt + 1 < maxAttempts
                 run(source, willRetry)
                 if (_state.value.status != ConnectionStatus.ERROR || !willRetry) break
                 attempt++
@@ -152,7 +152,10 @@ class TelemetryRepository(context: Context) {
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            _state.update { it.copy(status = ConnectionStatus.ERROR, error = e.message ?: e.javaClass.simpleName, retrying = willRetry) }
+            val message = if (source is ObdSource.Bluetooth && e is java.io.IOException) {
+                "Module ${source.label} injoignable : contact coupé ou hors de portée"
+            } else e.message ?: e.javaClass.simpleName
+            _state.update { it.copy(status = ConnectionStatus.ERROR, error = message, retrying = willRetry) }
         } finally {
             tripBuilder.flush()
             position.stop()

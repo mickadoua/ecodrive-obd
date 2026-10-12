@@ -101,8 +101,8 @@ private fun Header(state: LiveState, onConnectClick: () -> Unit, onDisconnect: (
             Text("Conso", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Palette.Text)
             val (dot, label) = when (state.status) {
                 ConnectionStatus.CONNECTED -> Palette.Green to (state.sourceLabel ?: "Connecté")
-                ConnectionStatus.CONNECTING -> Palette.Yellow to "Connexion…"
-                ConnectionStatus.ERROR -> Palette.Red to "Erreur"
+                ConnectionStatus.CONNECTING -> Palette.Yellow to "Connexion à ${state.sourceLabel ?: "l'OBD"}…"
+                ConnectionStatus.ERROR -> if (state.retrying) Palette.Yellow to "Nouvelle tentative…" else Palette.Red to "Non connecté"
                 ConnectionStatus.DISCONNECTED -> Palette.Muted to "Déconnecté"
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
