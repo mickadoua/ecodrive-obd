@@ -87,6 +87,7 @@ class TelemetryRepository(context: Context) {
     val profile: StateFlow<VehicleProfile> = _profile.asStateFlow()
 
     private val terrain = TerrainElevation()
+    var autoReconnectTried = false
     private var job: Job? = null
 
     fun saveProfile(p: VehicleProfile) {

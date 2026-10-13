@@ -71,7 +71,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         autoStart = autoStartStore.load()
-        if (savedInstanceState == null) reconnectLastModule()
+        reconnectLastModule()
         setContent {
             ConsoTheme {
                 val state by telemetry.state.collectAsStateWithLifecycle()
@@ -187,7 +187,8 @@ class MainActivity : ComponentActivity() {
     private fun reconnectLastModule() {
         val canUseBt = Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
             ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
-        if (!canUseBt || telemetry.state.value.status != ConnectionStatus.DISCONNECTED) return
+        if (!canUseBt || telemetry.state.value.status != ConnectionStatus.DISCONNECTED || telemetry.autoReconnectTried) return
+        telemetry.autoReconnectTried = true
         val source = autoStartStore.savedObdSource(this) ?: return
         telemetry.connect(source, retry = true, maxAttempts = 3)
         ObdService.start(this)
