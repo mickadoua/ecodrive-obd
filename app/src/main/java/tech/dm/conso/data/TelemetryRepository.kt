@@ -79,6 +79,10 @@ class TelemetryRepository(context: Context) {
     val history = DailyHistory(File(appContext.filesDir, "history.json"))
     val segments = SegmentStore(File(appContext.filesDir, "segments.jsonl"))
     val roads = RoadNames(appContext, File(appContext.filesDir, "roads.json"))
+    private val tripStore = TripStore(File(appContext.filesDir, "trip.json"))
+    private var tripId = 0L
+    private var engineStartMs: Long? = null
+    private var tripBuilder: SegmentBuilder? = null
     private val _historyVersion = MutableStateFlow(0)
     val historyVersion: StateFlow<Int> = _historyVersion.asStateFlow()
 
@@ -119,6 +123,7 @@ class TelemetryRepository(context: Context) {
     }
 
     private suspend fun run(source: ObdSource, willRetry: Boolean) {
+        tripId = 0L
         _state.value = LiveState(status = ConnectionStatus.CONNECTING, sourceLabel = source.label)
         val position: PositionSource
         val elm: Elm327
@@ -129,10 +134,6 @@ class TelemetryRepository(context: Context) {
                 elm = Elm327(BluetoothTransport(source.device))
             }
         }
-        val tripBuilder = SegmentBuilder(System.currentTimeMillis()) {
-            segments.append(it)
-            _historyVersion.update { v -> v + 1 }
-        }
         try {
             elm.initialize()
             val fuelType = if (elm.supports(Pids.FUEL_TYPE)) {
@@ -140,13 +141,14 @@ class TelemetryRepository(context: Context) {
             } else _profile.value.fuel
             val detected = elm.readVin()?.let(Vin::decode)
             val method = FuelCalculator.chooseMethod(elm::supports, fuelType)
+            beginOrResumeTrip(readEngineStart(elm))
             _state.update {
                 it.copy(status = ConnectionStatus.CONNECTED, method = method, fuelType = fuelType, detectedVehicle = detected)
             }
             position.start()
             val terrainJob = if (position.hasPreciseAltitude) null else terrain.start(scope)
             try {
-                poll(elm, position, method, fuelType, tripBuilder)
+                poll(elm, position, method, fuelType)
             } finally {
                 terrainJob?.cancel()
             }
@@ -158,7 +160,9 @@ class TelemetryRepository(context: Context) {
             } else e.message ?: e.javaClass.simpleName
             _state.update { it.copy(status = ConnectionStatus.ERROR, error = message, retrying = willRetry) }
         } finally {
-            tripBuilder.flush()
+            tripBuilder?.flush()
+            tripBuilder = null
+            saveTrip()
             position.stop()
             elm.close()
             history.save()
@@ -170,7 +174,6 @@ class TelemetryRepository(context: Context) {
         position: PositionSource,
         method: FuelMethod,
         fuelType: FuelType,
-        tripBuilder: SegmentBuilder,
     ) {
         val scorer = EcoScorer(_profile.value.vehicleModel, fuelType)
         val grade = GradeEstimator()
@@ -222,7 +225,7 @@ class TelemetryRepository(context: Context) {
             val eco = scorer.evaluate(speed, accel, g, rpm, lh)
             val fuelStep = (lh ?: 0.0) * dt / 3600.0
             history.add(LocalDate.now(), fuelStep, stepM / 1000.0, if (speed >= 3) eco.score else null)
-            if (lh != null) tripBuilder.add(wall, loc, stepM / 1000.0, fuelStep, eco.expectedLh * dt / 3600.0, g)
+            if (lh != null) tripBuilder?.add(wall, loc, stepM / 1000.0, fuelStep, eco.expectedLh * dt / 3600.0, g)
 
             if (speed >= 3) ecoTrend = ecoTrend?.let { it + (eco.instantScore - it) * 0.2 } ?: eco.instantScore
             val takeSample = now - lastSampleAt >= SAMPLE_PERIOD_MS
@@ -245,11 +248,53 @@ class TelemetryRepository(context: Context) {
             }
 
             if (now - lastSave > 30_000) {
+                val engineStart = readEngineStart(elm)
+                if (engineStart != null && engineStartMs != null &&
+                    kotlin.math.abs(engineStart - engineStartMs!!) > TripSnapshot.ENGINE_START_TOLERANCE_MS
+                ) {
+                    saveTrip()
+                    beginOrResumeTrip(engineStart)
+                }
+                saveTrip()
                 history.save()
                 _historyVersion.update { it + 1 }
                 lastSave = now
             }
             delay(POLL_INTERVAL_MS)
+        }
+    }
+
+    private suspend fun readEngineStart(elm: Elm327): Long? =
+        if (elm.supports(Pids.ENGINE_RUNTIME)) {
+            elm.query(Pids.ENGINE_RUNTIME)?.let(Pids::engineRuntimeS)
+                ?.takeIf { it > 0 }
+                ?.let { System.currentTimeMillis() - it * 1000L }
+        } else null
+
+    private fun beginOrResumeTrip(engineStart: Long?) {
+        tripBuilder?.flush()
+        val now = System.currentTimeMillis()
+        val saved = tripStore.load()?.takeIf { it.isSameTrip(engineStart, now) }
+        tripId = saved?.tripId ?: now
+        engineStartMs = engineStart ?: saved?.engineStartMs
+        tripBuilder = SegmentBuilder(tripId) {
+            segments.append(it)
+            _historyVersion.update { v -> v + 1 }
+        }
+        _state.update {
+            it.copy(
+                tripKm = saved?.tripKm ?: 0.0,
+                tripLiters = saved?.tripLiters ?: 0.0,
+                samples = saved?.samples.orEmpty(),
+            )
+        }
+    }
+
+    private fun saveTrip() {
+        if (tripId == 0L) return
+        val s = _state.value
+        runCatching {
+            tripStore.save(TripSnapshot(tripId, engineStartMs, System.currentTimeMillis(), s.tripKm, s.tripLiters, s.samples))
         }
     }
 

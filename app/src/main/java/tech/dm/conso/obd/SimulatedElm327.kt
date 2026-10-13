@@ -21,7 +21,7 @@ class SimulatedElm327(private val clock: () -> Long = SystemClock::elapsedRealti
         Leg(130.0, 45.0, 2.4), Leg(70.0, 40.0, 0.8), Leg(30.0, 20.0, 1.0),
     )
     private val model = VehicleModel()
-    private val supportedPids = setOf(0x0B, 0x0C, 0x0D, 0x0F, 0x10, 0x20, 0x51)
+    private val supportedPids = setOf(0x0B, 0x0C, 0x0D, 0x0F, 0x10, 0x1F, 0x20, 0x51)
 
     private var lastTick = 0L
     private var legIndex = 0
@@ -39,8 +39,11 @@ class SimulatedElm327(private val clock: () -> Long = SystemClock::elapsedRealti
     override val location: GeoPoint? get() = position
     override val hasPreciseAltitude = true
 
+    private var openedAt = 0L
+
     override suspend fun open() {
         lastTick = clock()
+        openedAt = lastTick
     }
 
     override suspend fun send(command: String, timeoutMs: Long): String {
@@ -60,6 +63,7 @@ class SimulatedElm327(private val clock: () -> Long = SystemClock::elapsedRealti
             pid == Pids.MAP -> hex1(30 + min(70.0, fuelLh * 6))
             pid == Pids.INTAKE_TEMP -> hex1(25.0 + 40)
             pid == Pids.FUEL_TYPE -> "01"
+            pid == Pids.ENGINE_RUNTIME -> hex2(((clock() - openedAt) / 1000).toDouble())
             else -> return "NO DATA\r\r"
         }
         return "41%02X%s\r\r".format(pid, payload)

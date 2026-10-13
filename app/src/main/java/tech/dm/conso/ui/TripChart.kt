@@ -68,7 +68,9 @@ fun TripChart(samples: List<Sample>, modifier: Modifier = Modifier) {
     val first = samples.firstOrNull()?.wallMs ?: 0L
     val last = samples.lastOrNull()?.wallMs ?: 0L
     val total = (last - first).coerceAtLeast(1L)
-    val spanMs = window.ms?.coerceAtMost(total) ?: total
+    val available = ChartWindow.entries.filter { it.ms == null || total > it.ms }
+    val effective = if (window in available) window else ChartWindow.TRIP
+    val spanMs = effective.ms?.coerceAtMost(total) ?: total
     val endMs = last - panMs.coerceIn(0L, (total - spanMs).coerceAtLeast(0L))
     val startMs = endMs - spanMs
     val bucketMs = bucketFor(spanMs)
@@ -81,8 +83,8 @@ fun TripChart(samples: List<Sample>, modifier: Modifier = Modifier) {
 
     Column(modifier) {
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            ChartWindow.entries.forEach { w ->
-                val active = w == window
+            available.forEach { w ->
+                val active = w == effective
                 Text(
                     w.label,
                     Modifier
