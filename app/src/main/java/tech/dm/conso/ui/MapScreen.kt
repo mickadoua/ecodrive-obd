@@ -72,6 +72,8 @@ private val DARK_TILES = ColorMatrixColorFilter(
     }
 )
 
+private const val MAX_FIT_ZOOM = 17.0
+
 private val dayFmt = DateTimeFormatter.ofPattern("dd/MM HH:mm").withZone(ZoneId.systemDefault())
 
 fun excessColor(ratio: Double): Color = when {
@@ -249,6 +251,9 @@ internal fun OsmMap(segments: List<Segment>, current: GeoPoint?, focus: List<Seg
         }
     }
 
+    val target = focus.ifEmpty { segments }
+    val targetKey: Any? = if (focus.isNotEmpty()) focus.map { it.key to it.startedAt } else segments.firstOrNull()?.let { it.key to it.startedAt }
+
     AndroidView({ map }, Modifier.fillMaxSize()) { m ->
         m.overlays.clear()
         segments.forEach { s ->
@@ -269,19 +274,10 @@ internal fun OsmMap(segments: List<Segment>, current: GeoPoint?, focus: List<Seg
             }
         }
         when {
-            focus.isNotEmpty() && fitted.value != focus -> {
-                fitted.value = focus
-                val pts = focus.flatMap { it.points }.map { OsmPoint(it.lat, it.lon) }
-                m.post { m.zoomToBoundingBox(BoundingBox.fromGeoPointsSafe(pts).increaseByScale(1.4f), true) }
-            }
-            fitted.value != segments.firstOrNull() && segments.isNotEmpty() -> {
-                fitted.value = segments.firstOrNull()
-                val pts = segments.flatMap { it.points }
-                m.post {
-                    m.zoomToBoundingBox(
-                        BoundingBox.fromGeoPointsSafe(pts.map { OsmPoint(it.lat, it.lon) }).increaseByScale(1.2f), false
-                    )
-                }
+            target.isNotEmpty() && fitted.value != targetKey -> {
+                fitted.value = targetKey
+                val box = BoundingBox.fromGeoPointsSafe(target.flatMap { it.points }.map { OsmPoint(it.lat, it.lon) })
+                m.post { m.zoomToBoundingBox(box, focus.isNotEmpty(), 60, MAX_FIT_ZOOM, 500L) }
             }
             segments.isEmpty() && current != null -> m.controller.setCenter(OsmPoint(current.lat, current.lon))
         }

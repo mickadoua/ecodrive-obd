@@ -40,6 +40,8 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tech.dm.conso.data.Sample
+import tech.dm.conso.data.bucketFor
+import tech.dm.conso.data.downsample
 import tech.dm.conso.obd.FuelCalculator
 import java.time.Instant
 import java.time.ZoneId
@@ -69,7 +71,10 @@ fun TripChart(samples: List<Sample>, modifier: Modifier = Modifier) {
     val spanMs = window.ms?.coerceAtMost(total) ?: total
     val endMs = last - panMs.coerceIn(0L, (total - spanMs).coerceAtLeast(0L))
     val startMs = endMs - spanMs
-    val visible = samples.filter { it.wallMs in startMs..endMs }
+    val bucketMs = bucketFor(spanMs)
+    val visible = remember(samples.size, startMs / bucketMs, bucketMs) {
+        downsample(samples.filter { it.wallMs in startMs..endMs }, bucketMs)
+    }
     val latestSpan by rememberUpdatedState(spanMs)
     val latestStart by rememberUpdatedState(startMs)
     val latestTotal by rememberUpdatedState(total)
@@ -129,7 +134,7 @@ fun TripChart(samples: List<Sample>, modifier: Modifier = Modifier) {
                     }
                 },
         ) {
-            drawChart(visible, startMs, spanMs, selectedWall, measurer)
+            drawChart(visible, startMs, spanMs, selectedWall, measurer, bucketMs)
         }
         Spacer(Modifier.height(6.dp))
         Text(
@@ -153,6 +158,7 @@ private fun DrawScope.drawChart(
     spanMs: Long,
     selectedWall: Long?,
     measurer: TextMeasurer,
+    bucketMs: Long,
 ) {
     val label = TextStyle(color = Palette.Muted, fontSize = 10.sp)
     val left = LEFT.toPx()
@@ -228,7 +234,7 @@ private fun DrawScope.drawChart(
     sel.altitudeM?.let { if (minA != null) drawCircle(Palette.Blue, 6f, Offset(sx, yA(it))) }
 
     val lines = listOfNotNull(
-        clock.format(Instant.ofEpochMilli(sel.wallMs)),
+        clock.format(Instant.ofEpochMilli(sel.wallMs)) + if (bucketMs > 1_000) " · moy. ${bucketMs / 1_000} s" else "",
         sel.l100()?.let { "%.1f L/100 km".format(it) } ?: sel.litersPerHour?.let { "%.1f L/h (arrêt)".format(it) },
         "%.0f km/h".format(sel.speedKmh) + (sel.ecoScore?.let { " · éco %.0f".format(it) } ?: ""),
         sel.altitudeM?.let { "alt. %.0f m · pente %+.1f %%".format(it, sel.grade * 100) },
