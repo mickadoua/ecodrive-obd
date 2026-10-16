@@ -20,7 +20,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Bluetooth
+import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.material.icons.rounded.Landscape
 import androidx.compose.material.icons.rounded.PowerSettingsNew
 import androidx.compose.material.icons.rounded.Science
@@ -43,6 +45,7 @@ import tech.dm.conso.data.ConnectionStatus
 import tech.dm.conso.data.DayStats
 import tech.dm.conso.data.LiveState
 import tech.dm.conso.data.ObdSource
+import tech.dm.conso.data.Vehicle
 import tech.dm.conso.obd.FuelMethod
 import tech.dm.conso.obd.Powertrain
 import kotlin.math.atan
@@ -310,6 +313,23 @@ fun SourcePicker(sources: List<ObdSource>, onPick: (ObdSource) -> Unit, onDismis
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Annuler") } },
+    )
+}
+
+@Composable
+fun UnknownVehicleDialog(suggested: String, vehicles: List<Vehicle>, onChoose: (String?) -> Unit) {
+    AlertDialog(
+        onDismissRequest = {},
+        containerColor = Palette.Surface,
+        title = { Text("Véhicule inconnu") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Ce module ou cette voiture n'est pas encore connu. Sans choix d'ici une minute, un nouveau véhicule est créé.", color = Palette.Muted, fontSize = 12.sp)
+                SourceRow(Icons.Rounded.Add, "Nouveau véhicule : $suggested") { onChoose(null) }
+                vehicles.forEach { v -> SourceRow(Icons.Rounded.DirectionsCar, "C'est ${v.name}") { onChoose(v.id) } }
+            }
+        },
+        confirmButton = {},
     )
 }
 

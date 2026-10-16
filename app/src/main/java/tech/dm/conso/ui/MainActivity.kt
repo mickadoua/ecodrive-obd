@@ -76,6 +76,8 @@ class MainActivity : ComponentActivity() {
             val profile by telemetry.profile.collectAsStateWithLifecycle()
             ConsoTheme(profile.powertrain) {
                 val state by telemetry.state.collectAsStateWithLifecycle()
+                val vehicle by telemetry.vehicle.collectAsStateWithLifecycle()
+                val vehicles by telemetry.vehicleList.collectAsStateWithLifecycle()
                 val version by telemetry.historyVersion.collectAsStateWithLifecycle()
                 val roadNames by telemetry.roads.names.collectAsStateWithLifecycle()
                 val unresolvable by telemetry.roads.unresolvable.collectAsStateWithLifecycle()
@@ -142,12 +144,24 @@ class MainActivity : ComponentActivity() {
                                 onPortionClick = { focusKey = it; tab = Tab.MAP },
                                 onConfigureVehicle = { tab = Tab.VEHICLE },
                             )
-                            Tab.VEHICLE -> VehicleScreen(profile, state.detectedVehicle, telemetry::saveProfile) {
+                            Tab.VEHICLE -> VehicleScreen(
+                                vehicles = vehicles,
+                                active = vehicle,
+                                canSwitch = state.status == ConnectionStatus.DISCONNECTED || state.status == ConnectionStatus.ERROR && !state.retrying,
+                                onSelect = { telemetry.selectVehicle(it.id) },
+                                onAdd = { telemetry.createVehicle("Véhicule ${vehicles.count { !it.simulator } + 1}") },
+                                onRename = telemetry::updateVehicle,
+                                profile = profile,
+                                detected = state.detectedVehicle,
+                                onSave = telemetry::saveProfile,
+                            ) {
                                 AutoStartCard(
                                     settings = autoStart,
+                                    vehicle = vehicle,
                                     bonded = bondedDevices(),
                                     backgroundLocationGranted = backgroundLocation,
                                     onChange = { autoStart = it; autoStartStore.save(it) },
+                                    onVehicleChange = telemetry::updateVehicle,
                                     onRequestBackgroundLocation = {
                                         backgroundLocationRequest.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
                                     },
@@ -155,6 +169,9 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
+                }
+                state.unknownVehicle?.let { suggested ->
+                    UnknownVehicleDialog(suggested, vehicles.filterNot { it.simulator }, telemetry::chooseVehicle)
                 }
                 if (showPicker) {
                     SourcePicker(
