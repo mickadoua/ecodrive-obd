@@ -78,6 +78,14 @@ class RoadNames(private val context: Context, private val file: File) {
         if (missing.isNotEmpty()) save()
     }
 
+    suspend fun localityAt(p: GeoPoint): String? {
+        if (!Geocoder.isPresent()) return null
+        val address = withTimeoutOrNull(LOOKUP_TIMEOUT_MS) {
+            runCatching { lookup(Geocoder(context, Locale.FRANCE), p) }.getOrNull()
+        } ?: return null
+        return address.locality ?: address.subAdminArea
+    }
+
     private suspend fun lookup(geocoder: Geocoder, p: GeoPoint): Address? =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             suspendCancellableCoroutine { cont ->

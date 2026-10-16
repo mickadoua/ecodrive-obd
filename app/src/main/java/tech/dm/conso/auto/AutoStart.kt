@@ -60,7 +60,7 @@ class CarBluetoothReceiver : BroadcastReceiver() {
         if (!settings.enabled || device.address != settings.carAddress) return
         when (intent.action) {
             BluetoothDevice.ACTION_ACL_CONNECTED -> ObdService.startAuto(context)
-            BluetoothDevice.ACTION_ACL_DISCONNECTED -> ConsoApp.instance.telemetry.disconnect()
+            BluetoothDevice.ACTION_ACL_DISCONNECTED -> ConsoApp.instance.telemetry.endTrip()
         }
     }
 }
