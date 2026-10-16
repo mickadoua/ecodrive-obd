@@ -13,8 +13,6 @@ import tech.dm.conso.service.ObdService
 
 data class AutoStartSettings(
     val enabled: Boolean = false,
-    val carAddress: String? = null,
-    val carName: String? = null,
     val obdAddress: String? = null,
     val obdName: String? = null,
 )
@@ -24,8 +22,6 @@ class AutoStartStore(context: Context) {
 
     fun load() = AutoStartSettings(
         enabled = prefs.getBoolean("enabled", false),
-        carAddress = prefs.getString("car", null),
-        carName = prefs.getString("carName", null),
         obdAddress = prefs.getString("obd", null),
         obdName = prefs.getString("obdName", null),
     )
@@ -33,19 +29,20 @@ class AutoStartStore(context: Context) {
     fun save(s: AutoStartSettings) {
         prefs.edit()
             .putBoolean("enabled", s.enabled)
-            .putString("car", s.carAddress)
-            .putString("carName", s.carName)
             .putString("obd", s.obdAddress)
             .putString("obdName", s.obdName)
             .apply()
     }
 
+    fun legacyCar(): Pair<String?, String?> = prefs.getString("car", null) to prefs.getString("carName", null)
+
+    fun savedObdSource(context: Context): ObdSource.Bluetooth? = load().let { obdSource(context, it.obdAddress, it.obdName) }
+
     @SuppressLint("MissingPermission")
-    fun savedObdSource(context: Context): ObdSource.Bluetooth? {
-        val s = load()
-        val address = s.obdAddress ?: return null
+    fun obdSource(context: Context, address: String?, name: String?): ObdSource.Bluetooth? {
+        if (address == null) return null
         val adapter = context.getSystemService(BluetoothManager::class.java)?.adapter ?: return null
-        return runCatching { ObdSource.Bluetooth(adapter.getRemoteDevice(address), s.obdName ?: address) }.getOrNull()
+        return runCatching { ObdSource.Bluetooth(adapter.getRemoteDevice(address), name ?: address) }.getOrNull()
     }
 }
 
@@ -56,10 +53,10 @@ class CarBluetoothReceiver : BroadcastReceiver() {
         } else {
             @Suppress("DEPRECATION") intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
         } ?: return
-        val settings = AutoStartStore(context).load()
-        if (!settings.enabled || device.address != settings.carAddress) return
+        if (!AutoStartStore(context).load().enabled) return
+        val vehicle = ConsoApp.instance.telemetry.vehicles.byCar(device.address) ?: return
         when (intent.action) {
-            BluetoothDevice.ACTION_ACL_CONNECTED -> ObdService.startAuto(context)
+            BluetoothDevice.ACTION_ACL_CONNECTED -> ObdService.startAuto(context, vehicle)
             BluetoothDevice.ACTION_ACL_DISCONNECTED -> ConsoApp.instance.telemetry.endTrip()
         }
     }

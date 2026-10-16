@@ -13,15 +13,24 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.random.Random
 
-class SimulatedElm327(private val clock: () -> Long = SystemClock::elapsedRealtime) : ObdTransport, PositionSource {
+class SimulatedElm327(
+    private val powertrain: Powertrain = Powertrain.ICE,
+    private val clock: () -> Long = SystemClock::elapsedRealtime,
+) : ObdTransport, PositionSource {
     private data class Leg(val targetKmh: Double, val seconds: Double, val accel: Double)
 
     private val legs = listOf(
         Leg(0.0, 8.0, 1.0), Leg(50.0, 35.0, 1.2), Leg(90.0, 60.0, 0.9),
         Leg(130.0, 45.0, 2.4), Leg(70.0, 40.0, 0.8), Leg(30.0, 20.0, 1.0),
     )
-    private val model = VehicleModel()
-    private val supportedPids = setOf(0x0B, 0x0C, 0x0D, 0x0F, 0x10, 0x1F, 0x20, 0x51)
+    private val model = VehicleModel(massKg = 1300.0 + VehicleModel.extraMassKg(powertrain), powertrain = powertrain)
+    private val supportedPids = when (powertrain) {
+        Powertrain.ICE -> setOf(0x0B, 0x0C, 0x0D, 0x0F, 0x10, 0x1F, 0x20, 0x40, 0x51)
+        Powertrain.HYBRID -> setOf(0x0B, 0x0C, 0x0D, 0x0F, 0x10, 0x1F, 0x20, 0x40, 0x51, 0x5B)
+        Powertrain.ELECTRIC -> setOf(0x0D, 0x20, 0x40, 0x51, 0x5B)
+    }
+    private val batteryKwh = if (powertrain == Powertrain.ELECTRIC) 50.0 else 1.5
+    private var soc = if (powertrain == Powertrain.ELECTRIC) 80.0 else 60.0
 
     private var lastTick = 0L
     private var legIndex = 0
@@ -62,7 +71,12 @@ class SimulatedElm327(private val clock: () -> Long = SystemClock::elapsedRealti
             pid == Pids.MAF -> hex2(fuelLh * FuelType.GASOLINE.stoichAfr * FuelType.GASOLINE.densityGl / 3600.0 * 100)
             pid == Pids.MAP -> hex1(30 + min(70.0, fuelLh * 6))
             pid == Pids.INTAKE_TEMP -> hex1(25.0 + 40)
-            pid == Pids.FUEL_TYPE -> "01"
+            pid == Pids.FUEL_TYPE -> when (powertrain) {
+                Powertrain.ICE -> "01"
+                Powertrain.HYBRID -> "11"
+                Powertrain.ELECTRIC -> "08"
+            }
+            pid == Pids.HYBRID_BATTERY -> hex1(soc * 255 / 100)
             pid == Pids.ENGINE_RUNTIME -> hex2(((clock() - openedAt) / 1000).toDouble())
             else -> return "NO DATA\r\r"
         }
@@ -98,10 +112,23 @@ class SimulatedElm327(private val clock: () -> Long = SystemClock::elapsedRealti
         val grade = if (speedMs * dt > 0.01) (terrain(distanceM) - before) / (speedMs * dt) else 0.0
 
         val power = model.tractionPowerW(speedMs, grade, accel)
-        fuelLh = if (power < 0 && speedMs > 6) 0.0
-        else model.fuelLh(power, FuelType.GASOLINE) * Random.nextDouble(1.0, 1.12)
-
         val kmh = speedMs * 3.6
+        val engineOn = when (powertrain) {
+            Powertrain.ICE -> true
+            Powertrain.HYBRID -> soc < 40 || (power > 0 && (kmh >= 50 || power > 15_000))
+            Powertrain.ELECTRIC -> false
+        }
+        fuelLh = if (!engineOn || (power < 0 && speedMs > 6)) 0.0
+        else model.fuelLh(power, FuelType.GASOLINE) * Random.nextDouble(1.0, 1.12)
+        if (powertrain != Powertrain.ICE) {
+            val batteryKw = if (engineOn) -max(0.0, -power) * model.regenEfficiency / 1000.0 - 3.0 else model.electricKw(power)
+            soc = (soc - batteryKw * dt / 3600.0 / batteryKwh * 100.0).coerceIn(15.0, 95.0)
+        }
+        if (!engineOn) {
+            rpm = 0.0
+            return
+        }
+
         val gearRatio = when {
             kmh < 20 -> 110.0; kmh < 35 -> 70.0; kmh < 55 -> 48.0; kmh < 80 -> 36.0; else -> 24.0
         }
