@@ -4,23 +4,19 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothManager
 import android.content.Intent
+import android.graphics.Bitmap
 import android.content.pm.PackageManager
 import android.os.Build
-import android.text.SpannableString
-import android.text.SpannableStringBuilder
-import android.text.Spanned
 import androidx.car.app.CarAppService
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.Session
-import androidx.car.app.constraints.ConstraintManager
 import androidx.car.app.model.Action
-import androidx.car.app.model.CarColor
+import androidx.car.app.model.ActionStrip
 import androidx.car.app.model.CarIcon
-import androidx.car.app.model.ForegroundCarColorSpan
-import androidx.car.app.model.Pane
-import androidx.car.app.model.PaneTemplate
-import androidx.car.app.model.Row
+import androidx.car.app.model.GridItem
+import androidx.car.app.model.GridTemplate
+import androidx.car.app.model.ItemList
 import androidx.car.app.model.Template
 import androidx.car.app.validation.HostValidator
 import androidx.car.app.versioning.CarAppApiLevels
@@ -71,69 +67,53 @@ class DashboardScreen(carContext: CarContext) : Screen(carContext) {
 
     override fun onGetTemplate(): Template {
         val s = telemetry.state.value
-        val pane = Pane.Builder()
-        if (s.status == ConnectionStatus.CONNECTING) {
-            pane.setLoading(true)
-        } else {
-            val instant = s.litersPer100?.let { colored("%.1f L/100 km".format(it), 100 - (it - 4) * 10) }
-                ?: SpannableString(s.litersPerHour?.let { "%.1f L/h".format(it) } ?: "–")
-            val rows = listOf(
-                row("Consommation", SpannableStringBuilder(instant).append(" · %.0f km/h".format(s.speedKmh))),
-                row("Conseil", carTips(s).take(2).joinToString(" · ").ifEmpty { "En attente de données" }),
-                row(
-                    "Éco-score",
-                    SpannableStringBuilder(s.eco?.let { colored("%.0f/100".format(it.score), it.score) } ?: "–")
-                        .append(" · pente %+.1f %%".format(s.grade * 100)),
-                ),
-                row(
-                    "Trajet",
-                    "%.1f km · moy. ".format(s.tripKm) + (s.tripAvgL100?.let { "%.1f L/100".format(it) } ?: "–"),
-                ),
-            )
-            rows.take(rowLimit()).forEach(pane::addRow)
-            if (carContext.carAppApiLevel >= CarAppApiLevels.LEVEL_4) {
-                val points = trendPoints(s.samples)
-                if (points.count { it != null } >= 2) {
-                    pane.setImage(CarIcon.Builder(IconCompat.createWithBitmap(renderTrend(points, s.tripAvgL100))).build())
-                }
-            }
-
-            val active = s.status == ConnectionStatus.CONNECTED
-            if (active) {
-                pane.addAction(
-                    Action.Builder().setTitle("Arrêter").setOnClickListener { telemetry.disconnect() }.build()
-                )
-            } else {
-                pane.addAction(
-                    Action.Builder().setTitle("OBD").setBackgroundColor(CarColor.GREEN)
-                        .setOnClickListener {
-                            (AutoStartStore(carContext).savedObdSource(carContext) ?: firstObdDevice())?.let(::start) ?: invalidate()
-                        }.build()
-                )
-                pane.addAction(Action.Builder().setTitle("Démo").setOnClickListener { start(ObdSource.Simulator) }.build())
-            }
-        }
-        return PaneTemplate.Builder(pane.build())
+        val grid = GridTemplate.Builder()
             .setTitle(s.error?.takeIf { s.status == ConnectionStatus.ERROR }?.let { "Conso · $it" } ?: "Conso")
             .setHeaderAction(Action.APP_ICON)
-            .build()
-    }
+        if (carContext.carAppApiLevel >= CarAppApiLevels.LEVEL_7) grid.setItemSize(GridTemplate.ITEM_SIZE_LARGE)
+        if (s.status == ConnectionStatus.CONNECTING) return grid.setLoading(true).build()
 
-    private fun row(title: String, text: CharSequence) = Row.Builder().setTitle(title).addText(text).build()
-
-    private fun colored(text: String, score: Double) = SpannableString(text).apply {
-        val color = when {
-            score >= 75 -> CarColor.GREEN
-            score >= 50 -> CarColor.YELLOW
-            else -> CarColor.RED
+        if (s.status != ConnectionStatus.CONNECTED) {
+            val start = ItemList.Builder()
+                .addItem(
+                    tile("OBD", "Module Bluetooth", CarArt.consoGauge(null, 80.0)) {
+                        (AutoStartStore(carContext).savedObdSource(carContext) ?: firstObdDevice())?.let(::start) ?: invalidate()
+                    }
+                )
+                .addItem(tile("Démo", "Simulateur", CarArt.scoreRing(80.0)) { start(ObdSource.Simulator) })
+                .build()
+            return grid.setSingleList(start).build()
         }
-        setSpan(ForegroundCarColorSpan.create(color), 0, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+        val score = s.eco?.score
+        val tiles = ItemList.Builder()
+            .addItem(
+                tile(
+                    s.litersPer100?.let { "%.1f".format(it) } ?: s.litersPerHour?.let { "%.1f".format(it) } ?: "–",
+                    if (s.litersPer100 == null && s.litersPerHour != null) "L/h à l'arrêt" else "L/100 km",
+                    CarArt.consoGauge(s.litersPer100, score ?: 80.0),
+                )
+            )
+            .addItem(tile(score?.let { "%.0f".format(it) } ?: "–", "Éco-score", CarArt.scoreRing(score ?: 0.0)))
+            .addItem(tile(carTips(s).firstOrNull() ?: "–", "Conseil", CarArt.tipIcon(s)))
+            .addItem(
+                tile(
+                    s.tripAvgL100?.let { "%.1f".format(it) } ?: "–",
+                    "Moyenne · %.0f km".format(s.tripKm),
+                    CarArt.sparkline(s),
+                )
+            )
+            .build()
+        val stop = Action.Builder().setTitle("Arrêter").setOnClickListener { telemetry.disconnect() }.build()
+        return grid.setSingleList(tiles).setActionStrip(ActionStrip.Builder().addAction(stop).build()).build()
     }
 
-    private fun rowLimit(): Int =
-        if (carContext.carAppApiLevel >= CarAppApiLevels.LEVEL_2) {
-            carContext.getCarService(ConstraintManager::class.java).getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_PANE)
-        } else 4
+    private fun tile(title: String, text: String, image: Bitmap, onClick: (() -> Unit)? = null) = GridItem.Builder()
+        .setTitle(title)
+        .setText(text)
+        .setImage(CarIcon.Builder(IconCompat.createWithBitmap(image)).build(), GridItem.IMAGE_TYPE_LARGE)
+        .apply { onClick?.let { setOnClickListener(it) } }
+        .build()
 
     private fun start(source: ObdSource) {
         telemetry.connect(source)
