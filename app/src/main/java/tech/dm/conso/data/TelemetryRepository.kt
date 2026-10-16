@@ -16,6 +16,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import tech.dm.conso.eco.EcoResult
 import tech.dm.conso.eco.EcoScorer
+import tech.dm.conso.eco.GearAdvice
+import tech.dm.conso.eco.GearEstimator
 import tech.dm.conso.obd.BluetoothTransport
 import tech.dm.conso.obd.Elm327
 import tech.dm.conso.obd.FuelCalculator
@@ -65,6 +67,8 @@ data class LiveState(
     val location: GeoPoint? = null,
     val altitudeSource: String? = null,
     val eco: EcoResult? = null,
+    val gear: GearAdvice? = null,
+    val speedLimitKmh: Int? = null,
     val samples: List<Sample> = emptyList(),
 ) {
     val tripAvgL100: Double? get() = if (tripKm > 0.2) tripLiters / tripKm * 100.0 else null
@@ -83,6 +87,14 @@ class TelemetryRepository(context: Context) {
     private var tripId = 0L
     private var engineStartMs: Long? = null
     private var tripBuilder: SegmentBuilder? = null
+    private var tripStartedAt = 0L
+    private var tripStats = TripStats()
+    private var tripFinalized = false
+    private val speedLimits = SpeedLimits()
+    val summaries = TripSummaryStore(File(appContext.filesDir, "trips.jsonl"))
+    private val _summariesVersion = MutableStateFlow(0)
+    val summariesVersion: StateFlow<Int> = _summariesVersion.asStateFlow()
+    var onTripFinished: ((TripSummary) -> Unit)? = null
     private val _historyVersion = MutableStateFlow(0)
     val historyVersion: StateFlow<Int> = _historyVersion.asStateFlow()
 
@@ -111,6 +123,13 @@ class TelemetryRepository(context: Context) {
                 attempt++
                 delay(RETRY_DELAY_MS)
             }
+        }
+    }
+
+    fun endTrip() {
+        scope.launch {
+            finalizeCurrentTrip()
+            disconnect()
         }
     }
 
@@ -176,6 +195,9 @@ class TelemetryRepository(context: Context) {
         fuelType: FuelType,
     ) {
         val scorer = EcoScorer(_profile.value.vehicleModel, fuelType)
+        val manual = _profile.value.manualGearbox
+        val gears = GearEstimator(profileStore.loadGearRatios(), fuelType)
+        var engineOffSince: Long? = null
         val grade = GradeEstimator()
         val terrainGrade = TerrainGrade(terrain)
         val altitudeSource = when {
@@ -222,10 +244,22 @@ class TelemetryRepository(context: Context) {
             } else {
                 terrainGrade.update(distanceM, loc)
             }
-            val eco = scorer.evaluate(speed, accel, g, rpm, lh)
+            speedLimits.prefetch(scope, loc, now)
+            val limit = speedLimits.limitAt(loc)
+            val gear = if (manual) gears.update(speed, rpm, accel) else null
+            val eco = scorer.evaluate(speed, accel, g, rpm, lh, limit, gear)
             val fuelStep = (lh ?: 0.0) * dt / 3600.0
+            val expectedStep = eco.expectedLh * dt / 3600.0
             history.add(LocalDate.now(), fuelStep, stepM / 1000.0, if (speed >= 3) eco.score else null)
-            if (lh != null) tripBuilder?.add(wall, loc, stepM / 1000.0, fuelStep, eco.expectedLh * dt / 3600.0, g)
+
+            val engineRunning = rpm != null && rpm > 300
+            if (tripFinalized && engineRunning) beginOrResumeTrip(readEngineStart(elm))
+            if (!tripFinalized) {
+                if (lh != null) tripBuilder?.add(wall, loc, stepM / 1000.0, fuelStep, expectedStep, g)
+                tripStats.add(dt, speed, stepM / 1000.0, fuelStep, expectedStep, eco.hint, eco.instantScore, loc)
+            }
+            engineOffSince = if (!engineRunning && speed < 1) engineOffSince ?: now else null
+            if (!tripFinalized && engineOffSince != null && now - engineOffSince!! > ENGINE_OFF_MS) finalizeCurrentTrip()
 
             if (speed >= 3) ecoTrend = ecoTrend?.let { it + (eco.instantScore - it) * 0.2 } ?: eco.instantScore
             val takeSample = now - lastSampleAt >= SAMPLE_PERIOD_MS
@@ -243,7 +277,9 @@ class TelemetryRepository(context: Context) {
                     location = loc,
                     altitudeSource = altitudeSource,
                     eco = eco,
-                    samples = if (takeSample) (s.samples + Sample(wall, speed, lh, alt, g, ecoTrend)).takeLast(MAX_SAMPLES) else s.samples,
+                    gear = gear,
+                    speedLimitKmh = limit,
+                    samples = if (takeSample && !tripFinalized) (s.samples + Sample(wall, speed, lh, alt, g, ecoTrend)).takeLast(MAX_SAMPLES) else s.samples,
                 )
             }
 
@@ -256,6 +292,7 @@ class TelemetryRepository(context: Context) {
                     beginOrResumeTrip(engineStart)
                 }
                 saveTrip()
+                if (manual) profileStore.saveGearRatios(gears.learnedRatios)
                 history.save()
                 _historyVersion.update { it + 1 }
                 lastSave = now
@@ -271,11 +308,16 @@ class TelemetryRepository(context: Context) {
                 ?.let { System.currentTimeMillis() - it * 1000L }
         } else null
 
-    private fun beginOrResumeTrip(engineStart: Long?) {
+    private suspend fun beginOrResumeTrip(engineStart: Long?) {
         tripBuilder?.flush()
         val now = System.currentTimeMillis()
-        val saved = tripStore.load()?.takeIf { it.isSameTrip(engineStart, now) }
+        val stored = tripStore.load()?.takeIf { !it.finalized }
+        if (stored != null && !stored.isSameTrip(engineStart, now)) finalizeSnapshot(stored)
+        val saved = stored?.takeIf { it.isSameTrip(engineStart, now) }
         tripId = saved?.tripId ?: now
+        tripStartedAt = saved?.startedAt ?: now
+        tripStats = saved?.stats ?: TripStats()
+        tripFinalized = false
         engineStartMs = engineStart ?: saved?.engineStartMs
         tripBuilder = SegmentBuilder(tripId) {
             segments.append(it)
@@ -290,11 +332,47 @@ class TelemetryRepository(context: Context) {
         }
     }
 
+    private suspend fun finalizeCurrentTrip() {
+        if (tripId == 0L || tripFinalized) return
+        tripBuilder?.flush()
+        tripFinalized = true
+        val s = _state.value
+        val snapshot = TripSnapshot(
+            tripId, engineStartMs, System.currentTimeMillis(), s.tripKm, s.tripLiters, s.samples,
+            tripStartedAt, tripStats, finalized = true,
+        )
+        runCatching { tripStore.save(snapshot) }
+        publishSummary(snapshot)
+    }
+
+    private suspend fun finalizeSnapshot(snapshot: TripSnapshot) {
+        runCatching { tripStore.save(snapshot.copy(finalized = true)) }
+        publishSummary(snapshot)
+    }
+
+    private suspend fun publishSummary(snapshot: TripSnapshot) {
+        if (snapshot.stats.distanceKm < MIN_TRIP_KM) return
+        val summary = TripSummary(
+            id = snapshot.tripId,
+            startedAt = snapshot.startedAt,
+            endedAt = snapshot.lastUpdateMs,
+            stats = snapshot.stats,
+            startCity = snapshot.stats.start?.let { roads.localityAt(it) },
+            endCity = snapshot.stats.end?.let { roads.localityAt(it) },
+        )
+        summaries.add(summary)
+        _summariesVersion.update { it + 1 }
+        onTripFinished?.invoke(summary)
+    }
+
     private fun saveTrip() {
         if (tripId == 0L) return
         val s = _state.value
+        if (tripFinalized) return
         runCatching {
-            tripStore.save(TripSnapshot(tripId, engineStartMs, System.currentTimeMillis(), s.tripKm, s.tripLiters, s.samples))
+            tripStore.save(
+                TripSnapshot(tripId, engineStartMs, System.currentTimeMillis(), s.tripKm, s.tripLiters, s.samples, tripStartedAt, tripStats)
+            )
         }
     }
 
@@ -303,6 +381,8 @@ class TelemetryRepository(context: Context) {
         const val SAMPLE_PERIOD_MS = 1_000L
         const val POLL_INTERVAL_MS = 250L
         const val MAX_RETRIES = 20
+        const val ENGINE_OFF_MS = 8_000L
+        const val MIN_TRIP_KM = 0.3
         const val RETRY_DELAY_MS = 15_000L
     }
 }

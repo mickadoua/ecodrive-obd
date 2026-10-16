@@ -19,6 +19,7 @@ data class VehicleProfile(
     val fuel: FuelType = FuelType.GASOLINE,
     val displacementL: Double = 1.6,
     val segment: CarSegment = CarSegment.COMPACT,
+    val manualGearbox: Boolean = true,
 ) {
     val isConfigured get() = make.isNotBlank() && model.isNotBlank()
     val vehicleClass: String get() = "${fuel.name}-${segment.name}-${displacementBucket()}"
@@ -43,7 +44,15 @@ class VehicleProfileStore(context: Context) {
         fuel = runCatching { FuelType.valueOf(prefs.getString("fuel", "")!!) }.getOrDefault(FuelType.GASOLINE),
         displacementL = prefs.getFloat("displacement", 1.6f).toDouble(),
         segment = runCatching { CarSegment.valueOf(prefs.getString("segment", "")!!) }.getOrDefault(CarSegment.COMPACT),
+        manualGearbox = prefs.getBoolean("manual", true),
     )
+
+    fun loadGearRatios(): List<Double> =
+        prefs.getString("gearRatios", "").orEmpty().split(',').mapNotNull { it.toDoubleOrNull() }
+
+    fun saveGearRatios(ratios: List<Double>) {
+        prefs.edit().putString("gearRatios", ratios.joinToString(",")).apply()
+    }
 
     fun save(p: VehicleProfile) {
         prefs.edit()
@@ -53,6 +62,7 @@ class VehicleProfileStore(context: Context) {
             .putString("fuel", p.fuel.name)
             .putFloat("displacement", p.displacementL.toFloat())
             .putString("segment", p.segment.name)
+            .putBoolean("manual", p.manualGearbox)
             .apply()
     }
 }

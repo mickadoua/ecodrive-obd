@@ -12,6 +12,9 @@ data class TripSnapshot(
     val tripKm: Double,
     val tripLiters: Double,
     val samples: List<Sample>,
+    val startedAt: Long = tripId,
+    val stats: TripStats = TripStats(),
+    val finalized: Boolean = false,
 ) {
     fun isSameTrip(engineStart: Long?, now: Long): Boolean = when {
         engineStart != null && engineStartMs != null -> abs(engineStart - engineStartMs) < ENGINE_START_TOLERANCE_MS
@@ -40,6 +43,9 @@ class TripStore(private val file: File) {
                     a.getLong(0), a.getDouble(1), a.optNullable(2), a.optNullable(3), a.getDouble(4), a.optNullable(5),
                 )
             },
+            startedAt = o.optLong("startedAt", o.getLong("id")),
+            stats = o.optJSONObject("stats")?.let(TripStats::fromJson) ?: TripStats(),
+            finalized = o.optBoolean("finalized", false),
         )
     }.getOrNull()
 
@@ -59,6 +65,9 @@ class TripStore(private val file: File) {
             .put("km", t.tripKm)
             .put("l", t.tripLiters)
             .put("s", arr)
+            .put("startedAt", t.startedAt)
+            .put("stats", t.stats.toJson())
+            .put("finalized", t.finalized)
         val tmp = File(file.parentFile, file.name + ".tmp")
         tmp.writeText(o.toString())
         tmp.renameTo(file)
