@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Une seule page aujourd'hui. Ajouter ici la politique de confidentialité
+     (texte rédigé par Vega) et les mentions légales quand elles existent.
+     Les <loc> basculent vers https://ecodrive.dm-consulting.tech/ en même
+     temps que index.html et robots.txt (voir la commande sed dans
+     l'en-tête de index.html). Penser à mettre <lastmod> à jour. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://mickadoua.github.io/ecodrive-obd/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+</urlset>

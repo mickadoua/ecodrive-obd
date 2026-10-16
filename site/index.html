@@ -5,12 +5,102 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>EcoDrive OBD — real-time fuel consumption, gradient-aware eco-driving</title>
 <meta name="description" content="Open-source Android app that reads your car's fuel consumption over OBD-II and scores eco-driving while accounting for road gradient. Android Auto ready.">
+
+<!-- ===================================================================
+     ADRESSE PUBLIQUE DE LA PAGE — UNE SEULE VALEUR, À BASCULER UNE FOIS
+
+     Valeur actuelle : https://mickadoua.github.io/ecodrive-obd/
+     C'est la seule origine qui réponde (HTTP 200 vérifié le 15/10/2026).
+     https://ecodrive.dm-consulting.tech/ ne répond ni en 80 ni en 443 :
+     tant que ce n'est pas le cas, aucune balise ne doit y pointer, sinon
+     l'aperçu de partage reste cassé.
+
+     APRÈS la mise en ligne Vercel (étape 4 de « Mise en ligne sur Vercel
+     — procédure et DNS »), basculer d'un coup ce fichier, robots.txt et
+     sitemap.xml, depuis la racine du dépôt :
+
+       LC_ALL=C grep -rl 'mickadoua\.github\.io/ecodrive-obd' site \
+         | xargs sed -i 's#https://mickadoua\.github\.io/ecodrive-obd/#https://ecodrive.dm-consulting.tech/#g'
+
+     Puis revalider l'aperçu : developers.facebook.com/tools/debug/ et
+     cards-dev.twitter.com/validator.
+     =================================================================== -->
+<link rel="canonical" href="https://mickadoua.github.io/ecodrive-obd/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="EcoDrive OBD">
+<!-- og:locale suit <html lang> : passer à fr_FR si la page passe en français -->
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://mickadoua.github.io/ecodrive-obd/">
 <meta property="og:title" content="EcoDrive OBD">
 <meta property="og:description" content="Real-time fuel consumption over OBD-II, gradient-aware eco-driving score, over-consumption map.">
-<meta property="og:image" content="https://ecodrive.dm-consulting.tech/screenshots/direct.jpg">
+<meta property="og:image" content="https://mickadoua.github.io/ecodrive-obd/screenshots/direct.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="554">
+<meta property="og:image:height" content="1200">
+<meta property="og:image:alt" content="EcoDrive OBD live dashboard: instant fuel consumption gauge, eco score and trip stats.">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="EcoDrive OBD">
+<meta name="twitter:description" content="Real-time fuel consumption over OBD-II, gradient-aware eco-driving score, over-consumption map.">
+<meta name="twitter:image" content="https://mickadoua.github.io/ecodrive-obd/screenshots/direct.jpg">
+<meta name="twitter:image:alt" content="EcoDrive OBD live dashboard: instant fuel consumption gauge, eco score and trip stats.">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- Données structurées. Rien de déclaratif qui ne soit vérifiable dans le
+     dépôt : pas de note, pas de nombre d'installations, et le classement
+     communautaire (simulé) ne figure pas dans featureList.
+     "license" est volontairement absent : le dépôt n'a pas encore de
+     fichier LICENSE. Dès qu'il en a un, ajouter la ligne :
+       "license": "https://github.com/mickadoua/ecodrive-obd/blob/main/LICENSE", -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "EcoDrive OBD",
+  "url": "https://mickadoua.github.io/ecodrive-obd/",
+  "description": "Android app that reads real-time fuel consumption from a Bluetooth ELM327 OBD-II adapter and scores eco-driving against the power the road actually demands, road gradient included.",
+  "applicationCategory": "UtilitiesApplication",
+  "applicationSubCategory": "Automotive / OBD-II diagnostics",
+  "operatingSystem": "Android 8.0 and later",
+  "softwareRequirements": "Bluetooth ELM327 OBD-II adapter; Android 8.0 or later",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "EUR"
+  },
+  "featureList": [
+    "Real-time fuel consumption over OBD-II (L/100 km, L/h at standstill)",
+    "Gradient-aware eco-driving score",
+    "Over-consumption map averaged per road section",
+    "Automatic trip start and stop over the car's Bluetooth",
+    "Android Auto display built with the Car App Library",
+    "Built-in ELM327 simulator for testing without a dongle"
+  ],
+  "image": "https://mickadoua.github.io/ecodrive-obd/screenshots/direct.jpg",
+  "screenshot": [
+    "https://mickadoua.github.io/ecodrive-obd/screenshots/direct.jpg",
+    "https://mickadoua.github.io/ecodrive-obd/screenshots/trajet.jpg",
+    "https://mickadoua.github.io/ecodrive-obd/screenshots/carte.jpg",
+    "https://mickadoua.github.io/ecodrive-obd/screenshots/vehicule.jpg"
+  ],
+  "codeRepository": "https://github.com/mickadoua/ecodrive-obd",
+  "author": {
+    "@type": "Organization",
+    "name": "DM Consulting",
+    "url": "https://www.dm-consulting.tech"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "DM Consulting",
+    "url": "https://www.dm-consulting.tech"
+  }
+}
+</script>
 <style>
   :root {
     --bg: #0B0F14;
