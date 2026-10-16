@@ -6,7 +6,7 @@ enum class FuelType(val stoichAfr: Double, val densityGl: Double) {
 
     companion object {
         fun fromPid51(code: Int) = when (code) {
-            4, 0x0B, 0x13 -> DIESEL
+            0x04, 0x13, 0x17 -> DIESEL
             else -> GASOLINE
         }
     }
