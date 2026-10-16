@@ -2,12 +2,9 @@ package tech.dm.conso.car
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
-import android.graphics.Shader
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
 import tech.dm.conso.data.LiveState
 import tech.dm.conso.data.Sample
@@ -21,11 +18,6 @@ fun trendPoints(samples: List<Sample>): List<Double?> =
         val moving = bucket.filter { it.speedKmh >= 5 && it.litersPerHour != null }
         if (moving.isEmpty()) null
         else (moving.sumOf { it.litersPerHour!! } / moving.sumOf { it.speedKmh } * 100).coerceAtMost(30.0)
-    }
-
-fun ecoPoints(samples: List<Sample>): List<Double?> =
-    samples.takeLast(TREND_WINDOW_S).chunked(BUCKET_S).map { bucket ->
-        bucket.mapNotNull { it.ecoScore }.takeIf { it.isNotEmpty() }?.average()
     }
 
 fun carTips(s: LiveState): List<String> = buildList {
@@ -101,37 +93,15 @@ object CarArt {
         val (b, c) = canvas(size)
         val pts = trendPoints(s.samples)
         val top = maxOf(10.0, (pts.filterNotNull().maxOrNull() ?: 0.0) * 1.1)
-        drawCurve(c, pts, top, size * 0.1f, size * 0.9f, size.toFloat(), stroke(size * 0.05f, Palette.Blue.toArgb()), null)
+        drawCurve(c, pts, top, size * 0.1f, size * 0.9f, size.toFloat(), stroke(size * 0.05f, Palette.Blue.toArgb()))
         return b
     }
 
-    fun miniCard(s: LiveState, size: Int = 480): Bitmap {
-        val (b, c) = canvas(size)
-        val tint = Palette.forScore(s.eco?.score ?: 80.0)
-        val w = size.toFloat()
-        c.drawPaint(Paint().apply {
-            shader = LinearGradient(0f, 0f, 0f, w, lerp(Palette.Background, tint, 0.45f).toArgb(), Palette.Background.toArgb(), Shader.TileMode.CLAMP)
-        })
-        val high = w * 0.1f
-        val low = w * 0.6f
-        val conso = trendPoints(s.samples)
-        val top = maxOf(10.0, (conso.filterNotNull().maxOrNull() ?: 0.0) * 1.15)
-        val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            shader = LinearGradient(0f, high, 0f, low, tint.copy(alpha = 0.8f).toArgb(), tint.copy(alpha = 0f).toArgb(), Shader.TileMode.CLAMP)
-        }
-        drawCurve(c, ecoPoints(s.samples), 100.0, high, low, w, stroke(w * 0.012f, Palette.Text.copy(alpha = 0.7f).toArgb()), null)
-        drawCurve(c, conso, top, high, low, w, stroke(w * 0.022f, tint.toArgb()), fill)?.let { (x, y) ->
-            c.drawCircle(x, y, w * 0.035f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = tint.copy(alpha = 0.35f).toArgb() })
-            c.drawCircle(x, y, w * 0.018f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Palette.Text.toArgb() })
-        }
-        return b
-    }
-
-    private fun drawCurve(c: Canvas, pts: List<Double?>, top: Double, high: Float, low: Float, width: Float, line: Paint, fill: Paint?): Pair<Float, Float>? {
+    private fun drawCurve(c: Canvas, pts: List<Double?>, top: Double, high: Float, low: Float, width: Float, line: Paint) {
         val points = pts.mapIndexedNotNull { i, v ->
             v?.let { width * 0.94f * i / (pts.size - 1).coerceAtLeast(1).toFloat() to low - (low - high) * (it / top).toFloat().coerceIn(0f, 1f) }
         }
-        if (points.size < 2) return null
+        if (points.size < 2) return
         val curve = Path().apply {
             moveTo(points[0].first, points[0].second)
             points.zipWithNext().forEach { (p, q) ->
@@ -139,10 +109,6 @@ object CarArt {
                 cubicTo(mx, p.second, mx, q.second, q.first, q.second)
             }
         }
-        if (fill != null) {
-            c.drawPath(Path(curve).apply { lineTo(points.last().first, low); lineTo(points.first().first, low); close() }, fill)
-        }
         c.drawPath(curve, line)
-        return points.last()
     }
 }

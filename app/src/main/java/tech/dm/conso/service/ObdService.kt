@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 import tech.dm.conso.ConsoApp
 import tech.dm.conso.R
 import tech.dm.conso.auto.AutoStartStore
-import tech.dm.conso.car.MiniCard
+import tech.dm.conso.car.TipAlert
 import tech.dm.conso.data.ConnectionStatus
 import tech.dm.conso.data.LiveState
 import tech.dm.conso.ui.MainActivity
@@ -40,11 +40,10 @@ class ObdService : Service() {
         scope.launch {
             ConsoApp.instance.telemetry.state.sample(2_000).collect { s ->
                 if (s.status == ConnectionStatus.DISCONNECTED || (s.status == ConnectionStatus.ERROR && !s.retrying)) {
-                    MiniCard.stop()
                     stopSelf()
                 } else {
                     nm.notify(ID, build(s))
-                    if (s.status == ConnectionStatus.CONNECTED) MiniCard.update(this@ObdService, s)
+                    if (s.status == ConnectionStatus.CONNECTED) TipAlert.update(this@ObdService, s)
                 }
             }
         }
