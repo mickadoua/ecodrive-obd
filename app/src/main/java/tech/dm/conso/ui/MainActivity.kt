@@ -73,10 +73,10 @@ class MainActivity : ComponentActivity() {
         autoStart = autoStartStore.load()
         reconnectLastModule()
         setContent {
-            ConsoTheme {
+            val profile by telemetry.profile.collectAsStateWithLifecycle()
+            ConsoTheme(profile.powertrain) {
                 val state by telemetry.state.collectAsStateWithLifecycle()
                 val version by telemetry.historyVersion.collectAsStateWithLifecycle()
-                val profile by telemetry.profile.collectAsStateWithLifecycle()
                 val roadNames by telemetry.roads.names.collectAsStateWithLifecycle()
                 val unresolvable by telemetry.roads.unresolvable.collectAsStateWithLifecycle()
                 var tab by rememberSaveable { mutableStateOf(Tab.DASHBOARD) }

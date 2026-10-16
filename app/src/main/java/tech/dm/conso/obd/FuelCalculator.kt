@@ -12,10 +12,32 @@ enum class FuelType(val stoichAfr: Double, val densityGl: Double) {
     }
 }
 
+enum class Powertrain(val label: String, val rateUnit: String, val per100Unit: String, val totalUnit: String, val totalLabel: String, val consumptionScale: Double) {
+    ICE("Thermique", "L/h", "L/100 km", "L", "Carburant", 1.0),
+    HYBRID("Hybride", "L/h", "L/100 km", "L", "Carburant", 1.0),
+    ELECTRIC("Électrique", "kW", "kWh/100 km", "kWh", "Énergie", 3.0);
+
+    val per100Short get() = per100Unit.removeSuffix(" km")
+
+    companion object {
+        fun fromPid51(code: Int) = when (code) {
+            0x08 -> ELECTRIC
+            in 0x0F..0x16 -> HYBRID
+            else -> ICE
+        }
+
+        fun resolve(manual: Powertrain, pid51: Int?): Powertrain {
+            val detected = pid51?.let(::fromPid51) ?: return manual
+            return if (detected.ordinal > manual.ordinal) detected else manual
+        }
+    }
+}
+
 enum class FuelMethod(val label: String) {
     FUEL_RATE("débit carburant (PID 5E)"),
     MAF("débitmètre d'air (PID 10)"),
     SPEED_DENSITY("pression collecteur (PID 0B)"),
+    ELECTRIC_MODEL("estimation par modèle physique"),
     NONE("indisponible")
 }
 
@@ -34,7 +56,8 @@ object FuelCalculator {
     fun per100km(litersPerHour: Double, speedKmh: Double): Double? =
         if (speedKmh < 5.0) null else litersPerHour / speedKmh * 100.0
 
-    fun chooseMethod(supports: (Int) -> Boolean, fuel: FuelType): FuelMethod = when {
+    fun chooseMethod(supports: (Int) -> Boolean, fuel: FuelType, powertrain: Powertrain = Powertrain.ICE): FuelMethod = when {
+        powertrain == Powertrain.ELECTRIC -> FuelMethod.ELECTRIC_MODEL
         supports(Pids.FUEL_RATE) -> FuelMethod.FUEL_RATE
         fuel == FuelType.DIESEL -> FuelMethod.NONE
         supports(Pids.MAF) -> FuelMethod.MAF

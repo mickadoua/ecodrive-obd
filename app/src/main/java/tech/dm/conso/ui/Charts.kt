@@ -45,6 +45,7 @@ fun ArcGauge(fraction: Float, color: Color, modifier: Modifier = Modifier, strok
 
 @Composable
 fun DaysBarChart(days: List<DayStats>, modifier: Modifier = Modifier, onDayClick: (DayStats) -> Unit = {}) {
+    val powertrain = LocalPowertrain.current
     val maxV = (days.mapNotNull { it.avgL100 }.maxOrNull() ?: 10.0).coerceAtLeast(8.0)
     Column(modifier) {
         Row(Modifier.fillMaxWidth().height(140.dp), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -62,7 +63,7 @@ fun DaysBarChart(days: List<DayStats>, modifier: Modifier = Modifier, onDayClick
                             val v = d.avgL100 ?: return@Canvas
                             val h = (v / maxV * size.height).toFloat()
                             val w = size.width * 0.5f
-                            val color = d.ecoScore?.let(Palette::forScore) ?: Palette.forConsumption(v)
+                            val color = d.ecoScore?.let(Palette::forScore) ?: Palette.forConsumption(v, powertrain)
                             drawRoundRect(
                                 Brush.verticalGradient(listOf(color, color.copy(alpha = 0.35f)), size.height - h, size.height),
                                 Offset((size.width - w) / 2, size.height - h), Size(w, h), CornerRadius(12f, 12f),

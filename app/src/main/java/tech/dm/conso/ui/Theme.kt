@@ -3,8 +3,13 @@ package tech.dm.conso.ui
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
+import tech.dm.conso.obd.Powertrain
+
+val LocalPowertrain = staticCompositionLocalOf { Powertrain.ICE }
 
 object Palette {
     val Background = Color(0xFF0B0F14)
@@ -23,11 +28,17 @@ object Palette {
         else -> lerp(Red, Yellow, (score / 75).toFloat().coerceIn(0f, 1f))
     }
 
-    fun forConsumption(l100: Double): Color = forScore(100 - (l100 - 4) * 10)
+    fun forConsumption(l100: Double, powertrain: Powertrain = Powertrain.ICE): Color =
+        forScore(100 - (l100 / powertrain.consumptionScale - 4) * 10)
 }
 
 @Composable
-fun ConsoTheme(content: @Composable () -> Unit) {
+fun ConsoTheme(powertrain: Powertrain = Powertrain.ICE, content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalPowertrain provides powertrain) { ThemedContent(content) }
+}
+
+@Composable
+private fun ThemedContent(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = darkColorScheme(
             primary = Palette.Green,

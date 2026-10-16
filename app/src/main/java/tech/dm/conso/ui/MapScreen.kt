@@ -175,7 +175,7 @@ internal fun RoadRow(r: RoadStats, selected: Boolean, onClick: () -> Unit) {
     ) {
         Column(Modifier.width(76.dp)) {
             Text("%+.1f".format(r.surplusL100), color = excessColor(r.excessRatio), fontWeight = FontWeight.Bold, fontSize = 20.sp)
-            Text("L/100 en +", color = Palette.Muted, fontSize = 10.sp)
+            Text("${LocalPowertrain.current.per100Short} en +", color = Palette.Muted, fontSize = 10.sp)
         }
         Spacer(Modifier.width(8.dp))
         Column(Modifier.weight(1f)) {

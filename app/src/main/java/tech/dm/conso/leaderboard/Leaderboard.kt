@@ -4,6 +4,7 @@ import tech.dm.conso.data.CarSegment
 import tech.dm.conso.data.Segment
 import tech.dm.conso.data.VehicleProfile
 import tech.dm.conso.obd.FuelType
+import tech.dm.conso.obd.Powertrain
 import kotlin.random.Random
 
 data class PortionStats(
@@ -50,7 +51,11 @@ class MockLeaderboard : LeaderboardRepository {
             .sortedByDescending { it.segments.size * 1000 + it.segments.sumOf { s -> s.distanceKm } }
 
     override fun equivalentModels(profile: VehicleProfile, myL100: Double?): List<ModelEntry> {
-        val catalog = CATALOG[profile.segment to profile.fuel].orEmpty()
+        val catalog = when (profile.powertrain) {
+            Powertrain.ICE -> CATALOG[profile.segment to profile.fuel].orEmpty().filterNot { it.first.endsWith("Hybrid") }
+            Powertrain.HYBRID -> CATALOG[profile.segment to FuelType.GASOLINE].orEmpty().filter { it.first.endsWith("Hybrid") }
+            Powertrain.ELECTRIC -> emptyList()
+        }
         val rnd = Random(profile.vehicleClass.hashCode())
         val entries = catalog.map { (label, l100) ->
             ModelEntry(label, l100 * (1 + rnd.nextDouble(-0.04, 0.04)), 200 + rnd.nextInt(4000))
