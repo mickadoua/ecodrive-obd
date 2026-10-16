@@ -50,8 +50,8 @@ data class VehicleProfile(
     }
 }
 
-class VehicleProfileStore(context: Context) {
-    private val prefs = context.getSharedPreferences("vehicle", Context.MODE_PRIVATE)
+class VehicleProfileStore(context: Context, vehicleId: String) {
+    private val prefs = context.getSharedPreferences("vehicle_$vehicleId", Context.MODE_PRIVATE)
 
     fun load() = VehicleProfile(
         make = prefs.getString("make", "") ?: "",

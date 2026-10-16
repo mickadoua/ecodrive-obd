@@ -23,6 +23,7 @@ import tech.dm.conso.R
 import tech.dm.conso.auto.AutoStartStore
 import tech.dm.conso.data.ConnectionStatus
 import tech.dm.conso.data.LiveState
+import tech.dm.conso.data.Vehicle
 import tech.dm.conso.ui.MainActivity
 
 class ObdService : Service() {
@@ -51,7 +52,9 @@ class ObdService : Service() {
         val auto = intent?.action == ACTION_AUTO
         goForeground(fromBackground = auto)
         if (auto) {
-            val source = AutoStartStore(this).savedObdSource(this)
+            val store = AutoStartStore(this)
+            val source = store.obdSource(this, intent.getStringExtra(EXTRA_OBD), intent.getStringExtra(EXTRA_OBD_NAME))
+                ?: store.savedObdSource(this)
             if (source == null) stopSelf() else ConsoApp.instance.telemetry.connect(source, retry = true)
         }
         return START_NOT_STICKY
@@ -77,6 +80,7 @@ class ObdService : Service() {
 
     private fun build(s: LiveState): Notification {
         val text = when {
+            s.unknownVehicle != null -> "Véhicule inconnu : ouvrez l'app pour l'identifier"
             s.status == ConnectionStatus.CONNECTING -> "Connexion à ${s.sourceLabel}…"
             s.retrying -> "Module OBD injoignable, nouvelle tentative…"
             s.litersPer100 != null -> "%.1f %s · moy. %s".format(s.litersPer100, s.powertrain.per100Unit, s.tripAvgL100?.let { "%.1f".format(it) } ?: "–")
@@ -100,13 +104,19 @@ class ObdService : Service() {
         private const val ID = 1
 
         private const val ACTION_AUTO = "tech.dm.conso.AUTO_START"
+        private const val EXTRA_OBD = "obd"
+        private const val EXTRA_OBD_NAME = "obdName"
 
         fun start(context: Context) {
             context.startForegroundService(Intent(context, ObdService::class.java))
         }
 
-        fun startAuto(context: Context) {
-            context.startForegroundService(Intent(context, ObdService::class.java).setAction(ACTION_AUTO))
+        fun startAuto(context: Context, vehicle: Vehicle) {
+            context.startForegroundService(
+                Intent(context, ObdService::class.java).setAction(ACTION_AUTO)
+                    .putExtra(EXTRA_OBD, vehicle.obdAddress)
+                    .putExtra(EXTRA_OBD_NAME, vehicle.obdName)
+            )
         }
     }
 }

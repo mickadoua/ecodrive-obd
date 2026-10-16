@@ -19,15 +19,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tech.dm.conso.auto.AutoStartSettings
+import tech.dm.conso.data.Vehicle
 
 data class BondedDevice(val address: String, val name: String)
 
 @Composable
 fun AutoStartCard(
     settings: AutoStartSettings,
+    vehicle: Vehicle,
     bonded: List<BondedDevice>,
     backgroundLocationGranted: Boolean,
     onChange: (AutoStartSettings) -> Unit,
+    onVehicleChange: (Vehicle) -> Unit,
     onRequestBackgroundLocation: () -> Unit,
 ) {
     var picking by remember { mutableStateOf(false) }
@@ -35,27 +38,27 @@ fun AutoStartCard(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("Démarrage automatique", color = Palette.Text, fontWeight = FontWeight.SemiBold)
-                Text("Se connecte au module OBD dès que le téléphone rejoint la voiture en Bluetooth.", color = Palette.Muted, fontSize = 12.sp)
+                Text("Se connecte au module OBD de chaque véhicule dès que le téléphone rejoint sa voiture en Bluetooth.", color = Palette.Muted, fontSize = 12.sp)
             }
             Switch(
                 checked = settings.enabled,
                 onCheckedChange = { onChange(settings.copy(enabled = it)) },
-                enabled = settings.carAddress != null && settings.obdAddress != null,
+                enabled = settings.enabled || (vehicle.carAddress != null && vehicle.obdAddress != null),
                 colors = SwitchDefaults.colors(checkedTrackColor = Palette.Green),
             )
         }
         Spacer(Modifier.height(12.dp))
-        Text("Module OBD : ${settings.obdName ?: "connectez-vous une fois au module"}", color = Palette.Text, fontSize = 13.sp)
+        Text("Module OBD de ${vehicle.name} : ${vehicle.obdName ?: "connectez-vous une fois au module"}", color = Palette.Text, fontSize = 13.sp)
         Spacer(Modifier.height(6.dp))
-        Text("Voiture : ${settings.carName ?: "non choisie"}", color = Palette.Text, fontSize = 13.sp)
+        Text("Voiture Bluetooth : ${vehicle.carName ?: "non choisie"}", color = Palette.Text, fontSize = 13.sp)
         Spacer(Modifier.height(8.dp))
-        Chip(if (settings.carName == null) "Choisir la voiture" else "Changer", settings.carName == null) { picking = !picking }
+        Chip(if (vehicle.carName == null) "Choisir la voiture" else "Changer", vehicle.carName == null) { picking = !picking }
         if (picking) {
             Spacer(Modifier.height(8.dp))
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                bonded.filter { it.address != settings.obdAddress }.forEach { d ->
-                    Chip(d.name, d.address == settings.carAddress) {
-                        onChange(settings.copy(carAddress = d.address, carName = d.name))
+                bonded.filter { it.address != vehicle.obdAddress }.forEach { d ->
+                    Chip(d.name, d.address == vehicle.carAddress) {
+                        onVehicleChange(vehicle.copy(carAddress = d.address, carName = d.name))
                         picking = false
                     }
                 }

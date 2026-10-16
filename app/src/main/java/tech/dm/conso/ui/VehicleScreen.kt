@@ -29,6 +29,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tech.dm.conso.data.CarSegment
+import tech.dm.conso.data.Vehicle
 import tech.dm.conso.data.VehicleProfile
 import tech.dm.conso.obd.FuelType
 import tech.dm.conso.obd.Powertrain
@@ -38,13 +39,19 @@ import kotlin.math.roundToInt
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun VehicleScreen(
+    vehicles: List<Vehicle>,
+    active: Vehicle,
+    canSwitch: Boolean,
+    onSelect: (Vehicle) -> Unit,
+    onAdd: () -> Unit,
+    onRename: (Vehicle) -> Unit,
     profile: VehicleProfile,
     detected: VinInfo?,
     onSave: (VehicleProfile) -> Unit,
     autoStart: @Composable () -> Unit,
 ) {
     val draft = profile
-    var yearText by remember { mutableStateOf(profile.year?.toString() ?: "") }
+    var yearText by remember(active.id) { mutableStateOf(profile.year?.toString() ?: "") }
 
     Column(
         Modifier.fillMaxSize().background(Palette.Background).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp),
@@ -52,6 +59,23 @@ fun VehicleScreen(
     ) {
         Text("Véhicule", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Palette.Text)
         Text("Sert au calcul de la consommation attendue et à la comparaison entre modèles équivalents.", color = Palette.Muted, fontSize = 13.sp)
+
+        Card {
+            Text("Mes véhicules", color = Palette.Text, fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(8.dp))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                vehicles.forEach { v -> Chip(v.name, v.id == active.id) { if (canSwitch) onSelect(v) } }
+                if (canSwitch) Chip("+ Ajouter", false, onAdd)
+            }
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(active.name, { onRename(active.copy(name = it)) }, Modifier.fillMaxWidth(), label = { Text("Nom du véhicule actif") }, singleLine = true)
+            Spacer(Modifier.height(6.dp))
+            Text(
+                if (canSwitch) "Reconnu à la connexion par le VIN, sinon par le module OBD. Historique, carte et classement suivent le véhicule actif."
+                else "Changement de véhicule possible une fois déconnecté.",
+                color = Palette.Muted, fontSize = 11.sp,
+            )
+        }
 
         if (detected?.make != null) {
             Card {
@@ -66,7 +90,7 @@ fun VehicleScreen(
                     yearText = (detected.modelYear ?: draft.year)?.toString() ?: ""
                 }
                 Spacer(Modifier.height(6.dp))
-                Text("Le numéro VIN n'est ni stocké ni envoyé : seuls la marque et l'année en sont déduites.", color = Palette.Muted, fontSize = 11.sp)
+                Text("Le numéro VIN n'est ni stocké ni envoyé : seuls la marque, l'année et une empreinte irréversible servant à reconnaître la voiture restent sur le téléphone.", color = Palette.Muted, fontSize = 11.sp)
             }
         }
 

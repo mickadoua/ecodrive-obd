@@ -3,6 +3,7 @@ package tech.dm.conso.data
 import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.os.SystemClock
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -14,6 +15,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import tech.dm.conso.auto.AutoStartStore
 import tech.dm.conso.eco.EcoResult
 import tech.dm.conso.eco.EcoScorer
 import tech.dm.conso.eco.GearAdvice
@@ -60,6 +63,7 @@ data class LiveState(
     val batteryPct: Double? = null,
     val electricKm: Double = 0.0,
     val detectedVehicle: VinInfo? = null,
+    val unknownVehicle: String? = null,
     val speedKmh: Double = 0.0,
     val rpm: Double? = null,
     val litersPerHour: Double? = null,
@@ -85,10 +89,19 @@ class TelemetryRepository(context: Context) {
     private val _state = MutableStateFlow(LiveState())
     val state: StateFlow<LiveState> = _state.asStateFlow()
 
-    val history = DailyHistory(File(appContext.filesDir, "history.json"))
-    val segments = SegmentStore(File(appContext.filesDir, "segments.jsonl"))
+    val vehicles = VehicleRegistry(appContext.filesDir).also(::migrate)
+    private val _vehicle = MutableStateFlow(vehicles.active())
+    val vehicle: StateFlow<Vehicle> = _vehicle.asStateFlow()
+    private val _vehicleList = MutableStateFlow(vehicles.all())
+    val vehicleList: StateFlow<List<Vehicle>> = _vehicleList.asStateFlow()
+    private var vehicleChoice: CompletableDeferred<String?>? = null
+
+    var history = DailyHistory(vehicleFile("history.json"))
+        private set
+    var segments = SegmentStore(vehicleFile("segments.jsonl"))
+        private set
     val roads = RoadNames(appContext, File(appContext.filesDir, "roads.json"))
-    private val tripStore = TripStore(File(appContext.filesDir, "trip.json"))
+    private var tripStore = TripStore(vehicleFile("trip.json"))
     private var tripId = 0L
     private var engineStartMs: Long? = null
     private var tripBuilder: SegmentBuilder? = null
@@ -96,14 +109,15 @@ class TelemetryRepository(context: Context) {
     private var tripStats = TripStats()
     private var tripFinalized = false
     private val speedLimits = SpeedLimits()
-    val summaries = TripSummaryStore(File(appContext.filesDir, "trips.jsonl"))
+    var summaries = TripSummaryStore(vehicleFile("trips.jsonl"))
+        private set
     private val _summariesVersion = MutableStateFlow(0)
     val summariesVersion: StateFlow<Int> = _summariesVersion.asStateFlow()
     var onTripFinished: ((TripSummary) -> Unit)? = null
     private val _historyVersion = MutableStateFlow(0)
     val historyVersion: StateFlow<Int> = _historyVersion.asStateFlow()
 
-    private val profileStore = VehicleProfileStore(appContext)
+    private var profileStore = VehicleProfileStore(appContext, _vehicle.value.id)
     private val _profile = MutableStateFlow(profileStore.load())
     val profile: StateFlow<VehicleProfile> = _profile.asStateFlow()
 
@@ -114,6 +128,92 @@ class TelemetryRepository(context: Context) {
     fun saveProfile(p: VehicleProfile) {
         profileStore.save(p)
         _profile.value = p
+    }
+
+    fun selectVehicle(id: String) {
+        if (job?.isActive == true) return
+        vehicles.all().firstOrNull { it.id == id }?.let(::open)
+    }
+
+    fun createVehicle(name: String) {
+        if (job?.isActive == true) return
+        open(vehicles.create(name))
+    }
+
+    fun updateVehicle(v: Vehicle) {
+        vehicles.save(v)
+        if (v.id == _vehicle.value.id) _vehicle.value = v
+        _vehicleList.value = vehicles.all()
+    }
+
+    fun chooseVehicle(id: String?) {
+        vehicleChoice?.complete(id)
+    }
+
+    private fun vehicleFile(name: String) = File(vehicles.dir(_vehicle.value.id), name)
+
+    private fun open(v: Vehicle) {
+        if (v.id != _vehicle.value.id) {
+            history.save()
+            _vehicle.value = v
+            history = DailyHistory(vehicleFile("history.json"))
+            segments = SegmentStore(vehicleFile("segments.jsonl"))
+            tripStore = TripStore(vehicleFile("trip.json"))
+            summaries = TripSummaryStore(vehicleFile("trips.jsonl"))
+            profileStore = VehicleProfileStore(appContext, v.id)
+            _profile.value = profileStore.load()
+            vehicles.setActive(v.id)
+            _historyVersion.update { it + 1 }
+            _summariesVersion.update { it + 1 }
+        }
+        _vehicle.value = v
+        _vehicleList.value = vehicles.all()
+    }
+
+    private fun migrate(registry: VehicleRegistry) {
+        val legacy = appContext.getSharedPreferences("vehicle", Context.MODE_PRIVATE)
+        val name = listOfNotNull(legacy.getString("make", null), legacy.getString("model", null))
+            .filter { it.isNotBlank() }.joinToString(" ").ifBlank { VehicleRegistry.DEFAULT_NAME }
+        val v = registry.migrateLegacy(name) ?: return
+        val target = appContext.getSharedPreferences("vehicle_${v.id}", Context.MODE_PRIVATE).edit()
+        legacy.all.forEach { (k, value) ->
+            when (value) {
+                is String -> target.putString(k, value)
+                is Int -> target.putInt(k, value)
+                is Float -> target.putFloat(k, value)
+                is Boolean -> target.putBoolean(k, value)
+                is Long -> target.putLong(k, value)
+            }
+        }
+        target.commit()
+        val (car, carName) = AutoStartStore(appContext).legacyCar()
+        val obd = AutoStartStore(appContext).load()
+        registry.save(v.copy(carAddress = car, carName = carName, obdAddress = obd.obdAddress, obdName = obd.obdName))
+    }
+
+    private suspend fun identify(vin: String?, source: ObdSource.Bluetooth) {
+        val hash = vin?.let { VehicleIdentifier.vinHash(it, vehicles.salt) }
+        val address = source.device.address
+        val found = when (val id = VehicleIdentifier.identify(vehicles.all(), hash, address)) {
+            is Identification.Known -> id.vehicle
+            Identification.Manual -> _vehicle.value
+            Identification.Unknown -> askVehicle(vin?.let(Vin::decode))
+        }
+        open(vehicles.attach(found, hash, address, source.label))
+    }
+
+    private suspend fun askVehicle(info: VinInfo?): Vehicle {
+        val suggested = listOfNotNull(info?.make, info?.modelYear?.toString()).joinToString(" ")
+            .ifBlank { "Véhicule ${vehicles.all().count { !it.simulator } + 1}" }
+        val choice = CompletableDeferred<String?>().also { vehicleChoice = it }
+        val id = try {
+            _state.update { it.copy(unknownVehicle = suggested) }
+            withTimeoutOrNull(VEHICLE_CHOICE_TIMEOUT_MS) { choice.await() }
+        } finally {
+            vehicleChoice = null
+            _state.update { it.copy(unknownVehicle = null) }
+        }
+        return vehicles.all().firstOrNull { it.id == id && !it.simulator } ?: vehicles.create(suggested)
     }
 
     fun connect(source: ObdSource, retry: Boolean = false, maxAttempts: Int = MAX_RETRIES) {
@@ -151,6 +251,7 @@ class TelemetryRepository(context: Context) {
         _state.value = LiveState(status = ConnectionStatus.CONNECTING, sourceLabel = source.label)
         val position: PositionSource
         val elm: Elm327
+        if (source is ObdSource.Simulator) open(vehicles.simulator())
         when (source) {
             is ObdSource.Simulator -> SimulatedElm327(powertrain = _profile.value.powertrain).let { position = it; elm = Elm327(it) }
             is ObdSource.Bluetooth -> {
@@ -160,11 +261,13 @@ class TelemetryRepository(context: Context) {
         }
         try {
             elm.initialize()
+            val vin = elm.readVin()
+            if (source is ObdSource.Bluetooth) identify(vin, source)
             val pid51 = if (elm.supports(Pids.FUEL_TYPE)) elm.query(Pids.FUEL_TYPE)?.firstOrNull() else null
             val fuelType = pid51?.let(FuelType::fromPid51) ?: _profile.value.fuel
             val powertrain = Powertrain.resolve(_profile.value.powertrain, pid51)
             if (powertrain != _profile.value.powertrain) saveProfile(_profile.value.copy(powertrain = powertrain))
-            val detected = elm.readVin()?.let(Vin::decode)
+            val detected = vin?.let(Vin::decode)
             val method = FuelCalculator.chooseMethod(elm::supports, fuelType, powertrain)
             beginOrResumeTrip(readEngineStart(elm))
             _state.update {
@@ -406,5 +509,6 @@ class TelemetryRepository(context: Context) {
         const val MIN_TRIP_KM = 0.3
         const val RETRY_DELAY_MS = 15_000L
         const val BATTERY_PERIOD_MS = 5_000L
+        const val VEHICLE_CHOICE_TIMEOUT_MS = 60_000L
     }
 }
