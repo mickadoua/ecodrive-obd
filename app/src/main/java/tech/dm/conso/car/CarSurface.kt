@@ -90,12 +90,12 @@ private fun SurfaceDashboard(visible: MutableState<Rect?>) {
     val area = visible.value
     val base = LocalDensity.current
     Box(Modifier.fillMaxSize().background(Palette.Background)) {
-        val inner = if (area == null) Modifier.fillMaxSize() else with(base) {
-            Modifier
-                .offset { IntOffset(area.left, area.top) }
-                .size(area.width().toDp(), area.height().toDp())
-        }
         CompositionLocalProvider(LocalDensity provides Density(base.density * 1.3f, base.fontScale)) {
+            val inner = if (area == null) Modifier.fillMaxSize() else with(LocalDensity.current) {
+                Modifier
+                    .offset { IntOffset(area.left, area.top) }
+                    .size(area.width().toDp(), area.height().toDp())
+            }
             Column(inner.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     ConsoGauge(state, Modifier.weight(1f))
