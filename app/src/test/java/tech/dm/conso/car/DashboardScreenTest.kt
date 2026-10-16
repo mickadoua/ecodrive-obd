@@ -3,6 +3,7 @@ package tech.dm.conso.car
 import androidx.car.app.HandshakeInfo
 import androidx.car.app.model.GridItem
 import androidx.car.app.model.GridTemplate
+import androidx.car.app.navigation.model.MapWithContentTemplate
 import androidx.car.app.testing.TestCarContext
 import androidx.car.app.versioning.CarAppApiLevels
 import org.junit.Assert.assertEquals
@@ -21,7 +22,7 @@ class DashboardScreenTest {
 
     @Test
     fun disconnectedDashboardOffersObdAndDemoTiles() {
-        val template = DashboardScreen(carContext).onGetTemplate() as GridTemplate
+        val template = (DashboardScreen(carContext).onGetTemplate() as MapWithContentTemplate).contentTemplate as GridTemplate
 
         assertEquals("Conso", template.title.toString())
         assertEquals(listOf("OBD", "Démo"), template.singleList!!.items.map { (it as GridItem).title.toString() })
