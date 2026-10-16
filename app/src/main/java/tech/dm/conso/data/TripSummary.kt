@@ -12,6 +12,7 @@ class TripStats(
     var expectedL: Double = 0.0,
     var idleFuelL: Double = 0.0,
     var scoreWeighted: Double = 0.0,
+    var scoredKm: Double = 0.0,
     val wastedL: MutableMap<EcoHint, Double> = mutableMapOf(),
     val hintS: MutableMap<EcoHint, Double> = mutableMapOf(),
     var start: GeoPoint? = null,
@@ -32,23 +33,26 @@ class TripStats(
         }
         movingS += dt
         expectedL += expectedStepL
-        scoreWeighted += score * dt
+        scoreWeighted += score * stepKm
+        scoredKm += stepKm
         hintS.merge(hint, dt, Double::plus)
         val surplus = fuelStepL - expectedStepL
         if (surplus > 0) wastedL.merge(hint, surplus, Double::plus)
     }
 
-    val score: Double? get() = if (movingS > 30) scoreWeighted / movingS else null
+    val score: Double? get() = if (scoredKm > MIN_SCORED_KM) scoreWeighted / scoredKm else null
 
     fun toJson(): JSONObject = JSONObject()
         .put("moving", movingS).put("idle", idleS).put("km", distanceKm).put("fuel", fuelL)
-        .put("expected", expectedL).put("idleFuel", idleFuelL).put("score", scoreWeighted)
+        .put("expected", expectedL).put("idleFuel", idleFuelL).put("scoreKm", scoreWeighted).put("scoredKm", scoredKm)
         .put("wasted", JSONObject(wastedL.mapKeys { it.key.name }))
         .put("hintS", JSONObject(hintS.mapKeys { it.key.name }))
         .put("start", start?.let { JSONObject().put("lat", it.lat).put("lon", it.lon) } ?: JSONObject.NULL)
         .put("end", end?.let { JSONObject().put("lat", it.lat).put("lon", it.lon) } ?: JSONObject.NULL)
 
     companion object {
+        const val MIN_SCORED_KM = 0.3
+
         fun fromJson(o: JSONObject): TripStats {
             fun point(key: String) = o.optJSONObject(key)?.let { GeoPoint(it.getDouble("lat"), it.getDouble("lon")) }
             fun hints(key: String) = o.optJSONObject(key)?.let { m ->
@@ -58,7 +62,7 @@ class TripStats(
             } ?: mutableMapOf()
             return TripStats(
                 o.optDouble("moving", 0.0), o.optDouble("idle", 0.0), o.optDouble("km", 0.0), o.optDouble("fuel", 0.0),
-                o.optDouble("expected", 0.0), o.optDouble("idleFuel", 0.0), o.optDouble("score", 0.0),
+                o.optDouble("expected", 0.0), o.optDouble("idleFuel", 0.0), o.optDouble("scoreKm", 0.0), o.optDouble("scoredKm", 0.0),
                 hints("wasted"), hints("hintS"), point("start"), point("end"),
             )
         }

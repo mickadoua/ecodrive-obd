@@ -182,11 +182,11 @@ private fun HeroCard(state: LiveState) {
 @Composable
 private fun EcoCard(state: LiveState) {
     val eco = state.eco
-    val score = eco?.score ?: 0.0
+    val score = state.tripScore ?: eco?.score ?: 0.0
     val color by animateColorAsState(if (eco != null) Palette.forScore(score) else Palette.Outline, label = "eco")
     val fraction by animateFloatAsState((score / 100).toFloat(), label = "ecoFraction")
     Card {
-        SectionTitle("Éco-conduite", "tient compte du dénivelé")
+        SectionTitle("Éco-conduite", if (state.tripScore != null) "sur tout le trajet" else "tient compte du dénivelé")
         Spacer(Modifier.height(12.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(96.dp), contentAlignment = Alignment.Center) {
@@ -198,6 +198,7 @@ private fun EcoCard(state: LiveState) {
                 Text(eco?.message ?: "En attente de données", color = color, fontWeight = FontWeight.SemiBold)
                 GradeRow(state)
                 eco?.let {
+                    if (state.tripScore != null) Text("Récent : %.0f".format(it.score), color = Palette.Muted, fontSize = 12.sp)
                     Text(
                         "Attendu sur ce relief : %.1f L/h".format(it.expectedLh),
                         color = Palette.Muted, fontSize = 12.sp,
