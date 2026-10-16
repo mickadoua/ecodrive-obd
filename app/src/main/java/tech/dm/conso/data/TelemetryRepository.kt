@@ -162,6 +162,7 @@ class TelemetryRepository(context: Context) {
             summaries = TripSummaryStore(vehicleFile("trips.jsonl"))
             profileStore = VehicleProfileStore(appContext, v.id)
             _profile.value = profileStore.load()
+            _state.update { LiveState(status = it.status, sourceLabel = it.sourceLabel) }
             vehicles.setActive(v.id)
             _historyVersion.update { it + 1 }
             _summariesVersion.update { it + 1 }
