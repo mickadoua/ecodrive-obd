@@ -6,18 +6,26 @@ import android.bluetooth.BluetoothManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.text.SpannableString
+import android.text.SpannableStringBuilder
+import android.text.Spanned
 import androidx.car.app.CarAppService
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.Session
+import androidx.car.app.constraints.ConstraintManager
 import androidx.car.app.model.Action
 import androidx.car.app.model.CarColor
+import androidx.car.app.model.CarIcon
+import androidx.car.app.model.ForegroundCarColorSpan
 import androidx.car.app.model.Pane
 import androidx.car.app.model.PaneTemplate
 import androidx.car.app.model.Row
 import androidx.car.app.model.Template
 import androidx.car.app.validation.HostValidator
+import androidx.car.app.versioning.CarAppApiLevels
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.IconCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
@@ -25,8 +33,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
 import tech.dm.conso.BuildConfig
-import tech.dm.conso.auto.AutoStartStore
 import tech.dm.conso.ConsoApp
+import tech.dm.conso.auto.AutoStartStore
 import tech.dm.conso.data.ConnectionStatus
 import tech.dm.conso.data.ObdSource
 import tech.dm.conso.service.ObdService
@@ -67,22 +75,28 @@ class DashboardScreen(carContext: CarContext) : Screen(carContext) {
         if (s.status == ConnectionStatus.CONNECTING) {
             pane.setLoading(true)
         } else {
-            val instant = s.litersPer100?.let { "%.1f L/100 km".format(it) }
-                ?: s.litersPerHour?.let { "%.1f L/h (arrêt)".format(it) } ?: "–"
-            pane.addRow(row("Instantané", "$instant · %.0f km/h".format(s.speedKmh)))
-            pane.addRow(
+            val instant = s.litersPer100?.let { colored("%.1f L/100 km".format(it), 100 - (it - 4) * 10) }
+                ?: SpannableString(s.litersPerHour?.let { "%.1f L/h".format(it) } ?: "–")
+            val rows = listOf(
+                row("Consommation", SpannableStringBuilder(instant).append(" · %.0f km/h".format(s.speedKmh))),
+                row("Conseil", carTips(s).take(2).joinToString(" · ").ifEmpty { "En attente de données" }),
                 row(
-                    "Moyenne trajet",
-                    (s.tripAvgL100?.let { "%.1f L/100 km".format(it) } ?: "–") + " · %.1f km".format(s.tripKm),
-                )
-            )
-            pane.addRow(
+                    "Éco-score",
+                    SpannableStringBuilder(s.eco?.let { colored("%.0f/100".format(it.score), it.score) } ?: "–")
+                        .append(" · pente %+.1f %%".format(s.grade * 100)),
+                ),
                 row(
-                    "Éco-score " + (s.eco?.let { "%.0f/100".format(it.score) } ?: "–"),
-                    s.eco?.hint?.text ?: "En attente",
-                )
+                    "Trajet",
+                    "%.1f km · moy. ".format(s.tripKm) + (s.tripAvgL100?.let { "%.1f L/100".format(it) } ?: "–"),
+                ),
             )
-            pane.addRow(row("Pente", "%+.1f %%".format(s.grade * 100) + (s.altitudeM?.let { " · %.0f m".format(it) } ?: "")))
+            rows.take(rowLimit()).forEach(pane::addRow)
+            if (carContext.carAppApiLevel >= CarAppApiLevels.LEVEL_4) {
+                val points = trendPoints(s.samples)
+                if (points.count { it != null } >= 2) {
+                    pane.setImage(CarIcon.Builder(IconCompat.createWithBitmap(renderTrend(points, s.tripAvgL100))).build())
+                }
+            }
 
             val active = s.status == ConnectionStatus.CONNECTED
             if (active) {
@@ -105,7 +119,21 @@ class DashboardScreen(carContext: CarContext) : Screen(carContext) {
             .build()
     }
 
-    private fun row(title: String, text: String) = Row.Builder().setTitle(title).addText(text).build()
+    private fun row(title: String, text: CharSequence) = Row.Builder().setTitle(title).addText(text).build()
+
+    private fun colored(text: String, score: Double) = SpannableString(text).apply {
+        val color = when {
+            score >= 75 -> CarColor.GREEN
+            score >= 50 -> CarColor.YELLOW
+            else -> CarColor.RED
+        }
+        setSpan(ForegroundCarColorSpan.create(color), 0, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    }
+
+    private fun rowLimit(): Int =
+        if (carContext.carAppApiLevel >= CarAppApiLevels.LEVEL_2) {
+            carContext.getCarService(ConstraintManager::class.java).getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_PANE)
+        } else 4
 
     private fun start(source: ObdSource) {
         telemetry.connect(source)
