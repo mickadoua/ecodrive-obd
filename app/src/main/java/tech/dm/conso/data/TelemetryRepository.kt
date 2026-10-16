@@ -69,6 +69,7 @@ data class LiveState(
     val eco: EcoResult? = null,
     val gear: GearAdvice? = null,
     val speedLimitKmh: Int? = null,
+    val tripScore: Double? = null,
     val samples: List<Sample> = emptyList(),
 ) {
     val tripAvgL100: Double? get() = if (tripKm > 0.2) tripLiters / tripKm * 100.0 else null
@@ -212,6 +213,8 @@ class TelemetryRepository(context: Context) {
         var lastSave = lastTime
         var lastSampleAt = 0L
         var ecoTrend: Double? = null
+        var headingFrom: GeoPoint? = null
+        var heading: Double? = null
 
         while (scope.isActive) {
             val speed = elm.query(Pids.SPEED)?.let(Pids::speedKmh) ?: 0.0
@@ -246,17 +249,26 @@ class TelemetryRepository(context: Context) {
             }
             speedLimits.prefetch(scope, loc, now)
             val limit = speedLimits.limitAt(loc)
+            if (loc != null) {
+                val from = headingFrom
+                if (from == null) headingFrom = loc
+                else if (Geo.distanceM(from, loc) >= HEADING_MIN_M) {
+                    heading = Geo.bearingDeg(from, loc)
+                    headingFrom = loc
+                }
+            }
+            val ahead = speedLimits.ahead(loc, heading, limit, EcoScorer.lookaheadM(speed))
             val gear = if (manual) gears.update(speed, rpm, accel) else null
-            val eco = scorer.evaluate(speed, accel, g, rpm, lh, limit, gear)
+            val eco = scorer.evaluate(speed, accel, g, rpm, lh, limit, gear, ahead, dt)
             val fuelStep = (lh ?: 0.0) * dt / 3600.0
             val expectedStep = eco.expectedLh * dt / 3600.0
-            history.add(LocalDate.now(), fuelStep, stepM / 1000.0, if (speed >= 3) eco.score else null)
+            history.add(LocalDate.now(), fuelStep, stepM / 1000.0, if (speed >= 3) eco.instantScore else null)
 
             val engineRunning = rpm != null && rpm > 300
             if (tripFinalized && engineRunning) beginOrResumeTrip(readEngineStart(elm))
             if (!tripFinalized) {
                 if (lh != null) tripBuilder?.add(wall, loc, stepM / 1000.0, fuelStep, expectedStep, g)
-                tripStats.add(dt, speed, stepM / 1000.0, fuelStep, expectedStep, eco.hint, eco.instantScore, loc)
+                tripStats.add(dt, speed, stepM / 1000.0, fuelStep, expectedStep, eco.hint, eco.instantScore, loc, eco.lostL)
             }
             engineOffSince = if (!engineRunning && speed < 1) engineOffSince ?: now else null
             if (!tripFinalized && engineOffSince != null && now - engineOffSince!! > ENGINE_OFF_MS) finalizeCurrentTrip()
@@ -279,6 +291,7 @@ class TelemetryRepository(context: Context) {
                     eco = eco,
                     gear = gear,
                     speedLimitKmh = limit,
+                    tripScore = tripStats.score,
                     samples = if (takeSample && !tripFinalized) (s.samples + Sample(wall, speed, lh, alt, g, ecoTrend)).takeLast(MAX_SAMPLES) else s.samples,
                 )
             }
@@ -383,6 +396,7 @@ class TelemetryRepository(context: Context) {
         const val MAX_RETRIES = 20
         const val ENGINE_OFF_MS = 8_000L
         const val MIN_TRIP_KM = 0.3
+        const val HEADING_MIN_M = 15.0
         const val RETRY_DELAY_MS = 15_000L
     }
 }
