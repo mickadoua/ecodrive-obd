@@ -3,10 +3,6 @@ package tech.dm.conso.car
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.RectF
 import android.media.MediaMetadata
 import android.media.browse.MediaBrowser
 import android.media.session.MediaSession
@@ -15,11 +11,9 @@ import android.os.Bundle
 import android.os.SystemClock
 import android.service.media.MediaBrowserService
 import androidx.car.app.notification.CarAppExtender
-import androidx.compose.ui.graphics.toArgb
 import androidx.core.app.NotificationCompat
 import tech.dm.conso.R
 import tech.dm.conso.data.LiveState
-import tech.dm.conso.ui.Palette
 
 class ConsoMediaService : MediaBrowserService() {
     override fun onCreate() {
@@ -59,7 +53,7 @@ object MiniCard {
                 MediaMetadata.Builder()
                     .putString(MediaMetadata.METADATA_KEY_TITLE, title)
                     .putString(MediaMetadata.METADATA_KEY_ARTIST, tips.firstOrNull() ?: "Conso")
-                    .putBitmap(MediaMetadata.METADATA_KEY_ART, renderGauge(s.eco?.score))
+                    .putBitmap(MediaMetadata.METADATA_KEY_ART, CarArt.miniCard(s))
                     .build()
             )
             setPlaybackState(
@@ -102,23 +96,5 @@ object MiniCard {
             )
             .build()
         runCatching { nm.notify(TIP_ID, notification) }
-    }
-
-    private fun renderGauge(score: Double?, size: Int = 320): Bitmap {
-        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        canvas.drawColor(Palette.Background.toArgb())
-        val stroke = size * 0.11f
-        val oval = RectF(stroke, stroke, size - stroke, size - stroke)
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE; strokeWidth = stroke; strokeCap = Paint.Cap.ROUND
-        }
-        paint.color = Palette.Outline.toArgb()
-        canvas.drawArc(oval, 135f, 270f, false, paint)
-        score?.let {
-            paint.color = Palette.forScore(it).toArgb()
-            canvas.drawArc(oval, 135f, 270f * (it / 100).toFloat().coerceIn(0.02f, 1f), false, paint)
-        }
-        return bitmap
     }
 }
