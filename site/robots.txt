@@ -1,0 +1,16 @@
+# robots.txt — EcoDrive OBD
+#
+# Un robots.txt n'est lu que s'il est servi à la RACINE d'un domaine.
+# Sur GitHub Pages ce fichier sort sous /ecodrive-obd/robots.txt : il est
+# donc inerte aujourd'hui (https://mickadoua.github.io/robots.txt répond
+# 404, vérifié le 15/10/2026, et un 404 vaut « tout est autorisé »).
+# Il devient effectif sur https://ecodrive.dm-consulting.tech/robots.txt
+# dès la mise en ligne Vercel. Rien à corriger d'ici là.
+#
+# Après la bascule Vercel, la ligne Sitemap ci-dessous doit pointer vers
+# le sous-domaine (voir la commande sed dans l'en-tête de index.html).
+
+User-agent: *
+Allow: /
+
+Sitemap: https://mickadoua.github.io/ecodrive-obd/sitemap.xml

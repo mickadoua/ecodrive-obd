@@ -1,16 +1,121 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>EcoDrive OBD — real-time fuel consumption, gradient-aware eco-driving</title>
-<meta name="description" content="Open-source Android app that reads your car's fuel consumption over OBD-II and scores eco-driving while accounting for road gradient. Android Auto ready.">
+<meta name="theme-color" content="#0B0F14">
+<!-- Favicon en ligne (meme logo que la barre de navigation) : evite une
+     requete /favicon.ico qui repond 404 sur GitHub Pages. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20108%20108'%3E%3Crect%20width='108'%20height='108'%20rx='26'%20fill='%23141A22'/%3E%3Cpath%20fill='%233DDC97'%20d='M40,30h22a6,6%200,0%201,6%206v40h-34v-40a6,6%200,0%201,6%20-6zM40,38v12h22v-12z'/%3E%3Cpath%20fill='%233DDC97'%20d='M70,44l8,6v22a4,4%200,0%201,-8%200v-14h-2v-4h2z'/%3E%3C/svg%3E">
+<title>EcoDrive OBD — consommation en temps réel par OBD2 et note d'éco-conduite</title>
+<!-- LICENCE : quand le dépôt aura un fichier LICENSE, la description peut
+     commencer par « Application Android open source qui lit… ». Pas avant. -->
+<meta name="description" content="EcoDrive OBD lit la consommation réelle de votre voiture par la prise OBD2 (module ELM327 Bluetooth), sans rien y modifier, et note votre éco-conduite en tenant compte de la pente.">
+
+<!-- ===================================================================
+     ADRESSE PUBLIQUE DE LA PAGE — UNE SEULE VALEUR, À BASCULER UNE FOIS
+
+     Valeur actuelle : https://mickadoua.github.io/ecodrive-obd/
+     C'est la seule origine qui réponde (HTTP 200 vérifié le 15/10/2026).
+     https://ecodrive.dm-consulting.tech/ ne répond ni en 80 ni en 443 :
+     tant que ce n'est pas le cas, aucune balise ne doit y pointer, sinon
+     l'aperçu de partage reste cassé.
+
+     Deux langues : le français à la racine (page par défaut), l'anglais
+     sous en/. Les deux pages se déclarent l'une l'autre (hreflang) et
+     chacune porte sa propre canonique.
+
+     APRÈS la mise en ligne Vercel (étape 4 de « Mise en ligne sur Vercel
+     — procédure et DNS »), basculer d'un coup ce fichier, en/index.html,
+     robots.txt et sitemap.xml, depuis la racine du dépôt :
+
+       LC_ALL=C grep -rl 'mickadoua\.github\.io/ecodrive-obd' site \
+         | xargs sed -i 's#https://mickadoua\.github\.io/ecodrive-obd/#https://ecodrive.dm-consulting.tech/#g'
+
+     Puis revalider l'aperçu : developers.facebook.com/tools/debug/ et
+     cards-dev.twitter.com/validator.
+     =================================================================== -->
+<link rel="canonical" href="https://mickadoua.github.io/ecodrive-obd/">
+<link rel="alternate" hreflang="fr" href="https://mickadoua.github.io/ecodrive-obd/">
+<link rel="alternate" hreflang="en" href="https://mickadoua.github.io/ecodrive-obd/en/">
+<link rel="alternate" hreflang="x-default" href="https://mickadoua.github.io/ecodrive-obd/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="EcoDrive OBD">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:url" content="https://mickadoua.github.io/ecodrive-obd/">
 <meta property="og:title" content="EcoDrive OBD">
-<meta property="og:description" content="Real-time fuel consumption over OBD-II, gradient-aware eco-driving score, over-consumption map.">
-<meta property="og:image" content="https://ecodrive.dm-consulting.tech/screenshots/direct.jpg">
+<meta property="og:description" content="Lit la consommation réelle de votre voiture par la prise OBD2, sans rien modifier. Note d'éco-conduite qui tient compte de la pente, carte des surconsommations.">
+<meta property="og:image" content="https://mickadoua.github.io/ecodrive-obd/social/card.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Carte EcoDrive OBD : logo, nom de l'app et capture de la note d'éco-conduite qui tient compte du dénivelé.">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="EcoDrive OBD">
+<meta name="twitter:description" content="Lit la consommation réelle de votre voiture par la prise OBD2, sans rien modifier. Note d'éco-conduite qui tient compte de la pente, carte des surconsommations.">
+<meta name="twitter:image" content="https://mickadoua.github.io/ecodrive-obd/social/card.jpg">
+<meta name="twitter:image:alt" content="Carte EcoDrive OBD : logo, nom de l'app et capture de la note d'éco-conduite qui tient compte du dénivelé.">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- Données structurées. Rien de déclaratif qui ne soit vérifiable dans le
+     dépôt : pas de note, pas de nombre d'installations, et le classement
+     communautaire (simulé) ne figure pas dans featureList. Le démarrage
+     automatique et Android Auto en sont retirés tant que le périmètre de
+     la v1 n'est pas arbitré (carte sur ECO-1).
+     "license" est volontairement absent : le dépôt n'a pas encore de
+     fichier LICENSE. Dès qu'il en a un, ajouter la ligne :
+       "license": "https://github.com/mickadoua/ecodrive-obd/blob/main/LICENSE", -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "EcoDrive OBD",
+  "url": "https://mickadoua.github.io/ecodrive-obd/",
+  "inLanguage": "fr",
+  "description": "Application Android qui lit la consommation de carburant en temps réel par un module OBD2 ELM327 Bluetooth, sans rien modifier dans la voiture, et note l'éco-conduite en tenant compte de la pente.",
+  "applicationCategory": "UtilitiesApplication",
+  "applicationSubCategory": "Automobile / diagnostic OBD2",
+  "operatingSystem": "Android 8.0 ou plus récent",
+  "softwareRequirements": "Module OBD2 ELM327 Bluetooth ; Android 8.0 ou plus récent",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "EUR"
+  },
+  "featureList": [
+    "Consommation en temps réel par OBD2 (L/100 km, L/h à l'arrêt)",
+    "Note d'éco-conduite qui tient compte de la pente",
+    "Carte des surconsommations, moyennée par route",
+    "Marque et année lues dans le numéro VIN",
+    "Simulateur ELM327 intégré pour essayer sans module"
+  ],
+  "image": "https://mickadoua.github.io/ecodrive-obd/social/card.jpg",
+  "screenshot": [
+    "https://mickadoua.github.io/ecodrive-obd/screenshots/direct.jpg",
+    "https://mickadoua.github.io/ecodrive-obd/screenshots/trajet.jpg",
+    "https://mickadoua.github.io/ecodrive-obd/screenshots/carte.jpg",
+    "https://mickadoua.github.io/ecodrive-obd/screenshots/vehicule.jpg"
+  ],
+  "codeRepository": "https://github.com/mickadoua/ecodrive-obd",
+  "author": {
+    "@type": "Organization",
+    "name": "DM Consulting",
+    "url": "https://www.dm-consulting.tech"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "DM Consulting",
+    "url": "https://www.dm-consulting.tech"
+  }
+}
+</script>
 <style>
   :root {
     --bg: #0B0F14;
@@ -36,9 +141,17 @@
     overflow-x: clip;
   }
   a { color: inherit; }
+  :focus-visible { outline: 3px solid var(--green); outline-offset: 3px; border-radius: 4px; }
+  .shots:focus-visible { outline-offset: -3px; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition-duration: .01ms !important; }
+    .btn:hover { transform: none; }
+  }
   .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
 
-  nav { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; }
+  nav { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 22px 0; }
+  .nav-links { display: flex; gap: 10px; flex-wrap: wrap; }
   .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; text-decoration: none; }
   .brand svg { width: 30px; height: 30px; }
   .btn {
@@ -60,7 +173,7 @@
   .pill {
     display: inline-block; padding: 6px 14px; border-radius: 999px;
     background: rgba(61, 220, 151, .12); color: var(--green);
-    font-size: 13px; font-weight: 600; margin-bottom: 22px;
+    font-size: 13px; font-weight: 600; margin: 0 0 22px;
   }
   h1 { font-size: clamp(36px, 6vw, 64px); line-height: 1.08; letter-spacing: -0.03em; margin: 0 0 20px; font-weight: 800; }
   h1 em { font-style: normal; background: linear-gradient(90deg, var(--green), var(--yellow)); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -111,6 +224,10 @@
   .steps p { margin: 0; color: var(--muted); }
   .steps strong { color: var(--text); display: block; }
 
+  .facts { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; max-width: 760px; }
+  .facts li { background: var(--surface); border: 1px solid var(--outline); border-radius: 16px; padding: 16px 20px; color: var(--muted); }
+  .facts strong { color: var(--text); }
+
   .stack { display: flex; flex-wrap: wrap; gap: 10px; }
   .stack span { padding: 8px 14px; border-radius: 999px; background: var(--surface-high); color: var(--muted); font-size: 14px; }
 
@@ -131,72 +248,80 @@
 <body>
 <div class="wrap">
   <nav>
-    <a class="brand" href="#">
+    <a class="brand" href="./">
       <svg viewBox="0 0 108 108" aria-hidden="true"><rect width="108" height="108" rx="26" fill="#141A22"/><path fill="#3DDC97" d="M40,30h22a6,6 0,0 1,6 6v40h-34v-40a6,6 0,0 1,6 -6zM40,38v12h22v-12z"/><path fill="#3DDC97" d="M70,44l8,6v22a4,4 0,0 1,-8 0v-14h-2v-4h2z"/></svg>
       EcoDrive OBD
     </a>
-    <a class="btn btn-ghost" href="https://github.com/mickadoua/ecodrive-obd">
-      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
-      GitHub
-    </a>
+    <div class="nav-links">
+      <a class="btn btn-ghost" href="en/" hreflang="en" lang="en">English</a>
+      <a class="btn btn-ghost" href="https://github.com/mickadoua/ecodrive-obd">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+        GitHub
+      </a>
+    </div>
   </nav>
 
   <header class="hero">
-    <div class="pill">Open source · Android · Android Auto</div>
-    <h1>Know what your car <em>really</em> burns.</h1>
-    <p class="lead">EcoDrive OBD reads your fuel consumption live from an inexpensive Bluetooth OBD-II dongle, and scores your driving against what the road actually demands: speed, gradient and all.</p>
+    <!-- Première ligne imposée : l'app lit, elle ne modifie rien. Les boîtiers
+         « Eco OBD2 » vendus comme réducteurs de consommation ont un nom voisin
+         (testés sans effet par l'ADAC). Ne pas retirer cette ligne.
+         LICENCE : quand le dépôt aura un fichier LICENSE, ajouter ici une
+         seconde pastille « Open source · Android ». -->
+    <p class="pill">Lecture seule : l'app lit les données de votre voiture et n'y modifie rien</p>
+    <h1>Ce que votre voiture consomme <em>vraiment</em>.</h1>
+    <p class="lead">EcoDrive OBD affiche en direct la consommation réelle de votre voiture, lue par un petit module OBD2 Bluetooth (ELM327, vendu à part). Et elle note votre conduite en tenant compte de la route : monter une côte ne vous fait pas perdre de points.</p>
     <div class="cta">
       <a class="btn btn-primary" href="https://github.com/mickadoua/ecodrive-obd">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
-        View on GitHub
+        Voir le code sur GitHub
       </a>
-      <a class="btn btn-ghost" href="#how">How it works</a>
+      <a class="btn btn-ghost" href="#how">Comment ça marche</a>
     </div>
   </header>
 </div>
 
-<div class="shots" aria-label="Screenshots">
-  <figure class="phone"><img src="screenshots/direct.jpg" alt="Live dashboard with instant consumption gauge and trip stats" loading="lazy"><figcaption>Live dashboard</figcaption></figure>
-  <figure class="phone"><img src="screenshots/trajet.jpg" alt="Trip chart coloured by eco score with elevation profile" loading="lazy"><figcaption>Trip chart &amp; relief</figcaption></figure>
-  <figure class="phone"><img src="screenshots/carte.jpg" alt="Map of over-consumption aggregated per road" loading="lazy"><figcaption>Over-consumption map</figcaption></figure>
-  <figure class="phone"><img src="screenshots/classement.jpg" alt="Anonymous leaderboard per road section" loading="lazy"><figcaption>Leaderboard</figcaption></figure>
-  <figure class="phone"><img src="screenshots/vehicule.jpg" alt="Vehicle profile detected from VIN" loading="lazy"><figcaption>Vehicle profile</figcaption></figure>
+<div class="shots" role="group" tabindex="0" aria-label="Captures d'écran">
+  <figure class="phone"><img src="screenshots/direct.jpg" width="554" height="1200" alt="Tableau de bord en direct : jauge de consommation instantanée et statistiques du trajet" loading="lazy"><figcaption>Tableau de bord en direct</figcaption></figure>
+  <figure class="phone"><img src="screenshots/trajet.jpg" width="554" height="1200" alt="Graphe du trajet coloré selon la note, avec le profil d'altitude" loading="lazy"><figcaption>Graphe du trajet et relief</figcaption></figure>
+  <figure class="phone"><img src="screenshots/carte.jpg" width="554" height="1200" alt="Carte des surconsommations, moyennées par route" loading="lazy"><figcaption>Carte des surconsommations</figcaption></figure>
+  <figure class="phone"><img src="screenshots/classement.jpg" width="554" height="1200" alt="Écran du classement anonyme par tronçon, rempli avec des données de démonstration" loading="lazy"><figcaption>Classement (à venir) — données de démonstration</figcaption></figure>
+  <figure class="phone"><img src="screenshots/vehicule.jpg" width="554" height="1200" alt="Profil du véhicule, marque et année lues dans le numéro VIN" loading="lazy"><figcaption>Profil du véhicule</figcaption></figure>
 </div>
 
 <div class="wrap">
   <section>
-    <h2>Everything your dashboard doesn't tell you</h2>
-    <p class="sub">Your car's trip computer gives one average. EcoDrive OBD tells you where, why and how much.</p>
+    <h2>Ce que l'ordinateur de bord ne vous dit pas</h2>
+    <p class="sub">L'ordinateur de bord donne une moyenne. EcoDrive OBD vous montre où vous consommez, et pourquoi.</p>
     <div class="grid">
       <div class="card">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 14l4-4"/><path d="M3.3 17a9 9 0 1 1 17.4 0"/></svg></div>
-        <h3>Live consumption</h3>
-        <p>Instant L/100 km (L/h at standstill) from the fuel-rate PID, the mass air flow sensor or manifold pressure, whichever your car exposes.</p>
+        <h3>Consommation en direct</h3>
+        <p>Litres aux 100 km en temps réel, litres par heure à l'arrêt. La valeur vient du débit de carburant si la voiture le transmet, sinon du débitmètre d'air ou de la pression d'admission.</p>
       </div>
       <div class="card">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20l6-9 4 5 3-4 5 8z"/></svg></div>
-        <h3>Gradient-aware eco score</h3>
-        <p>Climbing a 6 % hill isn't bad driving. Pressing the throttle on the way down is. The score knows the difference.</p>
+        <h3>Une note qui ne punit pas la côte</h3>
+        <p>Monter une pente à 6 %, ce n'est pas mal conduire. Garder le pied sur l'accélérateur en descente, si. La note fait la différence.</p>
       </div>
       <div class="card">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg></div>
-        <h3>Over-consumption map</h3>
-        <p>Every road you drive, coloured by how much more you burned than expected, and averaged per road to surface your real black spots.</p>
-      </div>
-      <div class="card">
-        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 6h3a3 3 0 0 1-3 3M7 6H4a3 3 0 0 0 3 3"/></svg></div>
-        <h3>Anonymous leaderboard</h3>
-        <p>Compare yourself with other drivers on the same road section, in the same direction, and with equivalent car models. Community data is simulated until the shared backend ships.</p>
+        <h3>Carte des surconsommations</h3>
+        <p>Chaque route parcourue prend la couleur de l'écart entre ce que vous avez brûlé et ce qui était attendu. La moyenne par route fait ressortir vos vrais points noirs.</p>
       </div>
       <div class="card">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14l-1.5-6.5A2 2 0 0 0 15.6 9H8.4a2 2 0 0 0-1.9 1.5z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg></div>
-        <h3>Zero-touch trips</h3>
-        <p>Starts when your phone joins the car's Bluetooth, reconnects on its own, and keeps the same trip for as long as the engine runs.</p>
+        <h3>Profil du véhicule</h3>
+        <p>La marque et l'année sont lues dans le numéro VIN que transmet la voiture. Rien à saisir pour commencer.</p>
       </div>
       <div class="card">
-        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8"/></svg></div>
-        <h3>Android Auto</h3>
-        <p>Instant and trip consumption, eco score and gradient on the car screen, built with the Car App Library. Testable today on the Desktop Head Unit.</p>
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg></div>
+        <h3>Simulateur intégré</h3>
+        <p>Pas encore de module ? Le simulateur ELM327 de l'app répond avec de vraies trames OBD : vous pouvez tout essayer depuis votre canapé.</p>
+      </div>
+      <div class="card">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 6h3a3 3 0 0 1-3 3M7 6H4a3 3 0 0 0 3 3"/></svg></div>
+        <h3>Classement anonyme, à venir</h3>
+        <p>Se comparer aux autres conducteurs sur le même tronçon, dans le même sens, avec des voitures comparables. Pas encore en service : l'écran affiche aujourd'hui des données de démonstration, en attendant le serveur commun.</p>
       </div>
     </div>
   </section>
@@ -204,46 +329,60 @@
   <section id="how">
     <div class="how">
       <div>
-        <h2>How the score works</h2>
-        <p class="sub">A physics model predicts what a careful driver would burn on this exact stretch of road. Your score is how close you get.</p>
+        <h2>Comment la note est calculée</h2>
+        <p class="sub">Un modèle physique estime ce qu'un conducteur attentif consommerait sur ce tronçon précis. Votre note mesure l'écart. C'est une estimation : le modèle part d'un gabarit de voiture générique, pas d'un étalonnage de la vôtre.</p>
         <ol class="steps">
-          <li><span>1</span><p><strong>Read the car</strong>Speed, RPM and fuel flow over OBD-II, several times per second.</p></li>
-          <li><span>2</span><p><strong>Read the road</strong>Elevation from the phone's barometer, or from a 90 m terrain model when the phone has none. Slope is computed over the last 100 m.</p></li>
-          <li><span>3</span><p><strong>Predict</strong>Rolling resistance, air drag and gravity give the power needed, then the fuel a reasonable engine would use.</p></li>
-          <li><span>4</span><p><strong>Compare</strong>Over-consumption, harsh acceleration, high RPM and throttle on downhills lower the score. Climbing does not.</p></li>
+          <li><span>1</span><p><strong>Lire la voiture</strong>Vitesse, régime et débit de carburant par la prise OBD2, plusieurs fois par seconde.</p></li>
+          <li><span>2</span><p><strong>Lire la route</strong>L'altitude vient du baromètre du téléphone, ou d'un modèle de terrain au pas de 90 m s'il n'en a pas. La pente est calculée sur les 100 derniers mètres.</p></li>
+          <li><span>3</span><p><strong>Prévoir</strong>Résistance au roulement, résistance de l'air et gravité donnent la puissance nécessaire, puis le carburant qu'un moteur ordinaire brûlerait pour la fournir.</p></li>
+          <li><span>4</span><p><strong>Comparer</strong>La surconsommation, les accélérations brusques, les hauts régimes et l'accélérateur en descente font baisser la note. La montée, non.</p></li>
         </ol>
       </div>
       <div class="formula">
-        <b>P</b> = v · ( m·g·(C<sub>rr</sub> + <span class="y">slope</span>) + ½·ρ·C<sub>d</sub>A·v² )<br><br>
-        <b>expected</b> = idle + P / (η · LHV)<br><br>
-        <b>score</b> ← <span class="g">actual</span> / <b>expected</b><br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;− harsh acceleration<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;− RPM &gt; 3000<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;− throttle on <span class="y">slope</span> &lt; −3 %
+        <b>P</b> = v · ( m·g·(C<sub>rr</sub> + <span class="y">pente</span>) + ½·ρ·C<sub>d</sub>A·v² )<br><br>
+        <b>attendu</b> = ralenti + P / (η · PCI)<br><br>
+        <b>note</b> ← <span class="g">réel</span> / <b>attendu</b><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;− accélération brusque<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;− régime &gt; 3000 tr/min<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;− accélérateur si <span class="y">pente</span> &lt; −3 %
       </div>
     </div>
   </section>
 
   <section>
-    <h2>Built with</h2>
-    <p class="sub">Native Android, no account. Trips are stored on your phone; only coordinates are sent, without any identifier, to look up elevation and road names.</p>
+    <h2>Ce qu'il faut savoir avant d'essayer</h2>
+    <p class="sub">Autant le dire tout de suite.</p>
+    <ul class="facts">
+      <li><strong>Il faut un module OBD2 ELM327 Bluetooth</strong>, vendu à part. Sans lui, l'app ne voit pas la consommation de la voiture.</li>
+      <li><strong>L'app ne fait pas baisser la consommation à elle seule.</strong> Elle vous montre ce que vous faites et où. Nous n'annonçons aucun chiffre d'économie : nous n'en avons pas mesuré.</li>
+      <li><strong>Toutes les voitures ne transmettent pas les mêmes données.</strong> La prise OBD2 est standard, mais la consommation dépend de ce que la voiture expose. Votre retour sur votre modèle nous aide.</li>
+      <li><strong>Le classement communautaire n'existe pas encore.</strong> Les données visibles dans cet écran sont des données de démonstration.</li>
+      <li><strong>Android uniquement</strong>, interface en français.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Sous le capot</h2>
+    <p class="sub">Android natif, sans compte. Vos trajets restent sur votre téléphone ; seules des coordonnées, sans aucun identifiant, sont envoyées pour obtenir l'altitude et le nom des routes.</p>
     <div class="stack">
-      <span>Kotlin</span><span>Jetpack Compose</span><span>Car App Library</span><span>ELM327 / OBD-II</span>
-      <span>OpenStreetMap · osmdroid</span><span>Open-Meteo elevation</span><span>Built-in ELM327 simulator</span>
+      <span>Kotlin</span><span>Jetpack Compose</span><span>ELM327 / OBD2</span>
+      <span>OpenStreetMap · osmdroid</span><span>Altitude Open-Meteo</span><span>Simulateur ELM327 intégré</span>
     </div>
   </section>
 
   <section>
     <div class="final">
-      <h2>Try it with your own car</h2>
-      <p>Plug a Bluetooth ELM327 dongle into the OBD-II port, pair it with your phone, build the app. No dongle yet? The built-in simulator speaks real OBD frames.</p>
-      <a class="btn btn-primary" href="https://github.com/mickadoua/ecodrive-obd">Get the source on GitHub</a>
+      <h2>Essayez avec votre voiture</h2>
+      <p>Branchez un module ELM327 Bluetooth sur la prise OBD2, appairez-le avec votre téléphone, puis compilez l'app depuis le code source. Pas encore de module ? Le simulateur intégré parle de vraies trames OBD.</p>
+      <a class="btn btn-primary" href="https://github.com/mickadoua/ecodrive-obd">Récupérer le code sur GitHub</a>
     </div>
   </section>
 
   <footer>
-    <span>EcoDrive OBD · open source</span>
-    <span>Built by <a href="https://www.dm-consulting.tech">DM Consulting</a></span>
+    <!-- LICENCE : quand le dépôt aura un fichier LICENSE, écrire
+         « EcoDrive OBD · open source (nom de la licence) » avec un lien vers LICENSE. -->
+    <span>EcoDrive OBD · <a href="en/" hreflang="en" lang="en">English version</a></span>
+    <span>Réalisé par <a href="https://www.dm-consulting.tech">DM Consulting</a></span>
   </footer>
 </div>
 </body>

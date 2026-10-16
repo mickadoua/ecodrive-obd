@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Deux langues : français par défaut à la racine, anglais sous en/.
+     Chaque <url> déclare ses deux versions (xhtml:link), comme les balises
+     hreflang des pages ; les deux blocs doivent rester symétriques.
+     Ajouter ici la politique de confidentialité (texte rédigé par Vega) et
+     les mentions légales quand elles existent.
+     Les <loc> et href basculent vers https://ecodrive.dm-consulting.tech/
+     en même temps que index.html et robots.txt (voir la commande sed dans
+     l'en-tête de index.html). Penser à mettre <lastmod> à jour. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://mickadoua.github.io/ecodrive-obd/</loc>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://mickadoua.github.io/ecodrive-obd/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mickadoua.github.io/ecodrive-obd/en/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://mickadoua.github.io/ecodrive-obd/"/>
+    <lastmod>2026-10-15</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://mickadoua.github.io/ecodrive-obd/en/</loc>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://mickadoua.github.io/ecodrive-obd/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mickadoua.github.io/ecodrive-obd/en/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://mickadoua.github.io/ecodrive-obd/"/>
+    <lastmod>2026-10-15</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+</urlset>
