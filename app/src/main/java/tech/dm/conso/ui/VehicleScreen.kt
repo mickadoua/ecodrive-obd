@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import tech.dm.conso.data.CarSegment
 import tech.dm.conso.data.VehicleProfile
 import tech.dm.conso.obd.FuelType
+import tech.dm.conso.obd.Powertrain
 import tech.dm.conso.obd.VinInfo
 import kotlin.math.roundToInt
 
@@ -83,23 +84,39 @@ fun VehicleScreen(
         }
 
         Card {
-            Text("Carburant", color = Palette.Text, fontWeight = FontWeight.SemiBold)
+            Text("Motorisation", color = Palette.Text, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Chip("Essence", draft.fuel == FuelType.GASOLINE) { onSave(draft.copy(fuel = FuelType.GASOLINE)) }
-                Chip("Diesel", draft.fuel == FuelType.DIESEL) { onSave(draft.copy(fuel = FuelType.DIESEL)) }
+                Powertrain.entries.forEach { p -> Chip(p.label, draft.powertrain == p) { onSave(draft.copy(powertrain = p)) } }
             }
-            Spacer(Modifier.height(14.dp))
-            Text("Cylindrée : %.1f L".format(draft.displacementL), color = Palette.Text, fontWeight = FontWeight.SemiBold)
-            Slider(
-                value = draft.displacementL.toFloat(),
-                onValueChange = { onSave(draft.copy(displacementL = (it * 10).roundToInt() / 10.0)) },
-                valueRange = 0.8f..3.0f,
-                steps = 21,
-                colors = SliderDefaults.colors(thumbColor = Palette.Green, activeTrackColor = Palette.Green),
+            Text(
+                when (draft.powertrain) {
+                    Powertrain.ICE -> "Si le véhicule déclare une motorisation hybride ou électrique (PID 51), elle est retenue."
+                    Powertrain.HYBRID -> "Consommation de carburant en L/100 km, moteur thermique coupé compté comme roulage électrique."
+                    Powertrain.ELECTRIC -> "Énergie en kWh/100 km, estimée par le modèle physique : la plupart des électriques n'exposent leur puissance batterie que par des PIDs constructeur."
+                },
+                color = Palette.Muted, fontSize = 11.sp,
             )
-            Text("Utilisée si la voiture n'a pas de débitmètre d'air.", color = Palette.Muted, fontSize = 11.sp)
             Spacer(Modifier.height(14.dp))
+            if (draft.powertrain != Powertrain.ELECTRIC) {
+                Text("Carburant", color = Palette.Text, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Chip("Essence", draft.fuel == FuelType.GASOLINE) { onSave(draft.copy(fuel = FuelType.GASOLINE)) }
+                    Chip("Diesel", draft.fuel == FuelType.DIESEL) { onSave(draft.copy(fuel = FuelType.DIESEL)) }
+                }
+                Spacer(Modifier.height(14.dp))
+                Text("Cylindrée : %.1f L".format(draft.displacementL), color = Palette.Text, fontWeight = FontWeight.SemiBold)
+                Slider(
+                    value = draft.displacementL.toFloat(),
+                    onValueChange = { onSave(draft.copy(displacementL = (it * 10).roundToInt() / 10.0)) },
+                    valueRange = 0.8f..3.0f,
+                    steps = 21,
+                    colors = SliderDefaults.colors(thumbColor = Palette.Green, activeTrackColor = Palette.Green),
+                )
+                Text("Utilisée si la voiture n'a pas de débitmètre d'air.", color = Palette.Muted, fontSize = 11.sp)
+                Spacer(Modifier.height(14.dp))
+            }
             Text("Catégorie", color = Palette.Text, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(8.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {

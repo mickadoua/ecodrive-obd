@@ -8,6 +8,7 @@ object Pids {
     const val MAF = 0x10
     const val ENGINE_RUNTIME = 0x1F
     const val FUEL_TYPE = 0x51
+    const val HYBRID_BATTERY = 0x5B
     const val FUEL_RATE = 0x5E
 
     fun rpm(d: IntArray) = (256 * d[0] + d[1]) / 4.0
@@ -16,5 +17,6 @@ object Pids {
     fun intakeTempC(d: IntArray) = d[0] - 40.0
     fun mafGs(d: IntArray) = (256 * d[0] + d[1]) / 100.0
     fun engineRuntimeS(d: IntArray) = 256 * d[0] + d[1]
+    fun hybridBatteryPct(d: IntArray) = d[0] * 100.0 / 255.0
     fun fuelRateLh(d: IntArray) = (256 * d[0] + d[1]) / 20.0
 }

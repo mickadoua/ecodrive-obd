@@ -24,6 +24,7 @@ import tech.dm.conso.obd.FuelCalculator
 import tech.dm.conso.obd.FuelMethod
 import tech.dm.conso.obd.FuelType
 import tech.dm.conso.obd.Pids
+import tech.dm.conso.obd.Powertrain
 import tech.dm.conso.obd.SimulatedElm327
 import tech.dm.conso.obd.Vin
 import tech.dm.conso.obd.VinInfo
@@ -55,6 +56,9 @@ data class LiveState(
     val retrying: Boolean = false,
     val method: FuelMethod = FuelMethod.NONE,
     val fuelType: FuelType = FuelType.GASOLINE,
+    val powertrain: Powertrain = Powertrain.ICE,
+    val batteryPct: Double? = null,
+    val electricKm: Double = 0.0,
     val detectedVehicle: VinInfo? = null,
     val speedKmh: Double = 0.0,
     val rpm: Double? = null,
@@ -72,6 +76,7 @@ data class LiveState(
     val samples: List<Sample> = emptyList(),
 ) {
     val tripAvgL100: Double? get() = if (tripKm > 0.2) tripLiters / tripKm * 100.0 else null
+    val electricSharePct: Double? get() = if (powertrain == Powertrain.HYBRID && tripKm > 0.2) electricKm / tripKm * 100.0 else null
 }
 
 class TelemetryRepository(context: Context) {
@@ -147,7 +152,7 @@ class TelemetryRepository(context: Context) {
         val position: PositionSource
         val elm: Elm327
         when (source) {
-            is ObdSource.Simulator -> SimulatedElm327().let { position = it; elm = Elm327(it) }
+            is ObdSource.Simulator -> SimulatedElm327(powertrain = _profile.value.powertrain).let { position = it; elm = Elm327(it) }
             is ObdSource.Bluetooth -> {
                 position = DevicePositionSource(appContext)
                 elm = Elm327(BluetoothTransport(source.device))
@@ -155,19 +160,20 @@ class TelemetryRepository(context: Context) {
         }
         try {
             elm.initialize()
-            val fuelType = if (elm.supports(Pids.FUEL_TYPE)) {
-                elm.query(Pids.FUEL_TYPE)?.firstOrNull()?.let(FuelType::fromPid51) ?: FuelType.GASOLINE
-            } else _profile.value.fuel
+            val pid51 = if (elm.supports(Pids.FUEL_TYPE)) elm.query(Pids.FUEL_TYPE)?.firstOrNull() else null
+            val fuelType = pid51?.let(FuelType::fromPid51) ?: _profile.value.fuel
+            val powertrain = Powertrain.resolve(_profile.value.powertrain, pid51)
+            if (powertrain != _profile.value.powertrain) saveProfile(_profile.value.copy(powertrain = powertrain))
             val detected = elm.readVin()?.let(Vin::decode)
-            val method = FuelCalculator.chooseMethod(elm::supports, fuelType)
+            val method = FuelCalculator.chooseMethod(elm::supports, fuelType, powertrain)
             beginOrResumeTrip(readEngineStart(elm))
             _state.update {
-                it.copy(status = ConnectionStatus.CONNECTED, method = method, fuelType = fuelType, detectedVehicle = detected)
+                it.copy(status = ConnectionStatus.CONNECTED, method = method, fuelType = fuelType, powertrain = powertrain, detectedVehicle = detected)
             }
             position.start()
             val terrainJob = if (position.hasPreciseAltitude) null else terrain.start(scope)
             try {
-                poll(elm, position, method, fuelType)
+                poll(elm, position, method, fuelType, powertrain)
             } finally {
                 terrainJob?.cancel()
             }
@@ -193,9 +199,14 @@ class TelemetryRepository(context: Context) {
         position: PositionSource,
         method: FuelMethod,
         fuelType: FuelType,
+        powertrain: Powertrain,
     ) {
-        val scorer = EcoScorer(_profile.value.vehicleModel, fuelType)
-        val manual = _profile.value.manualGearbox
+        val model = _profile.value.vehicleModel
+        val scorer = EcoScorer(model, fuelType)
+        val manual = _profile.value.gearAdviceEnabled
+        val hasBattery = elm.supports(Pids.HYBRID_BATTERY)
+        var lastBatteryAt = 0L
+        var lastGrade = 0.0
         val gears = GearEstimator(profileStore.loadGearRatios(), fuelType)
         var engineOffSince: Long? = null
         val grade = GradeEstimator()
@@ -214,8 +225,9 @@ class TelemetryRepository(context: Context) {
         var ecoTrend: Double? = null
 
         while (scope.isActive) {
-            val speed = elm.query(Pids.SPEED)?.let(Pids::speedKmh) ?: 0.0
-            val rpm = elm.query(Pids.RPM)?.let(Pids::rpm)
+            val speedData = elm.query(Pids.SPEED)
+            val speed = speedData?.let(Pids::speedKmh) ?: 0.0
+            val rpm = if (powertrain == Powertrain.ELECTRIC) null else elm.query(Pids.RPM)?.let(Pids::rpm)
             val lh = when (method) {
                 FuelMethod.FUEL_RATE -> elm.query(Pids.FUEL_RATE)?.let(Pids::fuelRateLh)
                 FuelMethod.MAF -> elm.query(Pids.MAF)?.let { FuelCalculator.fromMaf(Pids.mafGs(it), fuelType) }
@@ -227,10 +239,15 @@ class TelemetryRepository(context: Context) {
                         FuelCalculator.fromMaf(maf, fuelType)
                     } else null
                 }
+                FuelMethod.ELECTRIC_MODEL -> model.electricKw(model.tractionPowerW(speed / 3.6, lastGrade, accel))
                 FuelMethod.NONE -> null
             }
 
             val now = SystemClock.elapsedRealtime()
+            val battery = if (hasBattery && now - lastBatteryAt >= BATTERY_PERIOD_MS) {
+                lastBatteryAt = now
+                elm.query(Pids.HYBRID_BATTERY)?.let(Pids::hybridBatteryPct)
+            } else null
             val wall = System.currentTimeMillis()
             val dt = ((now - lastTime) / 1000.0).coerceIn(0.0, 5.0)
             lastTime = now
@@ -244,15 +261,17 @@ class TelemetryRepository(context: Context) {
             } else {
                 terrainGrade.update(distanceM, loc)
             }
+            lastGrade = g
             speedLimits.prefetch(scope, loc, now)
             val limit = speedLimits.limitAt(loc)
             val gear = if (manual) gears.update(speed, rpm, accel) else null
-            val eco = scorer.evaluate(speed, accel, g, rpm, lh, limit, gear)
+            val eco = scorer.evaluate(speed, accel, g, rpm, lh.takeIf { method != FuelMethod.ELECTRIC_MODEL }, limit, gear)
             val fuelStep = (lh ?: 0.0) * dt / 3600.0
             val expectedStep = eco.expectedLh * dt / 3600.0
             history.add(LocalDate.now(), fuelStep, stepM / 1000.0, if (speed >= 3) eco.score else null)
 
-            val engineRunning = rpm != null && rpm > 300
+            val engineRunning = if (powertrain == Powertrain.ICE) rpm != null && rpm > 300 else speedData != null
+            val electricStep = if (powertrain == Powertrain.HYBRID && speed >= 3 && (rpm ?: 0.0) <= 300) stepM / 1000.0 else 0.0
             if (tripFinalized && engineRunning) beginOrResumeTrip(readEngineStart(elm))
             if (!tripFinalized) {
                 if (lh != null) tripBuilder?.add(wall, loc, stepM / 1000.0, fuelStep, expectedStep, g)
@@ -272,6 +291,8 @@ class TelemetryRepository(context: Context) {
                     litersPer100 = lh?.let { FuelCalculator.per100km(it, speed) },
                     tripKm = s.tripKm + stepM / 1000.0,
                     tripLiters = s.tripLiters + fuelStep,
+                    electricKm = s.electricKm + electricStep,
+                    batteryPct = battery ?: s.batteryPct,
                     altitudeM = alt,
                     grade = g,
                     location = loc,
@@ -384,5 +405,6 @@ class TelemetryRepository(context: Context) {
         const val ENGINE_OFF_MS = 8_000L
         const val MIN_TRIP_KM = 0.3
         const val RETRY_DELAY_MS = 15_000L
+        const val BATTERY_PERIOD_MS = 5_000L
     }
 }

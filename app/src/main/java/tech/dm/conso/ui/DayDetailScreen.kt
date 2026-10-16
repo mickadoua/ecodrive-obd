@@ -98,9 +98,9 @@ fun DayDetailScreen(
         item {
             Card {
                 Row(Modifier.fillMaxWidth()) {
-                    DayStat("Moyenne", day.avgL100?.let { "%.1f".format(it) } ?: "–", "L/100", Modifier.weight(1f))
+                    DayStat("Moyenne", day.avgL100?.let { "%.1f".format(it) } ?: "–", LocalPowertrain.current.per100Short, Modifier.weight(1f))
                     DayStat("Distance", "%.1f".format(day.distanceKm), "km", Modifier.weight(1f))
-                    DayStat("Carburant", "%.2f".format(day.fuelL), "L", Modifier.weight(1f))
+                    DayStat(LocalPowertrain.current.totalLabel, "%.2f".format(day.fuelL), LocalPowertrain.current.totalUnit, Modifier.weight(1f))
                 }
                 Spacer(Modifier.height(14.dp))
                 Row(Modifier.fillMaxWidth()) {
@@ -138,7 +138,7 @@ fun DayDetailScreen(
                     )
                     Text("%.1f km".format(t.distanceKm), color = Palette.Muted, fontSize = 13.sp)
                     Spacer(Modifier.width(12.dp))
-                    Text("%.1f L/100".format(t.l100), color = excessColor(1 + t.surplusL100 / 10), fontWeight = FontWeight.SemiBold)
+                    Text("%.1f %s".format(t.l100, LocalPowertrain.current.per100Short), color = excessColor(1 + t.surplusL100 / 10), fontWeight = FontWeight.SemiBold)
                 }
             }
         }

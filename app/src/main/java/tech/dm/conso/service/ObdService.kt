@@ -79,8 +79,8 @@ class ObdService : Service() {
         val text = when {
             s.status == ConnectionStatus.CONNECTING -> "Connexion à ${s.sourceLabel}…"
             s.retrying -> "Module OBD injoignable, nouvelle tentative…"
-            s.litersPer100 != null -> "%.1f L/100 km · moy. %s".format(s.litersPer100, s.tripAvgL100?.let { "%.1f".format(it) } ?: "–")
-            s.litersPerHour != null -> "%.1f L/h à l'arrêt".format(s.litersPerHour)
+            s.litersPer100 != null -> "%.1f %s · moy. %s".format(s.litersPer100, s.powertrain.per100Unit, s.tripAvgL100?.let { "%.1f".format(it) } ?: "–")
+            s.litersPerHour != null -> "%.1f %s à l'arrêt".format(s.litersPerHour, s.powertrain.rateUnit)
             else -> "Connecté"
         }
         val open = PendingIntent.getActivity(
