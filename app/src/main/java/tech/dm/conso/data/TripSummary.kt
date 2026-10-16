@@ -17,12 +17,13 @@ class TripStats(
     var start: GeoPoint? = null,
     var end: GeoPoint? = null,
 ) {
-    fun add(dt: Double, speedKmh: Double, stepKm: Double, fuelStepL: Double, expectedStepL: Double, hint: EcoHint, score: Double, position: GeoPoint?) {
+    fun add(dt: Double, speedKmh: Double, stepKm: Double, fuelStepL: Double, expectedStepL: Double, hint: EcoHint, score: Double, position: GeoPoint?, lostL: Double = 0.0) {
         if (position != null) {
             if (start == null) start = position
             end = position
         }
         fuelL += fuelStepL
+        if (lostL > 0) wastedL.merge(EcoHint.WASTED_ACCEL, lostL, Double::plus)
         distanceKm += stepKm
         if (speedKmh < 3) {
             idleS += dt
@@ -122,6 +123,16 @@ fun tipsFor(s: TripSummary): List<Tip> {
         "Allure irrégulière",
         "%.0f s au-dessus de la consommation attendue. Gardez une vitesse stable et anticipez le trafic.".format(sec(EcoHint.OVER_CONSUMPTION)),
         lost(EcoHint.OVER_CONSUMPTION),
+    )
+    if (sec(EcoHint.ANTICIPATE) > 5) tips += Tip(
+        "Accélérations avant un ralentissement",
+        "%.0f s à accélérer alors qu'une limitation plus basse, un stop ou un rond-point approchait. Levez le pied plus tôt.".format(sec(EcoHint.ANTICIPATE)),
+        lost(EcoHint.ANTICIPATE),
+    )
+    if (lost(EcoHint.WASTED_ACCEL) > 0) tips += Tip(
+        "Accélérations perdues",
+        "Des accélérations suivies d'un freinage quelques secondes plus tard : l'énergie gagnée part dans les freins.",
+        lost(EcoHint.WASTED_ACCEL),
     )
     if (sec(EcoHint.HARSH_BRAKE) > 3) tips += Tip(
         "Freinages brusques",

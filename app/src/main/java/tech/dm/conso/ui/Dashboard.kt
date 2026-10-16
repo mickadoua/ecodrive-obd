@@ -195,7 +195,7 @@ private fun EcoCard(state: LiveState) {
             }
             Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(eco?.hint?.text ?: "En attente de données", color = color, fontWeight = FontWeight.SemiBold)
+                Text(eco?.message ?: "En attente de données", color = color, fontWeight = FontWeight.SemiBold)
                 GradeRow(state)
                 eco?.let {
                     Text(
