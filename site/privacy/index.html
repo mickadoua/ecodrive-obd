@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0B0F14">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20108%20108'%3E%3Crect%20width='108'%20height='108'%20rx='26'%20fill='%23141A22'/%3E%3Cpath%20fill='%233DDC97'%20d='M40,30h22a6,6%200,0%201,6%206v40h-34v-40a6,6%200,0%201,6%20-6zM40,38v12h22v-12z'/%3E%3Cpath%20fill='%233DDC97'%20d='M70,44l8,6v22a4,4%200,0%201,-8%200v-14h-2v-4h2z'/%3E%3C/svg%3E">
+<title>Politique de confidentialité — EcoDrive OBD</title>
+<meta name="description" content="Ce que l&#x27;application EcoDrive OBD lit, ce qui quitte votre téléphone, ce qui est enregistré, et comment tout effacer.">
+<!-- Page de politique de confidentialité (FR). Contraintes (ECO-5, ECO-11) :
+     aucune police externe, aucun script, aucun cookie, aucune ressource d'un
+     autre domaine. Tout le CSS est en ligne, la police est celle du système.
+     Les adresses ci-dessous basculent avec le reste du site si l'hébergement
+     change (voir la commande sed dans l'en-tête de index.html). -->
+<link rel="canonical" href="https://mickadoua.github.io/ecodrive-obd/privacy/">
+<link rel="alternate" hreflang="fr" href="https://mickadoua.github.io/ecodrive-obd/privacy/">
+<link rel="alternate" hreflang="en" href="https://mickadoua.github.io/ecodrive-obd/en/privacy/">
+<link rel="alternate" hreflang="x-default" href="https://mickadoua.github.io/ecodrive-obd/privacy/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="EcoDrive OBD">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:url" content="https://mickadoua.github.io/ecodrive-obd/privacy/">
+<meta property="og:title" content="Politique de confidentialité — EcoDrive OBD">
+<meta property="og:description" content="Ce que l&#x27;application EcoDrive OBD lit, ce qui quitte votre téléphone, ce qui est enregistré, et comment tout effacer.">
+<meta name="twitter:card" content="summary">
+<style>
+  :root {
+    --bg: #0B0F14;
+    --surface: #141A22;
+    --surface-high: #1C2430;
+    --outline: #263040;
+    --text: #E8EDF3;
+    --muted: #A3AEBF;
+    --green: #3DDC97;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.65;
+    overflow-wrap: break-word;
+  }
+  a { color: var(--green); text-underline-offset: 3px; }
+  a:hover { text-decoration-thickness: 2px; }
+  :focus-visible { outline: 3px solid var(--green); outline-offset: 3px; border-radius: 4px; }
+  .skip { position: absolute; left: -9999px; top: 0; background: var(--green); color: var(--bg); padding: 10px 16px; z-index: 10; }
+  .skip:focus { left: 8px; top: 8px; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 20px; }
+  header.top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 20px 0; border-bottom: 1px solid var(--outline); }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--text); text-decoration: none; }
+  .brand svg { width: 30px; height: 30px; }
+  .lang { display: inline-block; padding: 8px 16px; border-radius: 999px; background: var(--surface-high); color: var(--text); font-weight: 600; font-size: 15px; text-decoration: none; }
+  h1 { font-size: clamp(28px, 6vw, 40px); line-height: 1.15; letter-spacing: -0.02em; margin: 36px 0 8px; }
+  h2 { font-size: 24px; line-height: 1.25; margin: 44px 0 12px; scroll-margin-top: 16px; }
+  h3 { font-size: 18px; margin: 28px 0 8px; }
+  p, ul { margin: 0 0 16px; }
+  ul { padding-left: 1.3em; }
+  li { margin-bottom: 6px; }
+  .meta { color: var(--muted); margin: 0 0 24px; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .9em; background: var(--surface-high); padding: 1px 6px; border-radius: 6px; }
+  .toc { background: var(--surface); border: 1px solid var(--outline); border-radius: 16px; padding: 16px 20px; margin: 0 0 8px; }
+  .toc p { margin: 0 0 6px; font-weight: 600; }
+  .toc ul { margin: 0; columns: 2 220px; list-style: none; padding: 0; }
+  .toc li { margin: 0 0 4px; break-inside: avoid; }
+  .table-wrap { margin: 0 0 20px; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th, td { text-align: left; vertical-align: top; padding: 10px 12px; border: 1px solid var(--outline); }
+  thead th { background: var(--surface-high); }
+  tbody th { background: var(--surface); font-weight: 600; }
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    thead { position: absolute; left: -9999px; }
+    table, tbody, tr, th, td { display: block; }
+    tr { border: 1px solid var(--outline); border-radius: 12px; margin: 0 0 12px; overflow: hidden; background: var(--surface); }
+    th, td { border: 0; padding: 8px 14px; }
+    tbody th { background: var(--surface-high); }
+    td::before { content: attr(data-label); display: block; color: var(--muted); font-size: 13px; }
+  }
+  footer { margin: 56px 0 0; padding: 24px 0 48px; border-top: 1px solid var(--outline); color: var(--muted); font-size: 15px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+</style>
+</head>
+<body>
+<a class="skip" href="#contenu">Aller au texte</a>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="../">
+      <svg viewBox="0 0 108 108" aria-hidden="true"><rect width="108" height="108" rx="26" fill="#141A22"/><path fill="#3DDC97" d="M40,30h22a6,6 0,0 1,6 6v40h-34v-40a6,6 0,0 1,6 -6zM40,38v12h22v-12z"/><path fill="#3DDC97" d="M70,44l8,6v22a4,4 0,0 1,-8 0v-14h-2v-4h2z"/></svg>
+      EcoDrive OBD
+    </a>
+    <a class="lang" href="../en/privacy/" hreflang="en" lang="en">English</a>
+  </header>
+
+  <main id="contenu">
+    <h1>Politique de confidentialité d'EcoDrive OBD</h1>
+    <p class="meta">Dernière mise à jour : <time datetime="2026-10-16">16 octobre 2026</time></p>
+    <nav class="toc" aria-label="Sur cette page">
+      <p>Sur cette page</p>
+      <ul>
+    <li><a href="#qui-sommes-nous">Qui sommes-nous</a></li>
+    <li><a href="#en-bref">En bref</a></li>
+    <li><a href="#ce-que-lapplication-lit">Ce que l'application lit</a></li>
+    <li><a href="#la-localisation-pourquoi-quand">La localisation : pourquoi, quand</a></li>
+    <li><a href="#ce-qui-quitte-votre-telephone-et-vers-qui">Ce qui quitte votre téléphone, et vers qui</a></li>
+    <li><a href="#ce-qui-est-enregistre-sur-votre-telephone-et-combien-de-temps">Ce qui est enregistré sur votre téléphone, et combien de temps</a></li>
+    <li><a href="#sauvegarde-android">Sauvegarde Android</a></li>
+    <li><a href="#vos-droits-et-comment-les-exercer">Vos droits et comment les exercer</a></li>
+    <li><a href="#ce-que-lapplication-ne-fait-pas">Ce que l'application ne fait pas</a></li>
+    <li><a href="#cette-page-et-le-site-du-projet">Cette page et le site du projet</a></li>
+    <li><a href="#enfants">Enfants</a></li>
+    <li><a href="#changements">Changements</a></li>
+    <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+
+<h2 id="qui-sommes-nous">Qui sommes-nous</h2>
+<p>EcoDrive OBD est une application Android (identifiant <code>tech.dm.conso</code>) éditée par <strong>DM Consulting</strong>, SARL, SIREN 889 957 643, 78 avenue des Champs-Élysées, 75008 Paris. Le code source est public : <a href="https://github.com/mickadoua/ecodrive-obd">https://github.com/mickadoua/ecodrive-obd</a></p>
+<p>Contact pour toute question sur vos données : <strong><a href="mailto:mickael@dm-consulting.tech">mickael@dm-consulting.tech</a></strong></p>
+<h2 id="en-bref">En bref</h2>
+<ul>
+  <li>Pas de compte. Pas de publicité. Pas de traceur. Pas d'outil de mesure d'audience. Pas de rapport de plantage envoyé.</li>
+  <li>Nous n'avons pas de serveur. Nous ne recevons aucune de vos données.</li>
+  <li>Vos trajets et votre historique restent sur votre téléphone.</li>
+  <li>Le numéro de série du véhicule (VIN) n'est jamais enregistré et jamais envoyé.</li>
+  <li>Trois services tiers peuvent recevoir des données de localisation quand vous utilisez certaines fonctions. Ils sont décrits plus bas.</li>
+</ul>
+<h2 id="ce-que-lapplication-lit">Ce que l'application lit</h2>
+<p><strong>Dans la voiture, par le module OBD-II (ELM327) en Bluetooth :</strong> régime moteur, vitesse, débit d'air, débit de carburant, temps écoulé depuis le démarrage du moteur, type de carburant. L'application s'en sert pour calculer votre consommation et votre note d'éco-conduite.</p>
+<p><strong>Le VIN (numéro d'identification du véhicule).</strong> L'application le lit une fois à la connexion pour en déduire la marque et l'année du modèle. Ensuite, le numéro complet est oublié. Il n'est écrit dans aucun fichier, il n'est envoyé à personne. Seules la marque et l'année restent en mémoire pendant la connexion, pour être affichées.</p>
+<p><strong>Sur le téléphone :</strong></p>
+<ul>
+  <li>Votre <strong>position GPS</strong> (latitude, longitude, altitude), une fois par seconde, pendant un trajet.</li>
+  <li>La <strong>pression atmosphérique</strong>, si votre téléphone a un baromètre, pour mesurer l'altitude.</li>
+  <li>Le <strong>nom et l'adresse Bluetooth</strong> du module OBD que vous choisissez, pour s'y reconnecter la fois suivante, et, si vous activez le démarrage automatique, ceux de la voiture.</li>
+  <li>Les <strong>informations de véhicule que vous saisissez</strong> vous-même (marque, modèle, année, carburant, cylindrée, segment).</li>
+</ul>
+<h2 id="la-localisation-pourquoi-quand">La localisation : pourquoi, quand</h2>
+<p>La position sert à deux choses : mesurer le dénivelé de la route (pour ne pas vous pénaliser en côte) et tracer sur une carte, route par route, où vous consommez plus que prévu.</p>
+<p>Elle est lue <strong>tant que l'application est connectée au module OBD</strong> (en pratique, tant que la voiture est sous contact). Cela continue quand l'application est en arrière-plan ou l'écran éteint : une notification « Trajet en cours » reste affichée pendant ce temps. La lecture s'arrête quand la connexion au module OBD s'arrête.</p>
+<p>Le trajet peut aussi démarrer <strong>sans que vous ouvriez l'application</strong>, si vous avez activé le « Démarrage automatique » : quand votre téléphone se connecte au Bluetooth de votre voiture, l'application se connecte au module OBD et enregistre le trajet. C'est la seule raison pour laquelle elle demande l'autorisation de position « Toujours autoriser ». Cette fonction est désactivée tant que vous ne l'activez pas, et vous pouvez retirer l'autorisation à tout moment.</p>
+<p>L'accès à la localisation est facultatif. Sans lui, l'application fonctionne toujours, mais sans carte ni correction de pente. Vous pouvez le retirer à tout moment dans les réglages Android.</p>
+<h2 id="ce-qui-quitte-votre-telephone-et-vers-qui">Ce qui quitte votre téléphone, et vers qui</h2>
+<p>Nous n'envoyons rien à un serveur qui nous appartienne. Voici les seuls échanges réseau de l'application, tous liés à la localisation.</p>
+<h3>1. Open-Meteo (altitude) — uniquement si votre téléphone n'a pas de baromètre.</h3>
+<ul>
+  <li>Donnée envoyée : les coordonnées GPS de votre trajet (5 décimales, soit environ 1 mètre), par lots d'au plus 100 points, au fil du trajet, pour obtenir l'altitude du sol. Comme pour toute connexion internet, votre adresse IP est visible par le service.</li>
+  <li>Si votre téléphone a un baromètre, cet échange n'a pas lieu.</li>
+  <li>Connexion chiffrée (HTTPS).</li>
+  <li>Chez eux : Open-Meteo indique conserver des journaux de serveur, qui peuvent contenir des coordonnées, pendant 90 jours, et ne pas les partager. Leur politique : <a href="https://open-meteo.com/en/terms">https://open-meteo.com/en/terms</a> (consultée le 15 octobre 2026). Ce sont leurs règles, pas les nôtres.</li>
+</ul>
+<h3>2. OpenStreetMap (fonds de carte) — quand vous ouvrez l'onglet Carte.</h3>
+<ul>
+  <li>Donnée envoyée : des demandes de tuiles de carte pour la zone que vous regardez. La zone indique donc où vous êtes ou où vous avez roulé. Votre adresse IP est visible par les serveurs. L'identifiant de l'application (<code>tech.dm.conso</code>) accompagne la demande.</li>
+  <li>Chez eux : la Fondation OpenStreetMap gère ces serveurs. Sa politique : <a href="https://osmfoundation.org/wiki/Privacy_Policy">https://osmfoundation.org/wiki/Privacy_Policy</a> (consultée le 15 octobre 2026).</li>
+  <li>Les tuiles déjà chargées sont gardées dans le cache de l'application pour éviter de les retélécharger.</li>
+</ul>
+<h3>3. Le service de noms de rues d'Android — quand vous ouvrez la carte ou le détail d'un jour.</h3>
+<ul>
+  <li>Donnée envoyée : les coordonnées d'un point de chaque portion de route, pour obtenir le nom de la rue. L'application ne contacte pas ce service elle-même : elle passe par la fonction de géocodage d'Android. Sur la plupart des téléphones, ce service est fourni par Google et suit les règles de Google. Sur un téléphone sans services Google, il peut ne pas fonctionner, et les noms de rues ne s'affichent alors pas.</li>
+  <li>Seul le <strong>nom de la rue</strong> est gardé dans l'application. Pas les coordonnées envoyées.</li>
+</ul>
+<p>Nous ne vendons aucune donnée. Nous n'en recevons aucune.</p>
+<h2 id="ce-qui-est-enregistre-sur-votre-telephone-et-combien-de-temps">Ce qui est enregistré sur votre téléphone, et combien de temps</h2>
+<p>Tout est dans l'espace privé de l'application. Les autres applications n'y ont pas accès.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th scope="col">Donnée</th><th scope="col">Contenu</th><th scope="col">Durée de conservation</th></tr></thead>
+<tbody>
+<tr><th scope="row">Portions de route</th><td data-label="Contenu">position GPS des points, distance, carburant, pente, vitesse moyenne, date</td><td data-label="Durée de conservation">Tant que vous ne supprimez pas les données de l'application. Aucune limite automatique.</td></tr>
+<tr><th scope="row">Trajet en cours</th><td data-label="Contenu">mesures horodatées (vitesse, litres par heure, altitude, pente, note) — <strong>sans position GPS</strong></td><td data-label="Durée de conservation">Jusqu'au trajet suivant, qui le remplace. Au plus 4 heures de mesures.</td></tr>
+<tr><th scope="row">Historique par jour</th><td data-label="Contenu">litres, kilomètres, note par jour</td><td data-label="Durée de conservation">90 derniers jours</td></tr>
+<tr><th scope="row">Noms de rues</th><td data-label="Contenu">nom de rue et commune par zone</td><td data-label="Durée de conservation">Tant que vous ne supprimez pas les données de l'application</td></tr>
+<tr><th scope="row">Module OBD et voiture</th><td data-label="Contenu">nom et adresse Bluetooth</td><td data-label="Durée de conservation">Jusqu'à ce que vous choisissiez un autre module ou désactiviez le démarrage automatique, ou jusqu'à suppression des données</td></tr>
+<tr><th scope="row">Profil du véhicule</th><td data-label="Contenu">ce que vous avez saisi</td><td data-label="Durée de conservation">Jusqu'à modification ou suppression des données</td></tr>
+<tr><th scope="row">Tuiles de carte</th><td data-label="Contenu">images de carte</td><td data-label="Durée de conservation">Dans le cache de l'application, que le système ou vous pouvez vider</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Jamais enregistré : le VIN.</strong></p>
+<h2 id="sauvegarde-android">Sauvegarde Android</h2>
+<p>Android peut sauvegarder les données de l'application dans votre compte Google si la sauvegarde est activée sur votre téléphone. Cette sauvegarde est gérée par Android et Google, pas par nous. Vous la réglez dans les paramètres du téléphone (Système &gt; Sauvegarde). La restauration sur un nouveau téléphone peut remettre vos données dessus.</p>
+<h2 id="vos-droits-et-comment-les-exercer">Vos droits et comment les exercer</h2>
+<p>Vos données sont sur votre téléphone. Vous les contrôlez directement :</p>
+<ul>
+  <li><strong>Voir vos données</strong> : elles sont affichées dans l'application (historique, carte, trajets).</li>
+  <li><strong>Les supprimer</strong> : dans les réglages Android, Applications &gt; EcoDrive OBD &gt; Stockage &gt; Effacer les données (cela efface tout ce que l'application a enregistré). Ou <strong>désinstallez l'application</strong> : le stockage privé de l'application est alors effacé. Le cache de tuiles est effacé de la même façon.</li>
+  <li><strong>Retirer la localisation, le Bluetooth ou les notifications</strong> : réglages Android, Applications &gt; EcoDrive OBD &gt; Autorisations.</li>
+</ul>
+<p>Ce qui reste hors de l'application après suppression : une éventuelle sauvegarde Android (voir plus haut), à supprimer depuis votre compte Google, et les journaux chez Open-Meteo, OpenStreetMap et Google, qui relèvent de leurs politiques.</p>
+<p>Nous ne détenons pas vos données. Si vous nous écrivez pour en demander l'accès ou la suppression, nous ne pourrons que vous indiquer ces démarches. Pour exercer vos droits auprès des services tiers, écrivez-leur directement.</p>
+<h2 id="ce-que-lapplication-ne-fait-pas">Ce que l'application ne fait pas</h2>
+<ul>
+  <li>Pas de compte, pas d'identifiant utilisateur.</li>
+  <li>Pas de publicité, pas d'identifiant publicitaire.</li>
+  <li>Pas de traceur, pas de mesure d'audience, pas de rapport de plantage.</li>
+  <li>Pas d'envoi de vos données de conduite à d'autres conducteurs. <strong>Le classement « communauté » affiché dans l'application est une simulation</strong> : les autres conducteurs sont générés sur votre téléphone, ils n'existent pas.</li>
+</ul>
+<h2 id="cette-page-et-le-site-du-projet">Cette page et le site du projet</h2>
+<p>Cette page ne dépose aucun cookie, n'utilise aucun outil de mesure d'audience et ne charge aucune ressource d'un autre site (ni police, ni script). Comme pour tout site, son hébergeur, GitHub (GitHub Pages), reçoit l'adresse IP de chaque visiteur et applique sa propre politique : <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement</a> (consultée le 16 octobre 2026).</p>
+<!-- Ce paragraphe décrit la page de présentation : le supprimer
+     dès que la police Inter y est auto-hébergée (plus de Google Fonts). -->
+<p>La page de présentation du projet charge la police Inter depuis les serveurs de Google (Google Fonts). Votre navigateur contacte alors Google, qui voit votre adresse IP.</p>
+<h2 id="enfants">Enfants</h2>
+<p>L'application n'est pas destinée aux enfants. Nous ne collectons aucune donnée sur eux.</p>
+<h2 id="changements">Changements</h2>
+<p>Si l'application change ce qu'elle fait de vos données, nous mettrons ce texte à jour avant la sortie de la version concernée et nous changerons la date en haut de page.</p>
+<h2 id="contact">Contact</h2>
+<p><strong><a href="mailto:mickael@dm-consulting.tech">mickael@dm-consulting.tech</a></strong> — DM Consulting</p>
+  </main>
+
+  <footer>
+    <a href="../">← Retour à la présentation</a>
+    <a href="https://github.com/mickadoua/ecodrive-obd">Code source sur GitHub</a>
+  </footer>
+</div>
+</body>
+</html>
