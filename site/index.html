@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0B0F14">
+<!-- Favicon en ligne (meme logo que la barre de navigation) : evite une
+     requete /favicon.ico qui repond 404 sur GitHub Pages. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20108%20108'%3E%3Crect%20width='108'%20height='108'%20rx='26'%20fill='%23141A22'/%3E%3Cpath%20fill='%233DDC97'%20d='M40,30h22a6,6%200,0%201,6%206v40h-34v-40a6,6%200,0%201,6%20-6zM40,38v12h22v-12z'/%3E%3Cpath%20fill='%233DDC97'%20d='M70,44l8,6v22a4,4%200,0%201,-8%200v-14h-2v-4h2z'/%3E%3C/svg%3E">
 <title>EcoDrive OBD — real-time fuel consumption, gradient-aware eco-driving</title>
 <meta name="description" content="Open-source Android app that reads your car's fuel consumption over OBD-II and scores eco-driving while accounting for road gradient. Android Auto ready.">
 
@@ -126,6 +130,13 @@
     overflow-x: clip;
   }
   a { color: inherit; }
+  :focus-visible { outline: 3px solid var(--green); outline-offset: 3px; border-radius: 4px; }
+  .shots:focus-visible { outline-offset: -3px; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition-duration: .01ms !important; }
+    .btn:hover { transform: none; }
+  }
   .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
 
   nav { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; }
@@ -221,7 +232,7 @@
 <body>
 <div class="wrap">
   <nav>
-    <a class="brand" href="#">
+    <a class="brand" href="./">
       <svg viewBox="0 0 108 108" aria-hidden="true"><rect width="108" height="108" rx="26" fill="#141A22"/><path fill="#3DDC97" d="M40,30h22a6,6 0,0 1,6 6v40h-34v-40a6,6 0,0 1,6 -6zM40,38v12h22v-12z"/><path fill="#3DDC97" d="M70,44l8,6v22a4,4 0,0 1,-8 0v-14h-2v-4h2z"/></svg>
       EcoDrive OBD
     </a>
@@ -245,12 +256,12 @@
   </header>
 </div>
 
-<div class="shots" aria-label="Screenshots">
-  <figure class="phone"><img src="screenshots/direct.jpg" alt="Live dashboard with instant consumption gauge and trip stats" loading="lazy"><figcaption>Live dashboard</figcaption></figure>
-  <figure class="phone"><img src="screenshots/trajet.jpg" alt="Trip chart coloured by eco score with elevation profile" loading="lazy"><figcaption>Trip chart &amp; relief</figcaption></figure>
-  <figure class="phone"><img src="screenshots/carte.jpg" alt="Map of over-consumption aggregated per road" loading="lazy"><figcaption>Over-consumption map</figcaption></figure>
-  <figure class="phone"><img src="screenshots/classement.jpg" alt="Anonymous leaderboard per road section" loading="lazy"><figcaption>Leaderboard</figcaption></figure>
-  <figure class="phone"><img src="screenshots/vehicule.jpg" alt="Vehicle profile detected from VIN" loading="lazy"><figcaption>Vehicle profile</figcaption></figure>
+<div class="shots" role="group" tabindex="0" aria-label="Screenshots">
+  <figure class="phone"><img src="screenshots/direct.jpg" width="554" height="1200" alt="Live dashboard with instant consumption gauge and trip stats" loading="lazy"><figcaption>Live dashboard</figcaption></figure>
+  <figure class="phone"><img src="screenshots/trajet.jpg" width="554" height="1200" alt="Trip chart coloured by eco score with elevation profile" loading="lazy"><figcaption>Trip chart &amp; relief</figcaption></figure>
+  <figure class="phone"><img src="screenshots/carte.jpg" width="554" height="1200" alt="Map of over-consumption aggregated per road" loading="lazy"><figcaption>Over-consumption map</figcaption></figure>
+  <figure class="phone"><img src="screenshots/classement.jpg" width="554" height="1200" alt="Anonymous leaderboard per road section" loading="lazy"><figcaption>Leaderboard</figcaption></figure>
+  <figure class="phone"><img src="screenshots/vehicule.jpg" width="554" height="1200" alt="Vehicle profile detected from VIN" loading="lazy"><figcaption>Vehicle profile</figcaption></figure>
 </div>
 
 <div class="wrap">
