@@ -10,11 +10,15 @@ import tech.dm.conso.data.LiveState
 import tech.dm.conso.data.Sample
 import tech.dm.conso.ui.Palette
 
-const val TREND_WINDOW_S = 300
+private const val TREND_WINDOW_S = 300
+private const val BUCKET_S = 10
+private const val BUCKETS = TREND_WINDOW_S / BUCKET_S
 
 fun trendPoints(samples: List<Sample>): List<Double?> =
-    samples.takeLast(TREND_WINDOW_S).map { s ->
-        s.litersPerHour?.takeIf { s.speedKmh >= 5 }?.let { (it / s.speedKmh * 100).coerceAtMost(30.0) }
+    samples.takeLast(TREND_WINDOW_S).chunked(BUCKET_S).map { bucket ->
+        val moving = bucket.filter { it.speedKmh >= 5 && it.litersPerHour != null }
+        if (moving.isEmpty()) null
+        else (moving.sumOf { it.litersPerHour!! } / moving.sumOf { it.speedKmh } * 100).coerceAtMost(30.0)
     }
 
 fun carTips(s: LiveState): List<String> = buildList {
@@ -28,20 +32,19 @@ fun carTips(s: LiveState): List<String> = buildList {
     s.eco?.message?.let(::add)
 }
 
-fun renderTrend(points: List<Double?>, average: Double?, width: Int = 480, height: Int = 270): Bitmap {
-    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+fun renderTrend(points: List<Double?>, average: Double?, width: Int = 400, height: Int = 225): Bitmap {
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
-    canvas.drawColor(Palette.Surface.toArgb())
     val pad = height * 0.08f
     val values = points.filterNotNull()
     val top = maxOf(10.0, (values.maxOrNull() ?: 0.0) * 1.15, (average ?: 0.0) * 1.3)
-    fun x(i: Int) = pad + (width - 2 * pad) * i / (TREND_WINDOW_S - 1).toFloat()
+    fun x(i: Int) = pad + (width - 2 * pad) * i / (BUCKETS - 1).toFloat()
     fun y(v: Double) = (height - pad) - (height - 2 * pad) * (v / top).toFloat()
 
     val grid = Paint().apply { color = Palette.Outline.toArgb(); strokeWidth = 2f }
     for (v in 5..top.toInt() step 5) canvas.drawLine(pad, y(v.toDouble()), width - pad, y(v.toDouble()), grid)
 
-    val offset = TREND_WINDOW_S - points.size
+    val offset = BUCKETS - points.size
     val line = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE; strokeWidth = 6f; strokeCap = Paint.Cap.ROUND; strokeJoin = Paint.Join.ROUND
     }
