@@ -11,9 +11,15 @@ data class DayStats(
     val distanceKm: Double = 0.0,
     val ecoSum: Double = 0.0,
     val ecoCount: Int = 0,
+    val ecoKmSum: Double = 0.0,
+    val ecoKm: Double = 0.0,
 ) {
     val avgL100: Double? get() = if (distanceKm > 0.5) fuelL / distanceKm * 100.0 else null
-    val ecoScore: Double? get() = if (ecoCount > 0) ecoSum / ecoCount else null
+    val ecoScore: Double? get() = when {
+        ecoKm > 0.1 -> ecoKmSum / ecoKm
+        ecoCount > 0 -> ecoSum / ecoCount
+        else -> null
+    }
 }
 
 class DailyHistory(private val file: File) {
@@ -28,6 +34,7 @@ class DailyHistory(private val file: File) {
                     LocalDate.parse(o.getString("date")),
                     o.getDouble("fuelL"), o.getDouble("distanceKm"),
                     o.getDouble("ecoSum"), o.getInt("ecoCount"),
+                    o.optDouble("ecoKmSum", 0.0), o.optDouble("ecoKm", 0.0),
                 )
                 days[d.date] = d
             }
@@ -40,8 +47,8 @@ class DailyHistory(private val file: File) {
         days[date] = d.copy(
             fuelL = d.fuelL + fuelL,
             distanceKm = d.distanceKm + distanceKm,
-            ecoSum = d.ecoSum + (eco ?: 0.0),
-            ecoCount = d.ecoCount + if (eco != null) 1 else 0,
+            ecoKmSum = d.ecoKmSum + (eco ?: 0.0) * distanceKm,
+            ecoKm = d.ecoKm + if (eco != null) distanceKm else 0.0,
         )
     }
 
@@ -60,6 +67,8 @@ class DailyHistory(private val file: File) {
                     .put("distanceKm", it.distanceKm)
                     .put("ecoSum", it.ecoSum)
                     .put("ecoCount", it.ecoCount)
+                    .put("ecoKmSum", it.ecoKmSum)
+                    .put("ecoKm", it.ecoKm)
             )
         }
         file.writeText(arr.toString())
