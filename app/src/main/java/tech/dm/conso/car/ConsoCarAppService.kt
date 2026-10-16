@@ -7,6 +7,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.car.app.AppManager
 import androidx.car.app.CarAppService
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
@@ -17,7 +18,10 @@ import androidx.car.app.model.CarIcon
 import androidx.car.app.model.GridItem
 import androidx.car.app.model.GridTemplate
 import androidx.car.app.model.ItemList
+import androidx.car.app.model.ListTemplate
+import androidx.car.app.model.Row
 import androidx.car.app.model.Template
+import androidx.car.app.navigation.model.MapWithContentTemplate
 import androidx.car.app.validation.HostValidator
 import androidx.car.app.versioning.CarAppApiLevels
 import androidx.core.content.ContextCompat
@@ -25,6 +29,9 @@ import androidx.core.graphics.drawable.IconCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import androidx.savedstate.SavedStateRegistry
+import androidx.savedstate.SavedStateRegistryController
+import androidx.savedstate.SavedStateRegistryOwner
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
@@ -32,6 +39,7 @@ import tech.dm.conso.BuildConfig
 import tech.dm.conso.ConsoApp
 import tech.dm.conso.auto.AutoStartStore
 import tech.dm.conso.data.ConnectionStatus
+import tech.dm.conso.data.LiveState
 import tech.dm.conso.data.ObdSource
 import tech.dm.conso.service.ObdService
 
@@ -42,8 +50,21 @@ class ConsoCarAppService : CarAppService() {
             .addAllowedHosts(androidx.car.app.R.array.hosts_allowlist_sample)
             .build()
 
-    override fun onCreateSession(): Session = object : Session() {
-        override fun onCreateScreen(intent: Intent): Screen = DashboardScreen(carContext)
+    override fun onCreateSession(): Session = ConsoSession()
+}
+
+class ConsoSession : Session(), SavedStateRegistryOwner {
+    private val savedState = SavedStateRegistryController.create(this).apply {
+        performAttach()
+        performRestore(null)
+    }
+    override val savedStateRegistry: SavedStateRegistry get() = savedState.savedStateRegistry
+
+    override fun onCreateScreen(intent: Intent): Screen {
+        if (carContext.carAppApiLevel >= CarAppApiLevels.LEVEL_7) {
+            carContext.getCarService(AppManager::class.java).setSurfaceCallback(DashboardSurface(carContext, this))
+        }
+        return DashboardScreen(carContext)
     }
 }
 
@@ -67,6 +88,27 @@ class DashboardScreen(carContext: CarContext) : Screen(carContext) {
 
     override fun onGetTemplate(): Template {
         val s = telemetry.state.value
+        if (carContext.carAppApiLevel < CarAppApiLevels.LEVEL_7) return tilesTemplate(s)
+        val content = if (s.status == ConnectionStatus.CONNECTED) {
+            ListTemplate.Builder()
+                .setTitle("Conso")
+                .setHeaderAction(Action.APP_ICON)
+                .setSingleList(
+                    ItemList.Builder()
+                        .addItem(Row.Builder().setTitle(carTips(s).firstOrNull() ?: "En attente de données").build())
+                        .build()
+                )
+                .build()
+        } else tilesTemplate(s)
+        val map = MapWithContentTemplate.Builder().setContentTemplate(content)
+        if (s.status == ConnectionStatus.CONNECTED) {
+            val stop = Action.Builder().setTitle("Arrêter").setOnClickListener { telemetry.disconnect() }.build()
+            map.setActionStrip(ActionStrip.Builder().addAction(stop).build())
+        }
+        return map.build()
+    }
+
+    private fun tilesTemplate(s: LiveState): Template {
         val grid = GridTemplate.Builder()
             .setTitle(s.error?.takeIf { s.status == ConnectionStatus.ERROR }?.let { "Conso · $it" } ?: "Conso")
             .setHeaderAction(Action.APP_ICON)
