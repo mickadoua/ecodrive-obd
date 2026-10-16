@@ -66,7 +66,7 @@ fun LeaderboardScreen(
 
         item {
             Spacer(Modifier.height(8.dp))
-            SectionTitle("Véhicules équivalents", "${profile.segment.label} · ${if (profile.fuel.name == "DIESEL") "diesel" else "essence"}")
+            SectionTitle("Véhicules équivalents", "${profile.segment.label} · ${profile.energyLabel}")
         }
         if (!profile.isConfigured) {
             item {
@@ -151,6 +151,6 @@ private fun ModelRow(rank: Int, m: ModelEntry) {
             if (!m.isMe) Text("${m.drivers} conducteurs", color = Palette.Muted, fontSize = 11.sp)
         }
         Text("%.1f".format(m.medianL100), color = Palette.Text, fontWeight = FontWeight.SemiBold)
-        Text(" L/100", color = Palette.Muted, fontSize = 11.sp)
+        Text(" ${LocalPowertrain.current.per100Short}", color = Palette.Muted, fontSize = 11.sp)
     }
 }

@@ -20,7 +20,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Bluetooth
+import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.material.icons.rounded.Landscape
 import androidx.compose.material.icons.rounded.PowerSettingsNew
 import androidx.compose.material.icons.rounded.Science
@@ -43,7 +45,9 @@ import tech.dm.conso.data.ConnectionStatus
 import tech.dm.conso.data.DayStats
 import tech.dm.conso.data.LiveState
 import tech.dm.conso.data.ObdSource
+import tech.dm.conso.data.Vehicle
 import tech.dm.conso.obd.FuelMethod
+import tech.dm.conso.obd.Powertrain
 import kotlin.math.atan
 
 @Composable
@@ -74,7 +78,7 @@ fun Dashboard(
             TripChart(state.samples)
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Legend(Palette.Green, "L/100 km, couleur = éco-conduite")
+                Legend(Palette.Green, "${LocalPowertrain.current.per100Unit}, couleur = éco-conduite")
                 Legend(Palette.Blue, "Relief")
             }
         }
@@ -83,7 +87,7 @@ fun Dashboard(
             val fuel = days.sumOf { it.fuelL }
             SectionTitle(
                 "7 derniers jours · touchez un jour",
-                if (total > 0.5) "%.0f km · %.1f L/100 km".format(total, fuel / total * 100) else "Aucun trajet",
+                if (total > 0.5) "%.0f km · %.1f %s".format(total, fuel / total * 100, LocalPowertrain.current.per100Unit) else "Aucun trajet",
             )
             Spacer(Modifier.height(12.dp))
             DaysBarChart(days, onDayClick = onDayClick)
@@ -135,14 +139,15 @@ private fun Header(state: LiveState, onConnectClick: () -> Unit, onDisconnect: (
 
 @Composable
 private fun HeroCard(state: LiveState) {
+    val powertrain = LocalPowertrain.current
     val l100 = state.litersPer100
     val display = l100 ?: state.litersPerHour
-    val unit = if (l100 != null) "L/100 km" else "L/h"
-    val gaugeMax = if (l100 != null) 20f else 3f
+    val unit = if (l100 != null) powertrain.per100Unit else powertrain.rateUnit
+    val gaugeMax = (if (l100 != null) 20f else 3f) * powertrain.consumptionScale.toFloat()
     val fraction by animateFloatAsState(((display ?: 0.0) / gaugeMax).toFloat(), label = "gauge")
     val color by animateColorAsState(
         when {
-            l100 != null -> Palette.forConsumption(l100)
+            l100 != null -> Palette.forConsumption(l100, powertrain)
             display != null -> Palette.Blue
             else -> Palette.Outline
         },
@@ -163,11 +168,29 @@ private fun HeroCard(state: LiveState) {
             }
             Spacer(Modifier.width(16.dp))
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Stat("Moyenne trajet", state.tripAvgL100?.let { "%.1f".format(it) } ?: "–", "L/100")
+                Stat("Moyenne trajet", state.tripAvgL100?.let { "%.1f".format(it) } ?: "–", powertrain.per100Short)
                 Stat("Distance", "%.1f".format(state.tripKm), "km")
-                Stat("Carburant", "%.2f".format(state.tripLiters), "L")
-                Stat("Régime", state.rpm?.let { "%.0f".format(it) } ?: "–", "tr/min")
+                Stat(powertrain.totalLabel, "%.2f".format(state.tripLiters), powertrain.totalUnit)
+                when (powertrain) {
+                    Powertrain.ICE -> Stat("Régime", state.rpm?.let { "%.0f".format(it) } ?: "–", "tr/min")
+                    Powertrain.HYBRID -> Stat("Part électrique", state.electricSharePct?.let { "%.0f".format(it) } ?: "–", "%")
+                    Powertrain.ELECTRIC -> Stat("Batterie", state.batteryPct?.let { "%.0f".format(it) } ?: "–", "%")
+                }
             }
+        }
+        if (powertrain == Powertrain.HYBRID && state.batteryPct != null) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "Batterie hybride (PID 5B) : %.0f %%".format(state.batteryPct) + (state.rpm?.let { " · moteur %.0f tr/min".format(it) } ?: ""),
+                color = Palette.Muted, fontSize = 12.sp,
+            )
+        }
+        if (state.status == ConnectionStatus.CONNECTED && state.method == FuelMethod.ELECTRIC_MODEL) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "Estimation par modèle physique : les PIDs OBD standard ne donnent pas la puissance batterie, la plupart des électriques ne l'exposent que par des PIDs constructeur.",
+                color = Palette.Yellow, fontSize = 12.sp,
+            )
         }
         if (state.status == ConnectionStatus.CONNECTED && state.method == FuelMethod.NONE) {
             Spacer(Modifier.height(8.dp))
@@ -200,7 +223,7 @@ private fun EcoCard(state: LiveState) {
                 eco?.let {
                     if (state.tripScore != null) Text("Récent : %.0f".format(it.score), color = Palette.Muted, fontSize = 12.sp)
                     Text(
-                        "Attendu sur ce relief : %.1f L/h".format(it.expectedLh),
+                        "Attendu sur ce relief : %.1f %s".format(it.expectedLh, LocalPowertrain.current.rateUnit),
                         color = Palette.Muted, fontSize = 12.sp,
                     )
                 }
@@ -291,6 +314,23 @@ fun SourcePicker(sources: List<ObdSource>, onPick: (ObdSource) -> Unit, onDismis
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Annuler") } },
+    )
+}
+
+@Composable
+fun UnknownVehicleDialog(suggested: String, vehicles: List<Vehicle>, onChoose: (String?) -> Unit) {
+    AlertDialog(
+        onDismissRequest = {},
+        containerColor = Palette.Surface,
+        title = { Text("Véhicule inconnu") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Ce module ou cette voiture n'est pas encore connu. Sans choix d'ici une minute, un nouveau véhicule est créé.", color = Palette.Muted, fontSize = 12.sp)
+                SourceRow(Icons.Rounded.Add, "Nouveau véhicule : $suggested") { onChoose(null) }
+                vehicles.forEach { v -> SourceRow(Icons.Rounded.DirectionsCar, "C'est ${v.name}") { onChoose(v.id) } }
+            }
+        },
+        confirmButton = {},
     )
 }
 

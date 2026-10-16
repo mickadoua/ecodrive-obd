@@ -43,6 +43,7 @@ import tech.dm.conso.data.Sample
 import tech.dm.conso.data.bucketFor
 import tech.dm.conso.data.downsample
 import tech.dm.conso.obd.FuelCalculator
+import tech.dm.conso.obd.Powertrain
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -64,6 +65,7 @@ fun TripChart(samples: List<Sample>, modifier: Modifier = Modifier) {
     var panMs by remember { mutableLongStateOf(0L) }
     var selectedWall by remember { mutableStateOf<Long?>(null) }
     val measurer = rememberTextMeasurer()
+    val powertrain = LocalPowertrain.current
 
     val first = samples.firstOrNull()?.wallMs ?: 0L
     val last = samples.lastOrNull()?.wallMs ?: 0L
@@ -136,7 +138,7 @@ fun TripChart(samples: List<Sample>, modifier: Modifier = Modifier) {
                     }
                 },
         ) {
-            drawChart(visible, startMs, spanMs, selectedWall, measurer, bucketMs)
+            drawChart(visible, startMs, spanMs, selectedWall, measurer, bucketMs, powertrain)
         }
         Spacer(Modifier.height(6.dp))
         Text(
@@ -161,6 +163,7 @@ private fun DrawScope.drawChart(
     selectedWall: Long?,
     measurer: TextMeasurer,
     bucketMs: Long,
+    powertrain: Powertrain,
 ) {
     val label = TextStyle(color = Palette.Muted, fontSize = 10.sp)
     val left = LEFT.toPx()
@@ -177,7 +180,7 @@ private fun DrawScope.drawChart(
     }
 
     val maxC = (ceil((visible.mapNotNull { it.l100() }.maxOrNull() ?: 10.0).coerceIn(10.0, 30.0) / 5) * 5)
-    fun yC(v: Double) = bottom - (v.coerceAtMost(maxC) / maxC * h).toFloat()
+    fun yC(v: Double) = bottom - (v.coerceIn(0.0, maxC) / maxC * h).toFloat()
 
     val alts = visible.mapNotNull { it.altitudeM }
     val minA = alts.minOrNull()
@@ -207,7 +210,7 @@ private fun DrawScope.drawChart(
         drawText(measurer, "%.0f".format(level), Offset(0f, y - 7), label)
         level += 5.0
     }
-    drawText(measurer, "L/100 km", Offset(left, -4f), label)
+    drawText(measurer, powertrain.per100Unit, Offset(left, -4f), label)
 
     visible.zipWithNext { a, b ->
         val ca = a.l100() ?: return@zipWithNext
@@ -237,7 +240,7 @@ private fun DrawScope.drawChart(
 
     val lines = listOfNotNull(
         clock.format(Instant.ofEpochMilli(sel.wallMs)) + if (bucketMs > 1_000) " · moy. ${bucketMs / 1_000} s" else "",
-        sel.l100()?.let { "%.1f L/100 km".format(it) } ?: sel.litersPerHour?.let { "%.1f L/h (arrêt)".format(it) },
+        sel.l100()?.let { "%.1f %s".format(it, powertrain.per100Unit) } ?: sel.litersPerHour?.let { "%.1f %s (arrêt)".format(it, powertrain.rateUnit) },
         "%.0f km/h".format(sel.speedKmh) + (sel.ecoScore?.let { " · éco %.0f".format(it) } ?: ""),
         sel.altitudeM?.let { "alt. %.0f m · pente %+.1f %%".format(it, sel.grade * 100) },
     )
