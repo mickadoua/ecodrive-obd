@@ -131,12 +131,12 @@ class TelemetryRepository(context: Context) {
     }
 
     fun selectVehicle(id: String) {
-        if (job?.isActive == true) return
+        if (job?.isCompleted == false) return
         vehicles.all().firstOrNull { it.id == id }?.let(::open)
     }
 
     fun createVehicle(name: String) {
-        if (job?.isActive == true) return
+        if (job?.isCompleted == false) return
         open(vehicles.create(name))
     }
 
@@ -219,8 +219,10 @@ class TelemetryRepository(context: Context) {
 
     fun connect(source: ObdSource, retry: Boolean = false, maxAttempts: Int = MAX_RETRIES) {
         if (retry && job?.isActive == true) return
+        val previous = job
         disconnect()
         job = scope.launch {
+            previous?.join()
             var attempt = 0
             while (true) {
                 val willRetry = retry && attempt + 1 < maxAttempts
