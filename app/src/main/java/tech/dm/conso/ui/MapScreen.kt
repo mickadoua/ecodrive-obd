@@ -27,6 +27,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -253,26 +254,27 @@ internal fun OsmMap(segments: List<Segment>, current: GeoPoint?, focus: List<Seg
 
     val target = focus.ifEmpty { segments }
     val targetKey: Any? = if (focus.isNotEmpty()) focus.map { it.key to it.startedAt } else segments.firstOrNull()?.let { it.key to it.startedAt }
+    val select by rememberUpdatedState(onSelect)
+    val drawn = remember { mutableStateOf<Pair<List<Segment>, List<Segment>>?>(null) }
+    val here = remember {
+        Polyline(map).apply {
+            outlinePaint.color = AndroidColor.WHITE
+            outlinePaint.strokeWidth = 26f
+            outlinePaint.strokeCap = Paint.Cap.ROUND
+        }
+    }
 
     AndroidView({ map }, Modifier.fillMaxSize()) { m ->
-        m.overlays.clear()
-        segments.forEach { s ->
-            m.overlays += Polyline(m).apply {
-                setPoints(s.points.map { OsmPoint(it.lat, it.lon) })
-                outlinePaint.color = excessColor(s.excessRatio).toArgb()
-                outlinePaint.strokeWidth = if (s in focus) 22f else 12f
-                outlinePaint.strokeCap = Paint.Cap.ROUND
-                setOnClickListener { _, _, _ -> onSelect(s); true }
-            }
+        val drawnSegments = drawn.value
+        if (drawnSegments?.first !== segments || drawnSegments.second !== focus) {
+            drawn.value = segments to focus
+            val focused = focus.mapTo(HashSet()) { it.key to it.startedAt }
+            m.overlays.clear()
+            m.overlays += SegmentsOverlay(segments, { s -> excessColor(s.excessRatio).toArgb() to if ((s.key to s.startedAt) in focused) 22f else 12f }) { select(it) }
+            m.overlays += here
         }
-        current?.let { p ->
-            m.overlays += Polyline(m).apply {
-                setPoints(listOf(OsmPoint(p.lat, p.lon), OsmPoint(p.lat + 0.00001, p.lon)))
-                outlinePaint.color = AndroidColor.WHITE
-                outlinePaint.strokeWidth = 26f
-                outlinePaint.strokeCap = Paint.Cap.ROUND
-            }
-        }
+        if (current != null) here.setPoints(listOf(OsmPoint(current.lat, current.lon), OsmPoint(current.lat + 0.00001, current.lon)))
+        here.isEnabled = current != null
         when {
             target.isNotEmpty() && fitted.value != targetKey -> {
                 fitted.value = targetKey
