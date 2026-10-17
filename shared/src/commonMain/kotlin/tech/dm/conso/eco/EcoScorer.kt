@@ -2,6 +2,7 @@ package tech.dm.conso.eco
 
 import tech.dm.conso.data.Ahead
 import tech.dm.conso.data.AheadKind
+import tech.dm.conso.fixed
 import tech.dm.conso.obd.FuelType
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -88,7 +89,7 @@ class EcoScorer(private val model: VehicleModel = VehicleModel(), private val fu
         if (wasted != null) {
             val p = (phasePeakKmh - phaseStartKmh).coerceIn(15.0, 35.0)
             score -= p
-            hints += Triple(p, EcoHint.WASTED_ACCEL, "Accélération perdue : freinage %.0f s après".format(sinceAccelS))
+            hints += Triple(p, EcoHint.WASTED_ACCEL, "Accélération perdue : freinage ${sinceAccelS.fixed(0)} s après")
         }
         if (accelMs2 > HARSH_ACCEL) {
             val p = ((accelMs2 - HARSH_ACCEL) * 25.0).coerceAtMost(35.0)

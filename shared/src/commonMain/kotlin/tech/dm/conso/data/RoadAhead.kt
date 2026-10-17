@@ -58,12 +58,12 @@ class RoadArea(val center: GeoPoint, val ways: List<LimitWay>, val features: Lis
 
         fun forwardLateral(origin: GeoPoint, q: GeoPoint, bearingDeg: Double): Pair<Double, Double> {
             val (x, y) = local(origin, q)
-            val b = Math.toRadians(bearingDeg)
+            val b = rad(bearingDeg)
             return (x * sin(b) + y * cos(b)) to (x * cos(b) - y * sin(b))
         }
 
         private fun local(origin: GeoPoint, q: GeoPoint): Pair<Double, Double> =
-            (q.lon - origin.lon) * 111_320.0 * cos(Math.toRadians(origin.lat)) to (q.lat - origin.lat) * 111_320.0
+            (q.lon - origin.lon) * 111_320.0 * cos(rad(origin.lat)) to (q.lat - origin.lat) * 111_320.0
 
         fun distanceToWay(p: GeoPoint, points: List<GeoPoint>): Double {
             if (points.size == 1) return Geo.distanceM(p, points[0])

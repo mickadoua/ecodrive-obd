@@ -1,7 +1,7 @@
 package tech.dm.conso
 
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import kotlin.test.assertEquals
+import kotlin.test.Test
 import tech.dm.conso.data.Sample
 import tech.dm.conso.data.bucketFor
 import tech.dm.conso.data.downsample

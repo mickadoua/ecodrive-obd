@@ -1,5 +1,6 @@
 package tech.dm.conso.data
 
+import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
@@ -31,27 +32,31 @@ object Geo {
     }
 
     fun distanceM(a: GeoPoint, b: GeoPoint): Double {
-        val dLat = Math.toRadians(b.lat - a.lat)
-        val dLon = Math.toRadians(b.lon - a.lon)
+        val dLat = rad(b.lat - a.lat)
+        val dLon = rad(b.lon - a.lon)
         val h = sin(dLat / 2) * sin(dLat / 2) +
-            cos(Math.toRadians(a.lat)) * cos(Math.toRadians(b.lat)) * sin(dLon / 2) * sin(dLon / 2)
+            cos(rad(a.lat)) * cos(rad(b.lat)) * sin(dLon / 2) * sin(dLon / 2)
         return 2 * EARTH_RADIUS_M * atan2(sqrt(h), sqrt(1 - h))
     }
 
     fun bearingDeg(a: GeoPoint, b: GeoPoint): Double {
-        val la = Math.toRadians(a.lat)
-        val lb = Math.toRadians(b.lat)
-        val dLon = Math.toRadians(b.lon - a.lon)
+        val la = rad(a.lat)
+        val lb = rad(b.lat)
+        val dLon = rad(b.lon - a.lon)
         val y = sin(dLon) * cos(lb)
         val x = cos(la) * sin(lb) - sin(la) * cos(lb) * cos(dLon)
-        return (Math.toDegrees(atan2(y, x)) + 360) % 360
+        return (deg(atan2(y, x)) + 360) % 360
     }
 
     fun offset(p: GeoPoint, distanceM: Double, bearingDeg: Double): GeoPoint {
-        val b = Math.toRadians(bearingDeg)
+        val b = rad(bearingDeg)
         return GeoPoint(
             p.lat + distanceM * cos(b) / 111_320.0,
-            p.lon + distanceM * sin(b) / (111_320.0 * cos(Math.toRadians(p.lat))),
+            p.lon + distanceM * sin(b) / (111_320.0 * cos(rad(p.lat))),
         )
     }
 }
+
+internal fun rad(deg: Double) = deg * PI / 180.0
+
+internal fun deg(rad: Double) = rad * 180.0 / PI

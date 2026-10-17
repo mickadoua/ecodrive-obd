@@ -1,9 +1,9 @@
 package tech.dm.conso
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
+import kotlin.test.Test
 import tech.dm.conso.data.Ahead
 import tech.dm.conso.data.AheadKind
 import tech.dm.conso.data.Geo
@@ -65,7 +65,7 @@ class AnticipationTest {
         assertTrue(flagged.first().message.startsWith("Accélération perdue"))
         assertTrue(flagged.first().instantScore < 85)
         val lost = results.sumOf { it.lostL }
-        assertTrue("lost=$lost", lost > 0.005 && lost < 0.1)
+        assertTrue(lost > 0.005 && lost < 0.1, "lost=$lost")
     }
 
     @Test

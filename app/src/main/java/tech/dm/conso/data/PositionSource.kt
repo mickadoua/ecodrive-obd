@@ -11,16 +11,6 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Looper
 
-data class GeoPoint(val lat: Double, val lon: Double)
-
-interface PositionSource {
-    val altitudeM: Double?
-    val location: GeoPoint?
-    val hasPreciseAltitude: Boolean
-    fun start() = Unit
-    fun stop() = Unit
-}
-
 class DevicePositionSource(context: Context) : PositionSource, SensorEventListener, LocationListener {
     private val sensors = context.getSystemService(SensorManager::class.java)
     private val locations = context.getSystemService(LocationManager::class.java)

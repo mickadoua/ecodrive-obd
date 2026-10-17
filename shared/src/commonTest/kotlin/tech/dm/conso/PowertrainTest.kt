@@ -1,10 +1,10 @@
 package tech.dm.conso
 
-import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import kotlinx.coroutines.test.runTest
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+import kotlin.test.Test
 import tech.dm.conso.eco.VehicleModel
 import tech.dm.conso.obd.Elm327
 import tech.dm.conso.obd.FuelCalculator
@@ -76,7 +76,7 @@ class PowertrainTest {
     }
 
     @Test
-    fun electricSimulator() = runBlocking {
+    fun electricSimulator() = runTest {
         var now = 0L
         val elm = Elm327(SimulatedElm327(Powertrain.ELECTRIC) { now })
         elm.initialize()
@@ -86,7 +86,7 @@ class PowertrainTest {
     }
 
     @Test
-    fun hybridSimulatorRollsWithEngineOff() = runBlocking {
+    fun hybridSimulatorRollsWithEngineOff() = runTest {
         var now = 0L
         val elm = Elm327(SimulatedElm327(Powertrain.HYBRID) { now })
         elm.initialize()

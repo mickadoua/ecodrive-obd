@@ -43,15 +43,6 @@ sealed interface ObdSource {
     data class Bluetooth(val device: BluetoothDevice, override val label: String) : ObdSource
 }
 
-data class Sample(
-    val wallMs: Long,
-    val speedKmh: Double,
-    val litersPerHour: Double?,
-    val altitudeM: Double?,
-    val grade: Double,
-    val ecoScore: Double?,
-)
-
 data class LiveState(
     val status: ConnectionStatus = ConnectionStatus.DISCONNECTED,
     val sourceLabel: String? = null,
