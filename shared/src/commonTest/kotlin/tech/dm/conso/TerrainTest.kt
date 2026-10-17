@@ -1,8 +1,9 @@
 package tech.dm.conso
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.Test
+import kotlinx.coroutines.test.runTest
 import tech.dm.conso.data.Geo
 import tech.dm.conso.data.GeoPoint
 import tech.dm.conso.data.TerrainElevation
@@ -16,7 +17,7 @@ class TerrainTest {
     }
 
     @Test
-    fun gradeFromTerrainModel() {
+    fun gradeFromTerrainModel() = runTest {
         val terrain = slopeTerrain(0.05)
         val estimator = TerrainGrade(terrain)
         var result: Pair<Double?, Double> = null to 0.0
@@ -37,7 +38,7 @@ class TerrainTest {
     }
 
     @Test
-    fun failedFetchKeepsPointsPending() {
+    fun failedFetchKeepsPointsPending() = runTest {
         var fail = true
         val terrain = TerrainElevation { pts -> if (fail) null else pts.map { 100.0 } }
         terrain.request(start)
