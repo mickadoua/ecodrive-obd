@@ -1,0 +1,29 @@
+name: EcoDriveOBD
+options:
+  bundleIdPrefix: tech.dm
+  deploymentTarget:
+    iOS: "16.0"
+targets:
+  EcoDriveOBD:
+    type: application
+    platform: iOS
+    sources: [EcoDriveOBD]
+    info:
+      path: EcoDriveOBD/Info.plist
+      properties:
+        CFBundleDisplayName: EcoDrive OBD
+        UILaunchScreen: {}
+        NSBluetoothAlwaysUsageDescription: Connexion au boîtier OBD-II Bluetooth LE pour lire la consommation.
+        NSLocalNetworkUsageDescription: Connexion au boîtier OBD-II Wi-Fi pour lire la consommation.
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: tech.dm.conso
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+        FRAMEWORK_SEARCH_PATHS: $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)
+        OTHER_LDFLAGS: [-framework, Shared]
+    preBuildScripts:
+      - name: Compile Kotlin
+        basedOnDependencyAnalysis: false
+        script: |
+          cd "$SRCROOT/.."
+          ./gradlew :shared:embedAndSignAppleFrameworkForXcode
