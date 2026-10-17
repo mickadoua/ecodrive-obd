@@ -1,7 +1,8 @@
 package tech.dm.conso.obd
 
-import android.os.SystemClock
 import kotlinx.coroutines.delay
+import tech.dm.conso.hex
+import tech.dm.conso.monotonicMs
 import tech.dm.conso.eco.VehicleModel
 import tech.dm.conso.data.Geo
 import tech.dm.conso.data.GeoPoint
@@ -15,7 +16,7 @@ import kotlin.random.Random
 
 class SimulatedElm327(
     private val powertrain: Powertrain = Powertrain.ICE,
-    private val clock: () -> Long = SystemClock::elapsedRealtime,
+    private val clock: () -> Long = ::monotonicMs,
 ) : ObdTransport, PositionSource {
     private data class Leg(val targetKmh: Double, val seconds: Double, val accel: Double)
 
@@ -80,7 +81,7 @@ class SimulatedElm327(
             pid == Pids.ENGINE_RUNTIME -> hex2(((clock() - openedAt) / 1000).toDouble())
             else -> return "NO DATA\r\r"
         }
-        return "41%02X%s\r\r".format(pid, payload)
+        return "41" + pid.hex(2) + payload + "\r\r"
     }
 
     override fun close() = Unit
@@ -143,6 +144,6 @@ class SimulatedElm327(
         const val SIM_VIN = "UU1SDENL5K6012345"
     }
 
-    private fun hex1(v: Double) = "%02X".format(v.roundToInt().coerceIn(0, 255))
-    private fun hex2(v: Double) = "%04X".format(v.roundToInt().coerceIn(0, 65535))
+    private fun hex1(v: Double) = v.roundToInt().coerceIn(0, 255).hex(2)
+    private fun hex2(v: Double) = v.roundToInt().coerceIn(0, 65535).hex(4)
 }

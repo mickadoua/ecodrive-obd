@@ -1,5 +1,7 @@
 package tech.dm.conso.obd
 
+import tech.dm.conso.hex
+
 class ObdException(message: String) : Exception(message)
 
 class Elm327(private val transport: ObdTransport) {
@@ -15,7 +17,7 @@ class Elm327(private val transport: ObdTransport) {
     fun supports(pid: Int) = pid in supported
 
     suspend fun query(pid: Int): IntArray? {
-        val raw = transport.send("01%02X".format(pid), 2_000)
+        val raw = transport.send("01" + pid.hex(2), 2_000)
         return parseResponse(raw, pid)
     }
 
@@ -26,7 +28,7 @@ class Elm327(private val transport: ObdTransport) {
     private suspend fun discoverSupportedPids() {
         var base = 0x00
         while (base <= 0xA0) {
-            val raw = transport.send("01%02X".format(base), if (base == 0) 15_000 else 2_000)
+            val raw = transport.send("01" + base.hex(2), if (base == 0) 15_000 else 2_000)
             val data = parseResponse(raw, base)
             if (data == null) {
                 if (base == 0) throw ObdException(errorOf(raw) ?: "Pas de réponse du véhicule")
@@ -40,7 +42,7 @@ class Elm327(private val transport: ObdTransport) {
 
     companion object {
         fun parseResponse(raw: String, pid: Int): IntArray? {
-            val prefix = "41%02X".format(pid)
+            val prefix = "41" + pid.hex(2)
             return raw.split('\r', '\n')
                 .map { it.replace(" ", "").uppercase() }
                 .firstOrNull { it.startsWith(prefix) }
@@ -66,7 +68,7 @@ class Elm327(private val transport: ObdTransport) {
                 val offset = it - base - 1
                 bytes[offset / 8] = bytes[offset / 8] or (0x80 shr (offset % 8))
             }
-            return bytes.joinToString("") { "%02X".format(it) }
+            return bytes.joinToString("") { it.hex(2) }
         }
 
         private fun errorOf(raw: String): String? = listOf(

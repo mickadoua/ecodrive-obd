@@ -1,5 +1,11 @@
 package tech.dm.conso.obd
 
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
+import tech.dm.conso.hex
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+
 data class VinInfo(val make: String?, val modelYear: Int?)
 
 object Vin {
@@ -35,20 +41,21 @@ object Vin {
         return vin.takeIf { it.length == 17 && it.none { c -> c in "IOQ" } }
     }
 
+    @OptIn(ExperimentalTime::class)
     fun decode(vin: String): VinInfo {
         val make = WMI[vin.take(3)]
         val code = YEAR_CODES.indexOf(vin[9])
         val year = if (code < 0) null else {
             val base = 2010 + code
-            if (base > java.time.Year.now().value + 1) base - 30 else base
+            if (base > Clock.System.todayIn(TimeZone.currentSystemDefault()).year + 1) base - 30 else base
         }
         return VinInfo(make, year)
     }
 
     fun encodeForSimulator(vin: String): String {
-        val bytes = "01" + vin.map { "%02X".format(it.code) }.joinToString("")
+        val bytes = "01" + vin.map { it.code.hex(2) }.joinToString("")
         val payload = "4902$bytes"
-        val lines = mutableListOf("%03X".format(payload.length / 2))
+        val lines = mutableListOf((payload.length / 2).hex(3))
         payload.chunked(14).forEachIndexed { i, chunk -> lines += "$i:$chunk" }
         return lines.joinToString("\r") + "\r\r"
     }

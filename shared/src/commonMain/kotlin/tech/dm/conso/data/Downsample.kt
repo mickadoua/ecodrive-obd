@@ -1,5 +1,14 @@
 package tech.dm.conso.data
 
+data class Sample(
+    val wallMs: Long,
+    val speedKmh: Double,
+    val litersPerHour: Double?,
+    val altitudeM: Double?,
+    val grade: Double,
+    val ecoScore: Double?,
+)
+
 fun bucketFor(spanMs: Long): Long = (spanMs / 60).coerceAtLeast(1_000L).let { ((it + 999) / 1_000) * 1_000 }
 
 fun downsample(samples: List<Sample>, bucketMs: Long): List<Sample> {

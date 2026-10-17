@@ -1,10 +1,10 @@
 package tech.dm.conso
 
-import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import kotlinx.coroutines.test.runTest
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import kotlin.test.Test
 import tech.dm.conso.eco.EcoHint
 import tech.dm.conso.eco.EcoScorer
 import tech.dm.conso.obd.Elm327
@@ -69,7 +69,7 @@ class ObdParsingTest {
     }
 
     @Test
-    fun simulatorSpeaksElm327() = runBlocking {
+    fun simulatorSpeaksElm327() = runTest {
         var now = 0L
         val sim = SimulatedElm327 { now }
         val elm = Elm327(sim)

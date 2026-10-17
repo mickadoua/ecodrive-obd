@@ -9,12 +9,6 @@ import kotlinx.coroutines.withTimeout
 import java.io.IOException
 import java.util.UUID
 
-interface ObdTransport {
-    suspend fun open()
-    suspend fun send(command: String, timeoutMs: Long = 2_000): String
-    fun close()
-}
-
 class BluetoothTransport(private val device: BluetoothDevice) : ObdTransport {
     private var socket: BluetoothSocket? = null
 
