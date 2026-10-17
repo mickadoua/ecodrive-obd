@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "conso-app"
-include(":app")
+include(":app", ":shared")
