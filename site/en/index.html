@@ -178,6 +178,10 @@
     .grid .card { grid-column: span 2; }
     .grid .card:nth-child(n+4):nth-last-child(-n+2) { grid-column: span 3; }
   }
+  @media (min-width: 560px) and (max-width: 859px) {
+    .grid { grid-template-columns: repeat(2, 1fr); }
+    .grid .card:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  }
   .card { background: var(--surface); border: 1px solid var(--outline); border-radius: 22px; padding: 26px; }
   .card h3 { margin: 14px 0 8px; font-size: 18px; }
   .card p { margin: 0; color: var(--muted); font-size: 15px; }
