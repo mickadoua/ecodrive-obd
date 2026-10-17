@@ -24,7 +24,7 @@ class DashboardScreenTest {
     fun disconnectedDashboardOffersObdAndDemoTiles() {
         val template = (DashboardScreen(carContext).onGetTemplate() as MapWithContentTemplate).contentTemplate as GridTemplate
 
-        assertEquals("Conso", template.title.toString())
+        assertEquals("EcoDrive OBD", template.title.toString())
         assertEquals(listOf("OBD", "Démo"), template.singleList!!.items.map { (it as GridItem).title.toString() })
     }
 }

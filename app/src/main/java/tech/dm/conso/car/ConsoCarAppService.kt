@@ -91,7 +91,7 @@ class DashboardScreen(carContext: CarContext) : Screen(carContext) {
         if (carContext.carAppApiLevel < CarAppApiLevels.LEVEL_7) return tilesTemplate(s)
         val content = if (s.status == ConnectionStatus.CONNECTED) {
             ListTemplate.Builder()
-                .setTitle("Conso")
+                .setTitle("EcoDrive OBD")
                 .setHeaderAction(Action.APP_ICON)
                 .setSingleList(
                     ItemList.Builder()
@@ -110,7 +110,7 @@ class DashboardScreen(carContext: CarContext) : Screen(carContext) {
 
     private fun tilesTemplate(s: LiveState): Template {
         val grid = GridTemplate.Builder()
-            .setTitle(s.error?.takeIf { s.status == ConnectionStatus.ERROR }?.let { "Conso · $it" } ?: "Conso")
+            .setTitle(s.error?.takeIf { s.status == ConnectionStatus.ERROR }?.let { "EcoDrive OBD · $it" } ?: "EcoDrive OBD")
             .setHeaderAction(Action.APP_ICON)
         if (carContext.carAppApiLevel >= CarAppApiLevels.LEVEL_7) grid.setItemSize(GridTemplate.ITEM_SIZE_LARGE)
         if (s.status == ConnectionStatus.CONNECTING) return grid.setLoading(true).build()
