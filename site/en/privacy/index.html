@@ -108,7 +108,11 @@
     <li><a href="#what-leaves-your-phone-and-where-it-goes">What leaves your phone, and where it goes</a></li>
     <li><a href="#what-is-stored-on-your-phone-and-for-how-long">What is stored on your phone, and for how long</a></li>
     <li><a href="#android-backup">Android backup</a></li>
+    <li><a href="#legal-basis-for-each-processing">Legal basis for each processing</a></li>
+    <li><a href="#transfers-outside-the-eu">Transfers outside the European Union</a></li>
     <li><a href="#your-rights-and-how-to-use-them">Your rights and how to use them</a></li>
+    <li><a href="#complaint-to-the-cnil">Complaint to the CNIL</a></li>
+    <li><a href="#data-protection-officer">Data protection officer</a></li>
     <li><a href="#what-the-app-does-not-do">What the app does not do</a></li>
     <li><a href="#this-page-and-the-project-website">This page and the project website</a></li>
     <li><a href="#children">Children</a></li>
@@ -120,6 +124,7 @@
 <h2 id="who-we-are">Who we are</h2>
 <p>EcoDrive OBD is an Android app (ID <code>tech.dm.conso</code>) published by <strong>DM Consulting</strong>, a SARL (French limited liability company), company number (SIREN) 889 957 643, 78 avenue des Champs-Élysées, 75008 Paris, France. The source code is public: <a href="https://github.com/mickadoua/ecodrive-obd">https://github.com/mickadoua/ecodrive-obd</a></p>
 <p>Contact for any question about your data: <strong><a href="mailto:mickael@dm-consulting.tech">mickael@dm-consulting.tech</a></strong></p>
+<p><strong>Data controller:</strong> DM Consulting, at the details above. The app's data stays on your phone and we have no access to it: this text describes what the app does with it.</p>
 <h2 id="in-short">In short</h2>
 <ul>
   <li>No account. No ads. No trackers. No analytics. No crash reports sent.</li>
@@ -181,17 +186,50 @@
 </table>
 </div>
 <p><strong>Never saved: the VIN.</strong></p>
+<p><strong>What the app's code actually does.</strong> A time limit exists for only two kinds of data: the current trip (at most 4 hours of readings) and the daily history (last 90 days). For road stretches and street names there is no time limit: the app never deletes them on its own. The elevations obtained from Open-Meteo are kept in working memory while the app runs and are not written to a file. At DM Consulting we hold none of this data, so we have no retention period to announce. For third-party services, the periods are given above when the service states one (Open-Meteo: 90 days for its logs); for the others, we have no period to give.</p>
 <h2 id="android-backup">Android backup</h2>
 <p>Android may back up the app's data to your Google account if backup is turned on on your phone. This backup is managed by Android and Google, not by us. You control it in your phone settings (System &gt; Backup). Restoring onto a new phone may put your data back.</p>
-<h2 id="your-rights-and-how-to-use-them">Your rights and how to use them</h2>
-<p>Your data is on your phone. You control it directly:</p>
+<h2 id="legal-basis-for-each-processing">Legal basis for each processing</h2>
+<p>The European data protection regulation (GDPR) asks us to say what each processing relies on. Here is the basis we use, processing by processing. As a reminder: the app sends nothing to a DM Consulting server.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th scope="col">Processing</th><th scope="col">What happens</th><th scope="col">Legal basis</th></tr></thead>
+<tbody>
+<tr><th scope="row">Reading vehicle data (OBD)</th><td data-label="What happens">The app reads engine speed, vehicle speed, flows and fuel type through the Bluetooth adapter, on your phone, to compute consumption and score.</td><td data-label="Legal basis">Providing the service you ask for by using the app (Art. 6(1)(b) GDPR).</td></tr>
+<tr><th scope="row">Location (GPS, barometer)</th><td data-label="What happens">The position is read during a trip, on your phone, for slope and the map.</td><td data-label="Legal basis">Your consent (Art. 6(1)(a)), given through Android's location permission and withdrawable at any time in Android settings. The app only asks for the "Allow all the time" permission if you turn on automatic start.</td></tr>
+<tr><th scope="row">Local storage of trips and history</th><td data-label="What happens">Road stretches, the current trip, the history and the vehicle profile are written to the app's private storage.</td><td data-label="Legal basis">Providing the service (Art. 6(1)(b)): showing you your history and your map. This data does not leave your phone, except through Android backup if you have turned it on.</td></tr>
+<tr><th scope="row">OBD adapter and car (Bluetooth)</th><td data-label="What happens">The Bluetooth name and address are remembered so the app can reconnect.</td><td data-label="Legal basis">Providing the service (Art. 6(1)(b)).</td></tr>
+<tr><th scope="row">Requests to Open-Meteo</th><td data-label="What happens">Coordinates are sent to get ground elevation, only if the phone has no barometer.</td><td data-label="Legal basis">Providing the service (Art. 6(1)(b)): elevation is used for the slope correction. This only happens if you have allowed location.</td></tr>
+<tr><th scope="row">OpenStreetMap tiles</th><td data-label="What happens">Images of the area shown are requested when you open the Map tab.</td><td data-label="Legal basis">Providing the service (Art. 6(1)(b)): showing the map background.</td></tr>
+<tr><th scope="row">Android geocoding</th><td data-label="What happens">A street name is requested for one point of each road stretch, through Android's geocoding feature.</td><td data-label="Legal basis">Providing the service (Art. 6(1)(b)): showing street names.</td></tr>
+</tbody>
+</table>
+</div>
+<p>Open-Meteo, the OpenStreetMap Foundation and Google decide for themselves the legal basis of their own logs: see their policies, cited above. We hold none of your data and receive none.</p>
+<h2 id="transfers-outside-the-eu">Transfers outside the European Union</h2>
+<p>DM Consulting transfers no data outside the European Union, since we receive none. The three third-party services above receive data directly from your phone, without going through us:</p>
 <ul>
-  <li><strong>See your data</strong>: it is shown in the app (history, map, trips).</li>
-  <li><strong>Delete it</strong>: in Android settings, Apps &gt; EcoDrive OBD &gt; Storage &gt; Clear data (this erases everything the app has saved). Or <strong>uninstall the app</strong>: the app's private storage is then erased. The tile cache is erased the same way.</li>
-  <li><strong>Remove location, Bluetooth or notifications</strong>: Android settings, Apps &gt; EcoDrive OBD &gt; Permissions.</li>
+  <li><strong>Open-Meteo</strong>: a company based in Switzerland (OpenMeteo GmbH, Bürglen, according to its terms of use, read on 16 October 2026). We have not checked which countries its servers are in.</li>
+  <li><strong>OpenStreetMap</strong>: according to the OpenStreetMap Foundation's policy (read on 16 October 2026), map tiles are served by a worldwide network of cache servers; the server that answers is chosen by that network at the time of the request, so it may be outside the European Union. That policy also states that the Foundation's other personal data is stored in the United Kingdom and the Netherlands.</li>
+  <li><strong>Android's geocoding service</strong>: on most phones it is provided by Google, a US group. We have not checked where those requests are processed.</li>
+</ul>
+<p>We cannot vouch for the legal mechanisms these services use for their own transfers: read their policies. For visits to this website, see the section "This page and the project website".</p>
+<h2 id="your-rights-and-how-to-use-them">Your rights and how to use them</h2>
+<p>The GDPR gives you rights over your personal data: access, rectification, erasure, restriction of processing, objection, portability, and withdrawal of your consent where the processing relies on it. Your data is on your phone, not with us. Here is what each right means in practice:</p>
+<ul>
+  <li><strong>Access</strong>: your data is shown in the app (history, map, trips). The app has no export feature.</li>
+  <li><strong>Rectification</strong>: you can edit the vehicle details you typed in. Recorded readings and trips cannot be edited.</li>
+  <li><strong>Erasure</strong>: in Android settings, Apps &gt; EcoDrive OBD &gt; Storage &gt; Clear data (this erases everything the app has saved). Or <strong>uninstall the app</strong>: the app's private storage is then erased. The tile cache is erased the same way. The app has no "Delete my data" button inside it.</li>
+  <li><strong>Restriction and objection</strong>: you stop the processing yourself. Remove the location permission, do not turn on automatic start, do not connect the OBD adapter, or uninstall the app.</li>
+  <li><strong>Portability</strong>: the app has no export feature, and we do not hold your data: we cannot hand it over to you.</li>
+  <li><strong>Withdrawing consent</strong>: remove the location permission in Android settings, Apps &gt; EcoDrive OBD &gt; Permissions, at any time. Withdrawal does not affect what was done before. You can remove Bluetooth and notifications the same way.</li>
 </ul>
 <p>What remains outside the app after deletion: any Android backup (see above), to be deleted from your Google account, and the logs held by Open-Meteo, OpenStreetMap and Google, which are covered by their own policies.</p>
-<p>We do not hold your data. If you write to us to ask for access or deletion, we can only point you to these steps. To exercise your rights with the third-party services, write to them directly.</p>
+<p>You can also write to us at <a href="mailto:mickael@dm-consulting.tech">mickael@dm-consulting.tech</a> about any request concerning these rights. We do not hold your data: if you ask us for access or deletion, we can only point you to these steps. To exercise your rights with the third-party services, write to them directly.</p>
+<h2 id="complaint-to-the-cnil">Complaint to the CNIL</h2>
+<p>If you believe your rights are not being respected, you can lodge a complaint with the French data protection authority, the Commission nationale de l'informatique et des libertés (CNIL): <a href="https://www.cnil.fr/fr/plaintes">https://www.cnil.fr/fr/plaintes</a> (page in French). You can also contact the data protection authority of your country of residence.</p>
+<h2 id="data-protection-officer">Data protection officer</h2>
+<p>No data protection officer has been appointed. For any question, write to <a href="mailto:mickael@dm-consulting.tech">mickael@dm-consulting.tech</a>.</p>
 <h2 id="what-the-app-does-not-do">What the app does not do</h2>
 <ul>
   <li>No account, no user ID.</li>

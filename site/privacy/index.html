@@ -108,7 +108,11 @@
     <li><a href="#ce-qui-quitte-votre-telephone-et-vers-qui">Ce qui quitte votre téléphone, et vers qui</a></li>
     <li><a href="#ce-qui-est-enregistre-sur-votre-telephone-et-combien-de-temps">Ce qui est enregistré sur votre téléphone, et combien de temps</a></li>
     <li><a href="#sauvegarde-android">Sauvegarde Android</a></li>
+    <li><a href="#base-legale-de-chaque-traitement">Base légale de chaque traitement</a></li>
+    <li><a href="#transferts-hors-ue">Transferts hors de l'Union européenne</a></li>
     <li><a href="#vos-droits-et-comment-les-exercer">Vos droits et comment les exercer</a></li>
+    <li><a href="#reclamation-aupres-de-la-cnil">Réclamation auprès de la CNIL</a></li>
+    <li><a href="#delegue-a-la-protection-des-donnees">Délégué à la protection des données</a></li>
     <li><a href="#ce-que-lapplication-ne-fait-pas">Ce que l'application ne fait pas</a></li>
     <li><a href="#cette-page-et-le-site-du-projet">Cette page et le site du projet</a></li>
     <li><a href="#enfants">Enfants</a></li>
@@ -120,6 +124,7 @@
 <h2 id="qui-sommes-nous">Qui sommes-nous</h2>
 <p>EcoDrive OBD est une application Android (identifiant <code>tech.dm.conso</code>) éditée par <strong>DM Consulting</strong>, SARL, SIREN 889 957 643, 78 avenue des Champs-Élysées, 75008 Paris. Le code source est public : <a href="https://github.com/mickadoua/ecodrive-obd">https://github.com/mickadoua/ecodrive-obd</a></p>
 <p>Contact pour toute question sur vos données : <strong><a href="mailto:mickael@dm-consulting.tech">mickael@dm-consulting.tech</a></strong></p>
+<p><strong>Responsable de traitement :</strong> DM Consulting, aux coordonnées ci-dessus. Les données de l'application restent sur votre téléphone et nous n'y avons pas accès : ce texte décrit ce que l'application en fait.</p>
 <h2 id="en-bref">En bref</h2>
 <ul>
   <li>Pas de compte. Pas de publicité. Pas de traceur. Pas d'outil de mesure d'audience. Pas de rapport de plantage envoyé.</li>
@@ -181,17 +186,50 @@
 </table>
 </div>
 <p><strong>Jamais enregistré : le VIN.</strong></p>
+<p><strong>Ce que le code de l'application prévoit réellement.</strong> Une limite de durée n'existe que pour deux données : le trajet en cours (au plus 4 heures de mesures) et l'historique par jour (90 derniers jours). Pour les portions de route et les noms de rues, il n'y a pas de durée : l'application ne les supprime jamais d'elle-même. Les altitudes obtenues d'Open-Meteo sont gardées en mémoire vive pendant que l'application tourne et ne sont pas écrites dans un fichier. Chez DM Consulting, nous ne détenons aucune de ces données, donc nous n'avons aucune durée de conservation à annoncer. Pour les services tiers, les durées sont indiquées plus haut quand le service les donne (Open-Meteo : 90 jours pour ses journaux) ; pour les autres, nous n'avons pas de durée à indiquer.</p>
 <h2 id="sauvegarde-android">Sauvegarde Android</h2>
 <p>Android peut sauvegarder les données de l'application dans votre compte Google si la sauvegarde est activée sur votre téléphone. Cette sauvegarde est gérée par Android et Google, pas par nous. Vous la réglez dans les paramètres du téléphone (Système &gt; Sauvegarde). La restauration sur un nouveau téléphone peut remettre vos données dessus.</p>
-<h2 id="vos-droits-et-comment-les-exercer">Vos droits et comment les exercer</h2>
-<p>Vos données sont sur votre téléphone. Vous les contrôlez directement :</p>
+<h2 id="base-legale-de-chaque-traitement">Base légale de chaque traitement</h2>
+<p>Le règlement européen sur la protection des données (RGPD) demande d'indiquer sur quel fondement repose chaque traitement. Voici celui que nous retenons, traitement par traitement. Rappel : l'application n'envoie rien vers un serveur de DM Consulting.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th scope="col">Traitement</th><th scope="col">Ce qui se passe</th><th scope="col">Base légale</th></tr></thead>
+<tbody>
+<tr><th scope="row">Lecture des données du véhicule (OBD)</th><td data-label="Ce qui se passe">L'application lit régime, vitesse, débits et type de carburant par le module Bluetooth, sur votre téléphone, pour calculer consommation et note.</td><td data-label="Base légale">Fourniture du service que vous demandez en utilisant l'application (art. 6, 1, b du RGPD).</td></tr>
+<tr><th scope="row">Localisation (GPS, baromètre)</th><td data-label="Ce qui se passe">Lecture de la position pendant un trajet, sur votre téléphone, pour la pente et la carte.</td><td data-label="Base légale">Votre consentement (art. 6, 1, a), donné par l'autorisation de position d'Android et retirable à tout moment dans les réglages Android. L'application ne demande l'autorisation « Toujours autoriser » que si vous activez le démarrage automatique.</td></tr>
+<tr><th scope="row">Stockage local des trajets et de l'historique</th><td data-label="Ce qui se passe">Écriture des portions de route, du trajet en cours, de l'historique et du profil du véhicule dans l'espace privé de l'application.</td><td data-label="Base légale">Fourniture du service (art. 6, 1, b) : vous montrer votre historique et votre carte. Ces données ne quittent pas votre téléphone, sauf la sauvegarde Android si vous l'avez activée.</td></tr>
+<tr><th scope="row">Module OBD et voiture (Bluetooth)</th><td data-label="Ce qui se passe">Mémorisation du nom et de l'adresse Bluetooth pour se reconnecter.</td><td data-label="Base légale">Fourniture du service (art. 6, 1, b).</td></tr>
+<tr><th scope="row">Requêtes à Open-Meteo</th><td data-label="Ce qui se passe">Envoi de coordonnées pour obtenir l'altitude du sol, seulement si le téléphone n'a pas de baromètre.</td><td data-label="Base légale">Fourniture du service (art. 6, 1, b) : l'altitude sert à la correction de pente. Cela ne se produit que si vous avez autorisé la localisation.</td></tr>
+<tr><th scope="row">Tuiles OpenStreetMap</th><td data-label="Ce qui se passe">Demande des images de la zone affichée quand vous ouvrez l'onglet Carte.</td><td data-label="Base légale">Fourniture du service (art. 6, 1, b) : afficher le fond de carte.</td></tr>
+<tr><th scope="row">Géocodage Android</th><td data-label="Ce qui se passe">Demande du nom de rue pour un point de chaque portion de route, par la fonction de géocodage d'Android.</td><td data-label="Base légale">Fourniture du service (art. 6, 1, b) : afficher les noms de rues.</td></tr>
+</tbody>
+</table>
+</div>
+<p>Open-Meteo, la Fondation OpenStreetMap et Google décident eux-mêmes de la base légale de leurs propres journaux : voir leurs politiques, citées plus haut. Nous ne détenons aucune de vos données et nous n'en recevons aucune.</p>
+<h2 id="transferts-hors-ue">Transferts hors de l'Union européenne</h2>
+<p>DM Consulting ne transfère aucune donnée hors de l'Union européenne, puisque nous n'en recevons aucune. Les trois services tiers ci-dessus reçoivent des données directement depuis votre téléphone, sans passer par nous :</p>
 <ul>
-  <li><strong>Voir vos données</strong> : elles sont affichées dans l'application (historique, carte, trajets).</li>
-  <li><strong>Les supprimer</strong> : dans les réglages Android, Applications &gt; EcoDrive OBD &gt; Stockage &gt; Effacer les données (cela efface tout ce que l'application a enregistré). Ou <strong>désinstallez l'application</strong> : le stockage privé de l'application est alors effacé. Le cache de tuiles est effacé de la même façon.</li>
-  <li><strong>Retirer la localisation, le Bluetooth ou les notifications</strong> : réglages Android, Applications &gt; EcoDrive OBD &gt; Autorisations.</li>
+  <li><strong>Open-Meteo</strong> : société établie en Suisse (OpenMeteo GmbH, Bürglen, d'après ses conditions d'utilisation, consultées le 16 octobre 2026). Nous n'avons pas vérifié dans quels pays se trouvent ses serveurs.</li>
+  <li><strong>OpenStreetMap</strong> : d'après la politique de la Fondation OpenStreetMap (consultée le 16 octobre 2026), les tuiles de carte sont servies par un réseau mondial de serveurs-cache ; le serveur qui répond est choisi par ce réseau au moment de la demande, et peut donc se trouver hors de l'Union européenne. Cette politique indique aussi que les autres données personnelles de la Fondation sont stockées au Royaume-Uni et aux Pays-Bas.</li>
+  <li><strong>Service de géocodage d'Android</strong> : sur la plupart des téléphones, il est fourni par Google, un groupe américain. Nous n'avons pas vérifié où ces demandes sont traitées.</li>
+</ul>
+<p>Nous ne pouvons pas vous garantir les mécanismes juridiques que ces services utilisent pour leurs propres transferts : lisez leurs politiques. Pour la visite de ce site web, voir la section « Cette page et le site du projet ».</p>
+<h2 id="vos-droits-et-comment-les-exercer">Vos droits et comment les exercer</h2>
+<p>Le RGPD vous donne des droits sur vos données personnelles : accès, rectification, effacement, limitation du traitement, opposition, portabilité, et retrait de votre consentement quand le traitement repose dessus. Vos données sont sur votre téléphone, pas chez nous. Voici ce que chaque droit donne concrètement :</p>
+<ul>
+  <li><strong>Accès</strong> : vos données sont affichées dans l'application (historique, carte, trajets). L'application n'a pas de fonction d'export.</li>
+  <li><strong>Rectification</strong> : vous pouvez modifier les informations de véhicule que vous avez saisies. Les mesures et les trajets enregistrés ne sont pas modifiables.</li>
+  <li><strong>Effacement</strong> : dans les réglages Android, Applications &gt; EcoDrive OBD &gt; Stockage &gt; Effacer les données (cela efface tout ce que l'application a enregistré). Ou <strong>désinstallez l'application</strong> : le stockage privé de l'application est alors effacé. Le cache de tuiles est effacé de la même façon. L'application n'a pas de bouton « Effacer mes données » à l'intérieur.</li>
+  <li><strong>Limitation et opposition</strong> : vous arrêtez vous-même le traitement. Retirez l'autorisation de position, n'activez pas le démarrage automatique, ne connectez pas le module OBD, ou désinstallez l'application.</li>
+  <li><strong>Portabilité</strong> : l'application n'a pas de fonction d'export, et nous ne détenons pas vos données : nous ne pouvons pas vous les remettre.</li>
+  <li><strong>Retrait du consentement</strong> : retirez l'autorisation de position dans les réglages Android, Applications &gt; EcoDrive OBD &gt; Autorisations, à tout moment. Ce retrait ne remet pas en cause ce qui a été fait avant. Vous pouvez aussi retirer de la même façon le Bluetooth et les notifications.</li>
 </ul>
 <p>Ce qui reste hors de l'application après suppression : une éventuelle sauvegarde Android (voir plus haut), à supprimer depuis votre compte Google, et les journaux chez Open-Meteo, OpenStreetMap et Google, qui relèvent de leurs politiques.</p>
-<p>Nous ne détenons pas vos données. Si vous nous écrivez pour en demander l'accès ou la suppression, nous ne pourrons que vous indiquer ces démarches. Pour exercer vos droits auprès des services tiers, écrivez-leur directement.</p>
+<p>Vous pouvez aussi nous écrire à <a href="mailto:mickael@dm-consulting.tech">mickael@dm-consulting.tech</a> pour toute demande sur ces droits. Nous ne détenons pas vos données : si vous nous demandez l'accès ou la suppression, nous ne pourrons que vous indiquer ces démarches. Pour exercer vos droits auprès des services tiers, écrivez-leur directement.</p>
+<h2 id="reclamation-aupres-de-la-cnil">Réclamation auprès de la CNIL</h2>
+<p>Si vous estimez que vos droits ne sont pas respectés, vous pouvez introduire une réclamation auprès de la Commission nationale de l'informatique et des libertés (CNIL) : <a href="https://www.cnil.fr/fr/plaintes">https://www.cnil.fr/fr/plaintes</a>. Vous pouvez aussi vous adresser à l'autorité de protection des données de votre pays de résidence.</p>
+<h2 id="delegue-a-la-protection-des-donnees">Délégué à la protection des données</h2>
+<p>Aucun délégué à la protection des données n'a été désigné. Pour toute question, écrivez à <a href="mailto:mickael@dm-consulting.tech">mickael@dm-consulting.tech</a>.</p>
 <h2 id="ce-que-lapplication-ne-fait-pas">Ce que l'application ne fait pas</h2>
 <ul>
   <li>Pas de compte, pas d'identifiant utilisateur.</li>
