@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EcoDrive OBD : légendes des captures Play</title>
+<style>
+  :root{color-scheme:dark}
+  body{margin:0;padding:24px;background:#0B0F14;color:#E8ECF4;font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+  main{max-width:880px;margin:0 auto}
+  h1{font-size:24px;margin:0 0 8px}
+  p,li{color:#B4BDCC}
+  code{background:#141B24;padding:1px 6px;border-radius:6px}
+  .slot{background:#141B24;border-radius:16px;padding:16px;margin:16px 0;display:grid;grid-template-columns:140px 1fr;gap:16px}
+  .slot canvas{width:140px;height:auto;border-radius:8px;background:#0B0F14;border:1px solid #202A36}
+  label{display:block;font-weight:600;margin-top:8px}
+  input[type=text],textarea,select{width:100%;box-sizing:border-box;background:#0B0F14;color:#E8ECF4;border:1px solid #2B3644;border-radius:8px;padding:8px;font:inherit}
+  textarea{min-height:64px}
+  .msg{font-size:14px;margin-top:6px}
+  .ok{color:#3DDC97}.err{color:#FF5C73}
+  button,.dl{background:#3DDC97;color:#0B0F14;border:0;border-radius:999px;padding:10px 18px;font:600 15px system-ui;cursor:pointer;text-decoration:none;display:inline-block;margin:8px 8px 0 0}
+  button[disabled]{opacity:.4;cursor:default}
+  .dl[hidden]{display:none}
+</style>
+</head>
+<body>
+<main>
+  <h1>Légendes des captures Play</h1>
+  <p>Cet outil ne fait que poser une légende sur de <strong>vraies captures</strong> de l'application (mode simulateur). Il refuse toute image qui n'est pas exactement <code>1080 × 2160</code> ou <code>1080 × 1920</code> : il n'étire ni ne recadre rien. Tout se passe dans votre navigateur, aucun fichier n'est envoyé.</p>
+  <ol>
+    <li>Prenez les 4 captures brutes sur l'émulateur ou le téléphone, <strong>sans légende</strong>, dans l'ordre ci-dessous.</li>
+    <li>Choisissez chaque fichier, vérifiez ou corrigez le texte, puis téléchargez le JPEG.</li>
+    <li>La légende occupe une bande en bas (14 % de la hauteur) ; le haut de l'écran reste intact.</li>
+  </ol>
+  <label for="lang">Langue des légendes</label>
+  <select id="lang"><option value="fr">Français</option><option value="en">English</option></select>
+  <div id="slots"></div>
+  <button id="all" disabled>Tout télécharger</button>
+</main>
+<script>
+const SLOTS = [
+  { key: 'direct',    fr: { text: "Consommation en direct et note d'éco-conduite qui tient compte du dénivelé (mode simulateur)" },
+                      en: { text: "Live consumption and an eco-driving score that accounts for gradient (simulator mode)" } },
+  { key: 'trajet',    fr: { text: "Le trajet : consommation colorée selon la note, avec le relief (mode simulateur)" },
+                      en: { text: "The trip: consumption coloured by score, with the terrain profile (simulator mode)" } },
+  { key: 'carte',     fr: { text: "La carte des routes où l'on a surconsommé (trajet simulé)" },
+                      en: { text: "The map of roads where consumption ran high (simulated trip)" } },
+  { key: 'vehicule',  fr: { text: "Profil du véhicule : seules la marque et l'année sont déduites du VIN, qui n'est ni stocké ni envoyé (détection simulée)" },
+                      en: { text: "Vehicle profile: only make and year are derived from the VIN, which is never stored or sent (simulated detection)" } },
+];
+const SIZES = ['1080x2160', '1080x1920'];
+const BAND = 0.14;
+const state = SLOTS.map(() => ({ img: null, blob: null }));
+const slotsEl = document.getElementById('slots');
+const langEl = document.getElementById('lang');
+const allBtn = document.getElementById('all');
+
+SLOTS.forEach((s, i) => {
+  const div = document.createElement('div');
+  div.className = 'slot';
+  div.innerHTML = `
+    <canvas width="270" height="540" aria-label="aperçu ${i + 1}"></canvas>
+    <div>
+      <strong>${i + 1}. ${s.key}</strong>
+      <label for="f${i}">Capture brute (1080 × 2160 ou 1080 × 1920)</label>
+      <input id="f${i}" type="file" accept="image/png,image/jpeg">
+      <label for="x${i}">Légende</label>
+      <textarea id="x${i}"></textarea>
+      <div class="msg" id="m${i}"></div>
+      <a class="dl" id="d${i}" hidden>Télécharger</a>
+    </div>`;
+  slotsEl.append(div);
+  div.querySelector(`#f${i}`).addEventListener('change', e => load(i, e.target.files[0]));
+  div.querySelector(`#x${i}`).addEventListener('input', () => render(i));
+});
+
+function fillTexts() {
+  const l = langEl.value;
+  SLOTS.forEach((s, i) => {
+    document.getElementById(`x${i}`).value = s[l].text;
+    render(i);
+  });
+}
+langEl.addEventListener('change', fillTexts);
+
+function load(i, file) {
+  const m = document.getElementById(`m${i}`);
+  state[i] = { img: null, blob: null }; m.className = 'msg'; m.textContent = '';
+  if (!file) return render(i);
+  const img = new Image();
+  img.onload = () => {
+    const size = `${img.naturalWidth}x${img.naturalHeight}`;
+    if (!SIZES.includes(size)) {
+      m.className = 'msg err';
+      m.textContent = `Refusé : ${img.naturalWidth} × ${img.naturalHeight}. Attendu exactement 1080 × 2160 ou 1080 × 1920 (pas d'étirement ni de recadrage).`;
+      return render(i);
+    }
+    state[i].img = img; render(i);
+  };
+  img.onerror = () => { m.className = 'msg err'; m.textContent = "Fichier illisible."; };
+  img.src = URL.createObjectURL(file);
+}
+
+function wrap(ctx, text, maxW) {
+  const lines = []; let cur = '';
+  for (const w of text.split(/\s+/)) {
+    const t = cur ? cur + ' ' + w : w;
+    if (ctx.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
+function draw(canvas, img, text) {
+  const W = img.naturalWidth, H = img.naturalHeight;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d', { alpha: false });
+  ctx.fillStyle = '#0B0F14'; ctx.fillRect(0, 0, W, H);
+  ctx.drawImage(img, 0, 0, W, H);
+  const bandH = Math.round(H * BAND), top = H - bandH, pad = Math.round(W * 0.05), maxW = W - 2 * pad;
+  ctx.fillStyle = '#0B0F14'; ctx.fillRect(0, top, W, bandH);
+  ctx.fillStyle = '#3DDC97'; ctx.fillRect(0, top, W, 4);
+  const stack = 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif';
+  ctx.textBaseline = 'top';
+  const avail = bandH - Math.round(bandH * 0.12) * 2;
+  let fs = 56, lines;
+  for (; fs >= 30; fs -= 2) {
+    ctx.font = `600 ${fs}px ${stack}`; lines = wrap(ctx, text, maxW);
+    if (lines.length * fs * 1.25 <= avail) break;
+  }
+  ctx.fillStyle = '#E8ECF4';
+  lines.forEach((l, k) => ctx.fillText(l, pad, top + Math.round(bandH * 0.12) + k * fs * 1.25));
+  return fs;
+}
+
+function render(i) {
+  const prev = document.querySelector(`#slots .slot:nth-child(${i + 1}) canvas`);
+  const m = document.getElementById(`m${i}`), d = document.getElementById(`d${i}`);
+  const s = state[i];
+  if (!s.img) { d.hidden = true; updateAll(); return; }
+  const fs = draw(prev, s.img, document.getElementById(`x${i}`).value.trim());
+  prev.toBlob(b => {
+    if (s.blob) URL.revokeObjectURL(d.href);
+    s.blob = b; d.href = URL.createObjectURL(b); d.download = `${i + 1}-${SLOTS[i].key}-${langEl.value}.jpg`; d.hidden = false;
+    m.className = 'msg ok';
+    m.textContent = `Prêt : ${prev.width} × ${prev.height}, JPEG sans transparence, ${Math.round(b.size / 1024)} Ko, texte ${fs} px.`;
+    updateAll();
+  }, 'image/jpeg', 0.95);
+}
+
+function updateAll() { allBtn.disabled = !state.every(s => s.blob); }
+allBtn.addEventListener('click', () => {
+  SLOTS.forEach((s, i) => { const d = document.getElementById(`d${i}`); d.click(); });
+});
+fillTexts();
+</script>
+</body>
+</html>
