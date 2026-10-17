@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.DirectionsCar
-import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material3.Icon
@@ -40,19 +39,15 @@ import tech.dm.conso.auto.AutoStartStore
 import tech.dm.conso.data.ConnectionStatus
 import tech.dm.conso.data.DayStats
 import tech.dm.conso.data.ObdSource
-import tech.dm.conso.leaderboard.LeaderboardRepository
-import tech.dm.conso.leaderboard.MockLeaderboard
 import tech.dm.conso.service.ObdService
 
 private enum class Tab(val label: String, val icon: ImageVector) {
     DASHBOARD("Direct", Icons.Rounded.Speed),
     MAP("Carte", Icons.Rounded.Map),
-    LEADERBOARD("Classement", Icons.Rounded.EmojiEvents),
     VEHICLE("Véhicule", Icons.Rounded.DirectionsCar),
 }
 
 class MainActivity : ComponentActivity() {
-    private val leaderboard: LeaderboardRepository = MockLeaderboard()
     private val autoStartStore by lazy { AutoStartStore(this) }
     private var autoStart by mutableStateOf(AutoStartSettings())
     private var backgroundLocation by mutableStateOf(false)
@@ -82,18 +77,9 @@ class MainActivity : ComponentActivity() {
                 val roadNames by telemetry.roads.names.collectAsStateWithLifecycle()
                 val unresolvable by telemetry.roads.unresolvable.collectAsStateWithLifecycle()
                 var tab by rememberSaveable { mutableStateOf(Tab.DASHBOARD) }
-                var focusKey by remember { mutableStateOf<String?>(null) }
                 var selectedDay by remember { mutableStateOf<DayStats?>(null) }
                 val days = remember(version, state.tripKm.toInt()) { telemetry.history.lastDays(7) }
                 val segments = remember(version) { telemetry.segments.all() }
-                val myL100 = remember(version) {
-                    telemetry.history.lastDays(30).let { d ->
-                        val km = d.sumOf { it.distanceKm }
-                        if (km > 1) d.sumOf { it.fuelL } / km * 100 else null
-                    }
-                }
-                val portions = remember(segments) { leaderboard.portions(segments) }
-                val models = remember(profile, myL100) { leaderboard.equivalentModels(profile, myL100) }
 
                 val connected = state.status == ConnectionStatus.CONNECTED
                 LaunchedEffect(connected) {
@@ -135,15 +121,7 @@ class MainActivity : ComponentActivity() {
                                 onDisconnect = telemetry::disconnect,
                                 onDayClick = { selectedDay = it },
                             )
-                            Tab.MAP -> MapScreen(segments, roadNames, unresolvable, state.location, focusKey, telemetry.roads::resolve)
-                            Tab.LEADERBOARD -> LeaderboardScreen(
-                                portions = portions,
-                                models = models,
-                                profile = profile,
-                                simulated = leaderboard.isSimulated,
-                                onPortionClick = { focusKey = it; tab = Tab.MAP },
-                                onConfigureVehicle = { tab = Tab.VEHICLE },
-                            )
+                            Tab.MAP -> MapScreen(segments, roadNames, unresolvable, state.location, telemetry.roads::resolve)
                             Tab.VEHICLE -> VehicleScreen(
                                 vehicles = vehicles,
                                 active = vehicle,

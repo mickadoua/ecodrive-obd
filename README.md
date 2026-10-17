@@ -3,11 +3,10 @@
 Android app that measures a car's fuel consumption in real time through a Bluetooth OBD-II module (ELM327), and scores eco-driving **while accounting for road gradient**.
 
 <p>
-  <img src="docs/screenshots/direct.jpg" width="19%" alt="Live dashboard" />
-  <img src="docs/screenshots/trajet.jpg" width="19%" alt="Trip chart" />
-  <img src="docs/screenshots/carte.jpg" width="19%" alt="Over-consumption map" />
-  <img src="docs/screenshots/classement.jpg" width="19%" alt="Leaderboard" />
-  <img src="docs/screenshots/vehicule.jpg" width="19%" alt="Vehicle profile" />
+  <img src="docs/screenshots/direct.jpg" width="24%" alt="Live dashboard" />
+  <img src="docs/screenshots/trajet.jpg" width="24%" alt="Trip chart" />
+  <img src="docs/screenshots/carte.jpg" width="24%" alt="Over-consumption map" />
+  <img src="docs/screenshots/vehicule.jpg" width="24%" alt="Vehicle profile" />
 </p>
 
 The app UI is in French.
@@ -19,7 +18,6 @@ The app UI is in French.
 - **Elevation** from the phone's barometer, or from the [Open-Meteo](https://open-meteo.com/en/docs/elevation-api) terrain model (Copernicus 90 m) when the phone has none.
 - **Trip chart** coloured by eco score, scrollable, averaged according to the displayed time window.
 - **Over-consumption map** (OpenStreetMap), aggregated per road, with a per-day detail view.
-- **Anonymous leaderboard** per road section and per equivalent car model (community data is simulated for now).
 - **Trip kept while the engine runs** (PID 1F), even if the app restarts.
 - **Auto-start** when the phone connects to the car over Bluetooth.
 - **Android Auto** (Car App Library, IoT category).

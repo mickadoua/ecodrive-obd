@@ -71,7 +71,7 @@ fun VehicleScreen(
             OutlinedTextField(active.name, { onRename(active.copy(name = it)) }, Modifier.fillMaxWidth(), label = { Text("Nom du véhicule actif") }, singleLine = true)
             Spacer(Modifier.height(6.dp))
             Text(
-                if (canSwitch) "Reconnu à la connexion par le VIN, sinon par le module OBD. Historique, carte et classement suivent le véhicule actif."
+                if (canSwitch) "Reconnu à la connexion par le VIN, sinon par le module OBD. Historique et carte suivent le véhicule actif."
                 else "Changement de véhicule possible une fois déconnecté.",
                 color = Palette.Muted, fontSize = 11.sp,
             )
