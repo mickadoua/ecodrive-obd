@@ -102,7 +102,7 @@ fun Dashboard(
 private fun Header(state: LiveState, onConnectClick: () -> Unit, onDisconnect: () -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
-            Text("Conso", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Palette.Text)
+            Text("EcoDrive OBD", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Palette.Text)
             val (dot, label) = when (state.status) {
                 ConnectionStatus.CONNECTED -> Palette.Green to (state.sourceLabel ?: "Connecté")
                 ConnectionStatus.CONNECTING -> Palette.Yellow to "Connexion à ${state.sourceLabel ?: "l'OBD"}…"

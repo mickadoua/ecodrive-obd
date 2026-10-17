@@ -94,7 +94,7 @@ class ObdService : Service() {
         )
         return Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat)
-            .setContentTitle("Conso")
+            .setContentTitle("EcoDrive OBD")
             .setContentText(text)
             .setContentIntent(open)
             .setOngoing(true)

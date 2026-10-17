@@ -2,6 +2,7 @@ package tech.dm.conso.ui
 
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -24,8 +25,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tech.dm.conso.data.CarSegment
@@ -150,6 +153,23 @@ fun VehicleScreen(
 
         Text("Enregistré automatiquement", color = Palette.Muted, fontSize = 12.sp)
         autoStart()
+        PrivacyPolicyLink()
         Spacer(Modifier.height(16.dp))
     }
+}
+
+private const val PRIVACY_POLICY_URL = "https://mickadoua.github.io/ecodrive-obd/privacy/"
+
+@Composable
+private fun PrivacyPolicyLink() {
+    val uriHandler = LocalUriHandler.current
+    Text(
+        "Politique de confidentialité",
+        Modifier.fillMaxWidth()
+            .clickable { runCatching { uriHandler.openUri(PRIVACY_POLICY_URL) } }
+            .padding(vertical = 14.dp),
+        color = Palette.Green,
+        fontSize = 14.sp,
+        textDecoration = TextDecoration.Underline,
+    )
 }
