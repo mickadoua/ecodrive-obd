@@ -90,10 +90,10 @@ class TelemetryRepository(context: Context) {
 
     var history = DailyHistory(vehicleFile("history.json"))
         private set
-    var segments = SegmentStore(vehicleFile("segments.jsonl"))
+    var segments = SegmentStore(vehicleText("segments.jsonl"))
         private set
     val roads = RoadNames(appContext, File(appContext.filesDir, "roads.json"))
-    private var tripStore = TripStore(vehicleFile("trip.json"))
+    private var tripStore = TripStore(vehicleText("trip.json"))
     private var tripId = 0L
     private var engineStartMs: Long? = null
     private var tripBuilder: SegmentBuilder? = null
@@ -101,7 +101,7 @@ class TelemetryRepository(context: Context) {
     private var tripStats = TripStats()
     private var tripFinalized = false
     private val speedLimits = SpeedLimits()
-    var summaries = TripSummaryStore(vehicleFile("trips.jsonl"))
+    var summaries = TripSummaryStore(vehicleText("trips.jsonl"))
         private set
     private val _summariesVersion = MutableStateFlow(0)
     val summariesVersion: StateFlow<Int> = _summariesVersion.asStateFlow()
@@ -143,15 +143,16 @@ class TelemetryRepository(context: Context) {
     }
 
     private fun vehicleFile(name: String) = File(vehicles.dir(_vehicle.value.id), name)
+    private fun vehicleText(name: String) = TextFile(vehicleFile(name).path)
 
     private fun open(v: Vehicle) {
         if (v.id != _vehicle.value.id) {
             history.save()
             _vehicle.value = v
             history = DailyHistory(vehicleFile("history.json"))
-            segments = SegmentStore(vehicleFile("segments.jsonl"))
-            tripStore = TripStore(vehicleFile("trip.json"))
-            summaries = TripSummaryStore(vehicleFile("trips.jsonl"))
+            segments = SegmentStore(vehicleText("segments.jsonl"))
+            tripStore = TripStore(vehicleText("trip.json"))
+            summaries = TripSummaryStore(vehicleText("trips.jsonl"))
             profileStore = VehicleProfileStore(appContext, v.id)
             _profile.value = profileStore.load()
             _state.update { LiveState(status = it.status, sourceLabel = it.sourceLabel) }

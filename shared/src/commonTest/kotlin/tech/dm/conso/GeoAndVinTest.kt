@@ -1,9 +1,9 @@
 package tech.dm.conso
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import kotlin.test.Test
 import tech.dm.conso.data.Geo
 import tech.dm.conso.data.GeoPoint
 import tech.dm.conso.data.Segment
