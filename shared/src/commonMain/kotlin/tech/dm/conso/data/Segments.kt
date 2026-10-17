@@ -1,8 +1,16 @@
 package tech.dm.conso.data
 
-import org.json.JSONArray
-import org.json.JSONObject
-import java.io.File
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.double
+import kotlinx.serialization.json.put
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 
 data class Segment(
     val key: String,
@@ -20,21 +28,22 @@ data class Segment(
     val surplusL100: Double get() = l100 - expectedL100
     val excessRatio: Double get() = l100 / expectedL100.coerceAtLeast(MIN_EXPECTED_L100)
 
-    fun toJson(): JSONObject = JSONObject()
-        .put("key", key).put("trip", tripId).put("t", startedAt)
-        .put("d", distanceKm).put("f", fuelL).put("e", expectedFuelL)
-        .put("g", avgGrade).put("v", avgSpeedKmh)
-        .put("p", JSONArray().apply { points.forEach { put(it.lat); put(it.lon) } })
+    fun toJson(): JsonObject = buildJsonObject {
+        put("key", key); put("trip", tripId); put("t", startedAt)
+        put("d", distanceKm); put("f", fuelL); put("e", expectedFuelL)
+        put("g", avgGrade); put("v", avgSpeedKmh)
+        put("p", JsonArray(points.flatMap { listOf(JsonPrimitive(it.lat), JsonPrimitive(it.lon)) }))
+    }
 
     companion object {
         const val MIN_EXPECTED_L100 = 4.0
 
-        fun fromJson(o: JSONObject): Segment {
-            val p = o.getJSONArray("p")
+        fun fromJson(o: JsonObject): Segment {
+            val p = o.array("p").map { it.jsonPrimitive.double }
             return Segment(
-                o.getString("key"), o.getLong("trip"), o.getLong("t"),
-                (0 until p.length() step 2).map { GeoPoint(p.getDouble(it), p.getDouble(it + 1)) },
-                o.getDouble("d"), o.getDouble("f"), o.getDouble("e"), o.getDouble("g"), o.getDouble("v"),
+                o.string("key"), o.long("trip"), o.long("t"),
+                (p.indices step 2).map { GeoPoint(p[it], p[it + 1]) },
+                o.double("d"), o.double("f"), o.double("e"), o.double("g"), o.double("v"),
             )
         }
     }
@@ -97,21 +106,20 @@ class SegmentBuilder(private val tripId: Long, private val onSegment: (Segment) 
     }
 }
 
-class SegmentStore(private val file: File) {
+class SegmentStore(private val file: TextFile) : SynchronizedObject() {
     private val segments = mutableListOf<Segment>()
 
     init {
         runCatching {
-            file.forEachLine { line -> if (line.isNotBlank()) segments += Segment.fromJson(JSONObject(line)) }
+            file.readText().lineSequence().filter { it.isNotBlank() }
+                .forEach { segments += Segment.fromJson(Json.parseToJsonElement(it).jsonObject) }
         }
     }
 
-    @Synchronized
-    fun append(segment: Segment) {
+    fun append(segment: Segment) = synchronized(this) {
         segments += segment
         file.appendText(segment.toJson().toString() + "\n")
     }
 
-    @Synchronized
-    fun all(): List<Segment> = segments.toList()
+    fun all(): List<Segment> = synchronized(this) { segments.toList() }
 }

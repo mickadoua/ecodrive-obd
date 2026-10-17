@@ -1,8 +1,8 @@
 package tech.dm.conso
 
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+import kotlin.test.Test
 import tech.dm.conso.data.TripSnapshot
 
 class TripStoreTest {

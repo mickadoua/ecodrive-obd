@@ -1,8 +1,17 @@
 package tech.dm.conso.data
 
-import org.json.JSONObject
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.put
 import tech.dm.conso.eco.EcoHint
-import java.io.File
+import tech.dm.conso.fixed
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 
 class TripStats(
     var movingS: Double = 0.0,
@@ -24,7 +33,7 @@ class TripStats(
             end = position
         }
         fuelL += fuelStepL
-        if (lostL > 0) wastedL.merge(EcoHint.WASTED_ACCEL, lostL, Double::plus)
+        if (lostL > 0) wastedL.accumulate(EcoHint.WASTED_ACCEL, lostL)
         distanceKm += stepKm
         if (speedKmh < 3) {
             idleS += dt
@@ -35,29 +44,38 @@ class TripStats(
         expectedL += expectedStepL
         scoreWeighted += score * stepKm
         scoredKm += stepKm
-        hintS.merge(hint, dt, Double::plus)
+        hintS.accumulate(hint, dt)
         val surplus = fuelStepL - expectedStepL
-        if (surplus > 0) wastedL.merge(hint, surplus, Double::plus)
+        if (surplus > 0) wastedL.accumulate(hint, surplus)
+    }
+
+    private fun MutableMap<EcoHint, Double>.accumulate(hint: EcoHint, value: Double) {
+        this[hint] = (this[hint] ?: 0.0) + value
     }
 
     val score: Double? get() = if (scoredKm > MIN_SCORED_KM) scoreWeighted / scoredKm else null
 
-    fun toJson(): JSONObject = JSONObject()
-        .put("moving", movingS).put("idle", idleS).put("km", distanceKm).put("fuel", fuelL)
-        .put("expected", expectedL).put("idleFuel", idleFuelL).put("scoreKm", scoreWeighted).put("scoredKm", scoredKm)
-        .put("wasted", JSONObject(wastedL.mapKeys { it.key.name }))
-        .put("hintS", JSONObject(hintS.mapKeys { it.key.name }))
-        .put("start", start?.let { JSONObject().put("lat", it.lat).put("lon", it.lon) } ?: JSONObject.NULL)
-        .put("end", end?.let { JSONObject().put("lat", it.lat).put("lon", it.lon) } ?: JSONObject.NULL)
+    fun toJson(): JsonObject = buildJsonObject {
+        put("moving", movingS); put("idle", idleS); put("km", distanceKm); put("fuel", fuelL)
+        put("expected", expectedL); put("idleFuel", idleFuelL); put("scoreKm", scoreWeighted); put("scoredKm", scoredKm)
+        put("wasted", JsonObject(wastedL.entries.associate { it.key.name to JsonPrimitive(it.value) }))
+        put("hintS", JsonObject(hintS.entries.associate { it.key.name to JsonPrimitive(it.value) }))
+        put("start", start.json())
+        put("end", end.json())
+    }
 
     companion object {
         const val MIN_SCORED_KM = 0.3
 
-        fun fromJson(o: JSONObject): TripStats {
-            fun point(key: String) = o.optJSONObject(key)?.let { GeoPoint(it.getDouble("lat"), it.getDouble("lon")) }
-            fun hints(key: String) = o.optJSONObject(key)?.let { m ->
-                m.keys().asSequence().mapNotNull { k ->
-                    runCatching { EcoHint.valueOf(k) }.getOrNull()?.let { it to m.getDouble(k) }
+        private fun GeoPoint?.json() = this?.let { buildJsonObject { put("lat", it.lat); put("lon", it.lon) } } ?: JsonNull
+
+        fun fromJson(o: JsonObject): TripStats {
+            fun point(key: String) = o.optObject(key)?.let { GeoPoint(it.double("lat"), it.double("lon")) }
+            fun hints(key: String) = o.optObject(key)?.let { m ->
+                m.mapNotNull { (k, v) ->
+                    val hint = EcoHint.entries.firstOrNull { it.name == k }
+                    val value = (v as? JsonPrimitive)?.doubleOrNull
+                    if (hint != null && value != null) hint to value else null
                 }.toMap().toMutableMap()
             } ?: mutableMapOf()
             return TripStats(
@@ -81,17 +99,18 @@ data class TripSummary(
     val expectedL100: Double? get() = if (stats.distanceKm > 0.3) (stats.expectedL + stats.idleFuelL) / stats.distanceKm * 100 else null
     val route: String? get() = if (startCity != null && endCity != null) "$startCity → $endCity" else null
 
-    fun toJson(): JSONObject = JSONObject()
-        .put("id", id).put("start", startedAt).put("end", endedAt)
-        .put("stats", stats.toJson())
-        .put("from", startCity ?: JSONObject.NULL).put("to", endCity ?: JSONObject.NULL)
+    fun toJson(): JsonObject = buildJsonObject {
+        put("id", id); put("start", startedAt); put("end", endedAt)
+        put("stats", stats.toJson())
+        put("from", startCity.json()); put("to", endCity.json())
+    }
 
     companion object {
-        fun fromJson(o: JSONObject) = TripSummary(
-            o.getLong("id"), o.getLong("start"), o.getLong("end"),
-            TripStats.fromJson(o.getJSONObject("stats")),
-            o.optString("from").takeIf { !o.isNull("from") && it.isNotBlank() },
-            o.optString("to").takeIf { !o.isNull("to") && it.isNotBlank() },
+        fun fromJson(o: JsonObject) = TripSummary(
+            o.long("id"), o.long("start"), o.long("end"),
+            TripStats.fromJson(o.getValue("stats").jsonObject),
+            o.optString("from")?.takeIf { it.isNotBlank() },
+            o.optString("to")?.takeIf { it.isNotBlank() },
         )
     }
 }
@@ -105,32 +124,32 @@ fun tipsFor(s: TripSummary): List<Tip> {
     fun lost(h: EcoHint) = st.wastedL[h] ?: 0.0
     if (sec(EcoHint.HARSH_ACCEL) > 5) tips += Tip(
         "Accélérations trop vives",
-        "%.0f s d'accélérations franches. Montez en vitesse plus progressivement, en passant les rapports tôt.".format(sec(EcoHint.HARSH_ACCEL)),
+        "${sec(EcoHint.HARSH_ACCEL).fixed(0)} s d'accélérations franches. Montez en vitesse plus progressivement, en passant les rapports tôt.",
         lost(EcoHint.HARSH_ACCEL),
     )
     if (sec(EcoHint.HIGH_RPM) > 20) tips += Tip(
         "Régime trop haut",
-        "%.0f s au-dessus du régime économique. Passez le rapport supérieur vers 2 000–2 500 tr/min.".format(sec(EcoHint.HIGH_RPM)),
+        "${sec(EcoHint.HIGH_RPM).fixed(0)} s au-dessus du régime économique. Passez le rapport supérieur vers 2 000–2 500 tr/min.",
         lost(EcoHint.HIGH_RPM),
     )
     if (sec(EcoHint.DOWNHILL_COAST) > 10) tips += Tip(
         "Descentes",
-        "%.0f s avec le pied sur l'accélérateur en descente. Levez complètement le pied : l'injection se coupe.".format(sec(EcoHint.DOWNHILL_COAST)),
+        "${sec(EcoHint.DOWNHILL_COAST).fixed(0)} s avec le pied sur l'accélérateur en descente. Levez complètement le pied : l'injection se coupe.",
         lost(EcoHint.DOWNHILL_COAST),
     )
     if (sec(EcoHint.OVER_SPEED) > 20) tips += Tip(
         "Au-dessus des limitations",
-        "%.0f s au-delà de la vitesse autorisée. La résistance de l'air croît avec le carré de la vitesse.".format(sec(EcoHint.OVER_SPEED)),
+        "${sec(EcoHint.OVER_SPEED).fixed(0)} s au-delà de la vitesse autorisée. La résistance de l'air croît avec le carré de la vitesse.",
         lost(EcoHint.OVER_SPEED),
     )
     if (sec(EcoHint.OVER_CONSUMPTION) > 30) tips += Tip(
         "Allure irrégulière",
-        "%.0f s au-dessus de la consommation attendue. Gardez une vitesse stable et anticipez le trafic.".format(sec(EcoHint.OVER_CONSUMPTION)),
+        "${sec(EcoHint.OVER_CONSUMPTION).fixed(0)} s au-dessus de la consommation attendue. Gardez une vitesse stable et anticipez le trafic.",
         lost(EcoHint.OVER_CONSUMPTION),
     )
     if (sec(EcoHint.ANTICIPATE) > 5) tips += Tip(
         "Accélérations avant un ralentissement",
-        "%.0f s à accélérer alors qu'une limitation plus basse, un stop ou un rond-point approchait. Levez le pied plus tôt.".format(sec(EcoHint.ANTICIPATE)),
+        "${sec(EcoHint.ANTICIPATE).fixed(0)} s à accélérer alors qu'une limitation plus basse, un stop ou un rond-point approchait. Levez le pied plus tôt.",
         lost(EcoHint.ANTICIPATE),
     )
     if (lost(EcoHint.WASTED_ACCEL) > 0) tips += Tip(
@@ -145,7 +164,7 @@ fun tipsFor(s: TripSummary): List<Tip> {
     )
     if (st.idleS > 120) tips += Tip(
         "Ralenti",
-        "%.0f min moteur tournant à l'arrêt. Au-delà d'une minute d'arrêt, couper le moteur est plus économique.".format(st.idleS / 60),
+        "${(st.idleS / 60).fixed(0)} min moteur tournant à l'arrêt. Au-delà d'une minute d'arrêt, couper le moteur est plus économique.",
         st.idleFuelL,
     )
     return tips.sortedByDescending { it.wastedL }.ifEmpty {
@@ -163,20 +182,21 @@ fun routeBoards(summaries: List<TripSummary>): List<RouteBoard> =
         .map { (route, trips) -> RouteBoard(route, trips.sortedBy { it.l100 }) }
         .sortedByDescending { it.trips.size }
 
-class TripSummaryStore(private val file: File) {
+class TripSummaryStore(private val file: TextFile) : SynchronizedObject() {
     private val items = mutableListOf<TripSummary>()
 
     init {
-        runCatching { file.forEachLine { if (it.isNotBlank()) items += TripSummary.fromJson(JSONObject(it)) } }
+        runCatching {
+            file.readText().lineSequence().filter { it.isNotBlank() }
+                .forEach { items += TripSummary.fromJson(Json.parseToJsonElement(it).jsonObject) }
+        }
     }
 
-    @Synchronized
-    fun add(s: TripSummary) {
+    fun add(s: TripSummary) = synchronized(this) {
         items.removeAll { it.id == s.id }
         items += s
         file.writeText(items.joinToString("\n") { it.toJson().toString() } + "\n")
     }
 
-    @Synchronized
-    fun all(): List<TripSummary> = items.sortedBy { it.startedAt }
+    fun all(): List<TripSummary> = synchronized(this) { items.sortedBy { it.startedAt } }
 }
