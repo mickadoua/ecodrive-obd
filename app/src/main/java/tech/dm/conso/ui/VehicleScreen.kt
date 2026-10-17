@@ -58,7 +58,7 @@ fun VehicleScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Text("Véhicule", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Palette.Text)
-        Text("Sert au calcul de la consommation attendue et à la comparaison entre modèles équivalents.", color = Palette.Muted, fontSize = 13.sp)
+        Text("Sert au calcul de la consommation attendue.", color = Palette.Muted, fontSize = 13.sp)
 
         Card {
             Text("Mes véhicules", color = Palette.Text, fontWeight = FontWeight.SemiBold)
