@@ -20,6 +20,7 @@
   .ok{color:#3DDC97}.err{color:#FF5C73}
   button,.dl{background:#3DDC97;color:#0B0F14;border:0;border-radius:999px;padding:10px 18px;font:600 15px system-ui;cursor:pointer;text-decoration:none;display:inline-block;margin:8px 8px 0 0}
   button[disabled]{opacity:.4;cursor:default}
+  .dl[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -27,9 +28,9 @@
   <h1>Légendes des captures Play</h1>
   <p>Cet outil ne fait que poser une légende sur de <strong>vraies captures</strong> de l'application (mode simulateur). Il refuse toute image qui n'est pas exactement <code>1080 × 2160</code> ou <code>1080 × 1920</code> : il n'étire ni ne recadre rien. Tout se passe dans votre navigateur, aucun fichier n'est envoyé.</p>
   <ol>
-    <li>Prenez les 5 captures brutes sur l'émulateur ou le téléphone, <strong>sans légende</strong>, dans l'ordre ci-dessous.</li>
+    <li>Prenez les 4 captures brutes sur l'émulateur ou le téléphone, <strong>sans légende</strong>, dans l'ordre ci-dessous.</li>
     <li>Choisissez chaque fichier, vérifiez ou corrigez le texte, puis téléchargez le JPEG.</li>
-    <li>La légende occupe une bande en bas (14 % de la hauteur). Le haut de l'écran, donc le bandeau jaune du classement, reste intact.</li>
+    <li>La légende occupe une bande en bas (14 % de la hauteur) ; le haut de l'écran reste intact.</li>
   </ol>
   <label for="lang">Langue des légendes</label>
   <select id="lang"><option value="fr">Français</option><option value="en">English</option></select>
@@ -46,8 +47,6 @@ const SLOTS = [
                       en: { text: "The map of roads where consumption ran high (simulated trip)" } },
   { key: 'vehicule',  fr: { text: "Profil du véhicule : seules la marque et l'année sont déduites du VIN, qui n'est ni stocké ni envoyé (détection simulée)" },
                       en: { text: "Vehicle profile: only make and year are derived from the VIN, which is never stored or sent (simulated detection)" } },
-  { key: 'classement',fr: { title: "Données de démonstration", text: "Le classement communautaire n'existe pas encore" },
-                      en: { title: "Demo data", text: "The community leaderboard doesn't exist yet" } },
 ];
 const SIZES = ['1080x2160', '1080x1920'];
 const BAND = 0.14;
@@ -65,7 +64,6 @@ SLOTS.forEach((s, i) => {
       <strong>${i + 1}. ${s.key}</strong>
       <label for="f${i}">Capture brute (1080 × 2160 ou 1080 × 1920)</label>
       <input id="f${i}" type="file" accept="image/png,image/jpeg">
-      ${s.fr.title ? `<label for="t${i}">Titre (gros)</label><input id="t${i}" type="text">` : ''}
       <label for="x${i}">Légende</label>
       <textarea id="x${i}"></textarea>
       <div class="msg" id="m${i}"></div>
@@ -74,14 +72,12 @@ SLOTS.forEach((s, i) => {
   slotsEl.append(div);
   div.querySelector(`#f${i}`).addEventListener('change', e => load(i, e.target.files[0]));
   div.querySelector(`#x${i}`).addEventListener('input', () => render(i));
-  const t = div.querySelector(`#t${i}`); if (t) t.addEventListener('input', () => render(i));
 });
 
 function fillTexts() {
   const l = langEl.value;
   SLOTS.forEach((s, i) => {
     document.getElementById(`x${i}`).value = s[l].text;
-    const t = document.getElementById(`t${i}`); if (t) t.value = s[l].title;
     render(i);
   });
 }
@@ -115,7 +111,7 @@ function wrap(ctx, text, maxW) {
   return lines;
 }
 
-function draw(canvas, img, title, text) {
+function draw(canvas, img, text) {
   const W = img.naturalWidth, H = img.naturalHeight;
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d', { alpha: false });
@@ -126,21 +122,14 @@ function draw(canvas, img, title, text) {
   ctx.fillStyle = '#3DDC97'; ctx.fillRect(0, top, W, 4);
   const stack = 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif';
   ctx.textBaseline = 'top';
-  let titleH = 0;
-  if (title) {
-    let ts = 76; ctx.font = `800 ${ts}px ${stack}`;
-    while (ctx.measureText(title).width > maxW && ts > 40) { ts -= 2; ctx.font = `800 ${ts}px ${stack}`; }
-    ctx.fillStyle = '#FFC857'; ctx.fillText(title, pad, top + Math.round(bandH * 0.12));
-    titleH = Math.round(ts * 1.15);
-  }
-  const avail = bandH - Math.round(bandH * 0.12) * 2 - titleH;
-  let fs = title ? 44 : 56, lines;
+  const avail = bandH - Math.round(bandH * 0.12) * 2;
+  let fs = 56, lines;
   for (; fs >= 30; fs -= 2) {
     ctx.font = `600 ${fs}px ${stack}`; lines = wrap(ctx, text, maxW);
     if (lines.length * fs * 1.25 <= avail) break;
   }
   ctx.fillStyle = '#E8ECF4';
-  lines.forEach((l, k) => ctx.fillText(l, pad, top + Math.round(bandH * 0.12) + titleH + k * fs * 1.25));
+  lines.forEach((l, k) => ctx.fillText(l, pad, top + Math.round(bandH * 0.12) + k * fs * 1.25));
   return fs;
 }
 
@@ -149,8 +138,7 @@ function render(i) {
   const m = document.getElementById(`m${i}`), d = document.getElementById(`d${i}`);
   const s = state[i];
   if (!s.img) { d.hidden = true; updateAll(); return; }
-  const tEl = document.getElementById(`t${i}`);
-  const fs = draw(prev, s.img, tEl ? tEl.value.trim() : '', document.getElementById(`x${i}`).value.trim());
+  const fs = draw(prev, s.img, document.getElementById(`x${i}`).value.trim());
   prev.toBlob(b => {
     if (s.blob) URL.revokeObjectURL(d.href);
     s.blob = b; d.href = URL.createObjectURL(b); d.download = `${i + 1}-${SLOTS[i].key}-${langEl.value}.jpg`; d.hidden = false;
