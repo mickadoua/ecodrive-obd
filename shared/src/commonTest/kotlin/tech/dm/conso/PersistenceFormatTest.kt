@@ -19,6 +19,7 @@ class PersistenceFormatTest {
         assertEquals("u0h1abc-3", s.key)
         assertEquals(listOf(GeoPoint(45.1, 5.7), GeoPoint(45.1005, 5.7008)), s.points)
         assertEquals(48.0, s.avgSpeedKmh)
+        assertEquals(1.0E-4, s.avgGrade)
         assertEquals(s, Segment.fromJson(obj(s.toJson().toString())))
     }
 
@@ -41,7 +42,7 @@ class PersistenceFormatTest {
 
     companion object {
         const val LEGACY_SEGMENT =
-            """{"key":"u0h1abc-3","trip":1700000000000,"t":1700000001000,"d":0.08,"f":0.006,"e":0.005,"g":0.012,"v":48,"p":[45.1,5.7,45.1005,5.7008]}"""
+            """{"key":"u0h1abc-3","trip":1700000000000,"t":1700000001000,"d":0.08,"f":0.006,"e":0.005,"g":1.0E-4,"v":48,"p":[45.1,5.7,45.1005,5.7008]}"""
         const val LEGACY_STATS =
             """{"moving":120.5,"idle":30,"km":2.4,"fuel":0.18,"expected":0.15,"idleFuel":0.01,"scoreKm":180,"scoredKm":2.2,"wasted":{"HARSH_ACCEL":0.02},"hintS":{"GOOD":100,"HIGH_RPM":12.5},"start":{"lat":45.1,"lon":5.7},"end":null}"""
         const val LEGACY_TRIPS =

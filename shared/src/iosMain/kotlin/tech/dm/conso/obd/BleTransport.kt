@@ -5,6 +5,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withTimeout
+import platform.CoreBluetooth.CBAdvertisementDataServiceUUIDsKey
 import platform.CoreBluetooth.CBCentralManager
 import platform.CoreBluetooth.CBCentralManagerDelegateProtocol
 import platform.CoreBluetooth.CBCharacteristic
@@ -13,7 +14,10 @@ import platform.CoreBluetooth.CBCharacteristicPropertyWrite
 import platform.CoreBluetooth.CBCharacteristicPropertyWriteWithoutResponse
 import platform.CoreBluetooth.CBCharacteristicWriteWithResponse
 import platform.CoreBluetooth.CBCharacteristicWriteWithoutResponse
+import platform.CoreBluetooth.CBManagerStatePoweredOff
 import platform.CoreBluetooth.CBManagerStatePoweredOn
+import platform.CoreBluetooth.CBManagerStateUnauthorized
+import platform.CoreBluetooth.CBManagerStateUnsupported
 import platform.CoreBluetooth.CBPeripheral
 import platform.CoreBluetooth.CBPeripheralDelegateProtocol
 import platform.CoreBluetooth.CBService
@@ -41,8 +45,12 @@ class BleTransport(
 
     private val delegate = object : NSObject(), CBCentralManagerDelegateProtocol, CBPeripheralDelegateProtocol {
         override fun centralManagerDidUpdateState(central: CBCentralManager) {
-            if (central.state == CBManagerStatePoweredOn) central.scanForPeripheralsWithServices(null, null)
-            else ready.completeExceptionally(ObdException("Bluetooth indisponible"))
+            when (central.state) {
+                CBManagerStatePoweredOn -> central.scanForPeripheralsWithServices(null, null)
+                CBManagerStatePoweredOff, CBManagerStateUnauthorized, CBManagerStateUnsupported ->
+                    ready.completeExceptionally(ObdException("Bluetooth indisponible"))
+                else -> Unit
+            }
         }
 
         override fun centralManager(central: CBCentralManager, didDiscoverPeripheral: CBPeripheral, advertisementData: Map<Any?, *>, RSSI: NSNumber) {
@@ -91,7 +99,7 @@ class BleTransport(
 
     private fun matches(p: CBPeripheral, advertisement: Map<Any?, *>): Boolean {
         val wanted = serviceUuids.map { CBUUID.UUIDWithString(it) }
-        val advertised = (advertisement["kCBAdvDataServiceUUIDs"] as? List<*>).orEmpty()
+        val advertised = (advertisement[CBAdvertisementDataServiceUUIDsKey] as? List<*>).orEmpty()
         val name = p.name.orEmpty()
         return advertised.any { it in wanted } || namePrefixes.any { name.startsWith(it, ignoreCase = true) }
     }
