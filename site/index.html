@@ -64,8 +64,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <!-- Données structurées. Rien de déclaratif qui ne soit vérifiable dans le
-     dépôt : pas de note, pas de nombre d'installations, et le classement
-     communautaire (simulé) ne figure pas dans featureList. Le démarrage
+     dépôt : pas de note, pas de nombre d'installations. L'app n'a pas de
+     classement : il ne figure pas dans featureList. Le démarrage
      automatique et Android Auto en sont retirés tant que le périmètre de
      la v1 n'est pas arbitré (carte sur ECO-1).
      "license" est volontairement absent : le dépôt n'a pas encore de
@@ -198,6 +198,11 @@
   .sub { color: var(--muted); max-width: 640px; margin: 0 0 40px; font-size: 17px; }
 
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  @media (min-width: 860px) {
+    .grid { grid-template-columns: repeat(6, 1fr); }
+    .grid .card { grid-column: span 2; }
+    .grid .card:nth-child(n+4):nth-last-child(-n+2) { grid-column: span 3; }
+  }
   .card { background: var(--surface); border: 1px solid var(--outline); border-radius: 22px; padding: 26px; }
   .card h3 { margin: 14px 0 8px; font-size: 18px; }
   .card p { margin: 0; color: var(--muted); font-size: 15px; }
@@ -317,11 +322,6 @@
         <h3>Simulateur intégré</h3>
         <p>Pas encore de module ? Le simulateur ELM327 de l'app répond avec de vraies trames OBD : vous pouvez tout essayer depuis votre canapé.</p>
       </div>
-      <div class="card">
-        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 6h3a3 3 0 0 1-3 3M7 6H4a3 3 0 0 0 3 3"/></svg></div>
-        <h3>Classement anonyme, à venir</h3>
-        <p>Se comparer aux autres conducteurs sur le même tronçon, dans le même sens, avec des voitures comparables. Pas encore en service : l'écran affiche aujourd'hui des données de démonstration, en attendant le serveur commun.</p>
-      </div>
     </div>
   </section>
 
@@ -355,7 +355,6 @@
       <li><strong>Il faut un module OBD2 ELM327 Bluetooth</strong>, vendu à part. Sans lui, l'app ne voit pas la consommation de la voiture.</li>
       <li><strong>L'app ne fait pas baisser la consommation à elle seule.</strong> Elle vous montre ce que vous faites et où. Nous n'annonçons aucun chiffre d'économie : nous n'en avons pas mesuré.</li>
       <li><strong>Toutes les voitures ne transmettent pas les mêmes données.</strong> La prise OBD2 est standard, mais la consommation dépend de ce que la voiture expose. Votre retour sur votre modèle nous aide.</li>
-      <li><strong>Le classement communautaire n'existe pas encore.</strong> Les données visibles dans cet écran sont des données de démonstration.</li>
       <li><strong>Android uniquement</strong>, interface en français.</li>
     </ul>
   </section>

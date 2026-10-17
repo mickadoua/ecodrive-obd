@@ -43,9 +43,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-<!-- Données structurées : mêmes règles que ../index.html (pas de note, pas
-     de classement, pas de démarrage automatique ni d'Android Auto, pas de
-     "license" tant que le dépôt n'a pas de fichier LICENSE). -->
+<!-- Données structurées : mêmes règles que ../index.html (pas de note,
+     l'app n'a pas de classement, pas de démarrage automatique ni
+     d'Android Auto, pas de "license" tant que le dépôt n'a pas de fichier LICENSE). -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -173,6 +173,11 @@
   .sub { color: var(--muted); max-width: 640px; margin: 0 0 40px; font-size: 17px; }
 
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  @media (min-width: 860px) {
+    .grid { grid-template-columns: repeat(6, 1fr); }
+    .grid .card { grid-column: span 2; }
+    .grid .card:nth-child(n+4):nth-last-child(-n+2) { grid-column: span 3; }
+  }
   .card { background: var(--surface); border: 1px solid var(--outline); border-radius: 22px; padding: 26px; }
   .card h3 { margin: 14px 0 8px; font-size: 18px; }
   .card p { margin: 0; color: var(--muted); font-size: 15px; }
@@ -292,11 +297,6 @@
         <h3>Built-in simulator</h3>
         <p>No adapter yet? The app's ELM327 simulator answers with real OBD frames, so you can try everything from your couch.</p>
       </div>
-      <div class="card">
-        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 6h3a3 3 0 0 1-3 3M7 6H4a3 3 0 0 0 3 3"/></svg></div>
-        <h3>Anonymous leaderboard, coming</h3>
-        <p>Compare yourself with other drivers on the same road section, in the same direction, with comparable cars. Not live yet: today the screen shows demo data until the shared backend ships.</p>
-      </div>
     </div>
   </section>
 
@@ -330,7 +330,6 @@
       <li><strong>You need a Bluetooth ELM327 OBD-II adapter</strong>, sold separately. Without one, the app can't see the car's fuel consumption.</li>
       <li><strong>The app doesn't lower your consumption on its own.</strong> It shows you what you do and where. We announce no fuel savings figure: we haven't measured any.</li>
       <li><strong>Not every car reports the same data.</strong> The OBD-II port is standard, but consumption depends on what the car exposes. Feedback on your model helps.</li>
-      <li><strong>The community leaderboard doesn't exist yet.</strong> What you see on that screen is demo data.</li>
       <li><strong>Android only</strong>, and the app's interface is in French.</li>
     </ul>
   </section>
