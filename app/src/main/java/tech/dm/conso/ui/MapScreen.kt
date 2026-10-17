@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
@@ -57,6 +58,8 @@ import tech.dm.conso.data.groupByRoad
 import tech.dm.conso.data.fallbackRoad
 import androidx.compose.runtime.LaunchedEffect
 import java.time.Instant
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import androidx.compose.runtime.saveable.rememberSaveable
 import java.time.ZoneId
@@ -106,8 +109,13 @@ fun MapScreen(
         }
     }
     LaunchedEffect(shown) { resolveRoads(shown) }
-    val roads = remember(shown, roadNames, unresolvable) { groupByRoad(shown, roadNames, unresolvable) }
-    val pending = remember(shown, roadNames, unresolvable) { shown.count { it.cell() !in roadNames && it.cell() !in unresolvable } }
+    val grouped by produceState<Pair<List<RoadStats>, Int>?>(null, shown, roadNames, unresolvable) {
+        value = withContext(Dispatchers.Default) {
+            groupByRoad(shown, roadNames, unresolvable) to shown.count { it.cell() !in roadNames && it.cell() !in unresolvable }
+        }
+    }
+    val roads = grouped?.first.orEmpty()
+    val pending = grouped?.second ?: shown.size
 
     Column(Modifier.fillMaxSize().background(Palette.Background).padding(horizontal = 16.dp, vertical = 12.dp)) {
         Text("Surconsommation", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Palette.Text)
