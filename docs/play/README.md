@@ -1,18 +1,18 @@
-# Éléments graphiques de la fiche Google Play
+# Google Play listing graphics
 
-| Fichier | Format | Usage dans la console |
+| File | Format | Use in the console |
 |---|---|---|
-| `icon-512.png` | 512 × 512, PNG 32 bits avec alpha, 3 Ko | Icône de l'application (carré, sans coins arrondis : Play applique le masque). Même dessin que `app/src/main/res/drawable/ic_launcher.xml`. |
-| `feature-graphic-1024x500-fr.png` | 1024 × 500, PNG 24 bits sans alpha | Visuel de présentation, fiche en français. |
-| `feature-graphic-1024x500-en.png` | idem | Visuel de présentation, fiche en anglais. |
-| `captions.html` | page autonome, aucun réseau | Pose la légende sur les 4 captures brutes que l'on prend soi-même. |
+| `icon-512.png` | 512 × 512, 32-bit PNG with alpha, 3 KB | App icon (square, no rounded corners: Play applies the mask). Same artwork as `app/src/main/res/drawable/ic_launcher.xml`. |
+| `feature-graphic-1024x500-fr.png` | 1024 × 500, 24-bit PNG without alpha | Feature graphic, French listing. |
+| `feature-graphic-1024x500-en.png` | same | Feature graphic, English listing. |
+| `captions.html` | standalone page, no network | Adds the caption to the 4 raw screenshots you take yourself. |
 
-Sources : `src/icon.svg`, `src/feature-graphic.html` (police Inter, SIL OFL 1.1, non incluse : le rendu a été fait avec Inter chargée localement).
+Sources: `src/icon.svg`, `src/feature-graphic.html` (Inter font, SIL OFL 1.1, not included: the render was made with Inter loaded locally).
 
-## Captures d'écran
+## Screenshots
 
-Les captures ne sont **pas** dans ce dossier : elles demandent de lancer l'application (émulateur ou téléphone).
+The screenshots are **not** in this folder: they require running the app (emulator or phone).
 
-1. Installer une version qui contient le changement de nom « EcoDrive OBD » (l'en-tête de l'écran Direct l'affiche).
-2. Prendre 4 captures en **mode simulateur**, sans légende, en **1080 × 2160** exactement (rapport 2,0) ou 1080 × 1920, dans l'ordre : direct, trajet, carte, véhicule. Sur l'émulateur : AVD « Pixel » avec une résolution personnalisée de 1080 × 2160 ; sur un téléphone en 20:9, la capture sort en 1080 × 2400 (rapport 2,22) et sera refusée.
-3. Ouvrir `captions.html` dans un navigateur, choisir les 4 fichiers, vérifier les légendes, télécharger les 4 JPEG (sans transparence). L'outil refuse toute taille autre que 1080 × 2160 ou 1080 × 1920 : il n'étire ni ne recadre.
+1. Install a build that contains the "EcoDrive OBD" rename (the header of the Live screen shows it).
+2. Take 4 screenshots in **simulator mode**, without captions, at exactly **1080 × 2160** (2.0 ratio) or 1080 × 1920, in this order: live (the "Direct" tab), trip (the "Trajet" section of that same screen), map (the "Carte" tab), vehicle (the last tab). On the emulator: a "Pixel" AVD with a custom 1080 × 2160 resolution; on a 20:9 phone the screenshot comes out at 1080 × 2400 (2.22 ratio) and will be rejected.
+3. Open `captions.html` in a browser, choose the 4 files, check the captions, and download the 4 JPEGs (no transparency). The tool rejects any size other than 1080 × 2160 or 1080 × 1920: it neither stretches nor crops. The tool's interface is in French; the language selector only switches the captions.
