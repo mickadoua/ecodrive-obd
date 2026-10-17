@@ -89,13 +89,10 @@ fun MapScreen(
     roadNames: Map<String, RoadName>,
     unresolvable: Set<String>,
     current: GeoPoint?,
-    focusKey: String?,
     resolveRoads: suspend (List<Segment>) -> Unit,
 ) {
     var period by rememberSaveable { mutableStateOf(MapPeriod.TODAY) }
-    var focus by remember(focusKey) {
-        mutableStateOf(segments.filter { it.key == focusKey }.takeIf { it.isNotEmpty() }?.let { RoadStats(RoadName("Portion du classement", null), it) })
-    }
+    var focus by remember { mutableStateOf<RoadStats?>(null) }
 
     val shown = remember(segments, period) {
         when (period) {
