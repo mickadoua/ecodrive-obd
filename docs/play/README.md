@@ -14,5 +14,5 @@ Sources: `src/icon.svg`, `src/feature-graphic.html` (Inter font, SIL OFL 1.1, no
 The screenshots are **not** in this folder: they require running the app (emulator or phone).
 
 1. Install a build that contains the "EcoDrive OBD" rename (the header of the Live screen shows it).
-2. Take 4 screenshots in **simulator mode**, without captions, at exactly **1080 × 2160** (2.0 ratio) or 1080 × 1920, in this order: live, trip, map, vehicle. On the emulator: a "Pixel" AVD with a custom 1080 × 2160 resolution; on a 20:9 phone the screenshot comes out at 1080 × 2400 (2.22 ratio) and will be rejected.
-3. Open `captions.html` in a browser, choose the 4 files, check the captions, and download the 4 JPEGs (no transparency). The tool rejects any size other than 1080 × 2160 or 1080 × 1920: it neither stretches nor crops.
+2. Take 4 screenshots in **simulator mode**, without captions, at exactly **1080 × 2160** (2.0 ratio) or 1080 × 1920, in this order: live (the "Direct" tab), trip (the "Trajet" section of that same screen), map (the "Carte" tab), vehicle (the last tab). On the emulator: a "Pixel" AVD with a custom 1080 × 2160 resolution; on a 20:9 phone the screenshot comes out at 1080 × 2400 (2.22 ratio) and will be rejected.
+3. Open `captions.html` in a browser, choose the 4 files, check the captions, and download the 4 JPEGs (no transparency). The tool rejects any size other than 1080 × 2160 or 1080 × 1920: it neither stretches nor crops. The tool's interface is in French; the language selector only switches the captions.
