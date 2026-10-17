@@ -32,6 +32,7 @@ kotlin {
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
             implementation("org.jetbrains.kotlinx:atomicfu:0.29.0")
             implementation("io.ktor:ktor-client-core:3.2.3")
+            implementation("io.ktor:ktor-network:3.2.3")
         }
         androidMain.dependencies {
             implementation("io.ktor:ktor-client-android:3.2.3")
