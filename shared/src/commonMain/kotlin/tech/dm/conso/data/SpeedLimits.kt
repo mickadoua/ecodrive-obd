@@ -1,15 +1,21 @@
 package tech.dm.conso.data
 
+import io.ktor.client.plugins.timeout
+import io.ktor.client.request.get
+import io.ktor.client.request.parameter
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import org.json.JSONObject
-import java.net.HttpURLConnection
-import java.net.URL
-import java.net.URLEncoder
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import tech.dm.conso.fixed
+import kotlin.concurrent.Volatile
+import kotlin.coroutines.cancellation.CancellationException
 
-class SpeedLimits(private val fetch: (GeoPoint) -> RoadArea = ::overpass) {
+class SpeedLimits(private val fetch: suspend (GeoPoint) -> RoadArea = ::overpass) {
     private var inFlight: Job? = null
     private var lastQueryAt = 0L
 
@@ -32,7 +38,7 @@ class SpeedLimits(private val fetch: (GeoPoint) -> RoadArea = ::overpass) {
         if (p == null || inFlight?.isActive == true || nowMs - lastQueryAt < MIN_INTERVAL_MS) return
         if (area?.let { Geo.distanceM(it.center, p) < REFETCH_M } == true) return
         lastQueryAt = nowMs
-        inFlight = scope.launch(Dispatchers.IO) {
+        inFlight = scope.launch {
             runCatching { fetch(p) }.onSuccess { area = it }
         }
     }
@@ -62,49 +68,49 @@ class SpeedLimits(private val fetch: (GeoPoint) -> RoadArea = ::overpass) {
         }
 
         fun parseArea(center: GeoPoint, json: String): RoadArea {
-            val elements = JSONObject(json).getJSONArray("elements")
+            val elements = Json.parseToJsonElement(json).jsonObject.array("elements")
             val ways = mutableListOf<LimitWay>()
             val features = mutableListOf<RoadFeature>()
-            for (i in 0 until elements.length()) {
-                val e = elements.getJSONObject(i)
-                val tags = e.optJSONObject("tags") ?: continue
-                if (e.getString("type") == "node") {
+            for (element in elements) {
+                val e = element as? JsonObject ?: continue
+                val tags = e.optObject("tags") ?: continue
+                if (e.string("type") == "node") {
                     val kind = when (tags.optString("highway")) {
                         "stop" -> AheadKind.STOP
                         "traffic_signals" -> AheadKind.SIGNAL
                         "give_way" -> AheadKind.GIVE_WAY
                         else -> continue
                     }
-                    features += RoadFeature(kind, listOf(GeoPoint(e.getDouble("lat"), e.getDouble("lon"))))
+                    features += RoadFeature(kind, listOf(GeoPoint(e.double("lat"), e.double("lon"))))
                     continue
                 }
-                val geometry = e.optJSONArray("geometry") ?: continue
-                val points = List(geometry.length()) { geometry.getJSONObject(it).let { g -> GeoPoint(g.getDouble("lat"), g.getDouble("lon")) } }
-                parseMaxspeed(tags.optString("maxspeed").ifBlank { null })?.let { ways += LimitWay(it, points) }
+                val geometry = e["geometry"] as? kotlinx.serialization.json.JsonArray ?: continue
+                val points = geometry.map { it.jsonObject.let { g -> GeoPoint(g.double("lat"), g.double("lon")) } }
+                parseMaxspeed(tags.optString("maxspeed")?.ifBlank { null })?.let { ways += LimitWay(it, points) }
                 if (tags.optString("junction") == "roundabout") features += RoadFeature(AheadKind.ROUNDABOUT, points)
             }
             return RoadArea(center, ways, features)
         }
 
-        fun overpass(p: GeoPoint): RoadArea {
-            val at = "${RADIUS_M.toInt()},${"%.6f".format(java.util.Locale.US, p.lat)},${"%.6f".format(java.util.Locale.US, p.lon)}"
+        suspend fun overpass(p: GeoPoint): RoadArea {
+            val at = "${RADIUS_M.toInt()},${p.lat.fixed(6)},${p.lon.fixed(6)}"
             val query = "[out:json][timeout:15];(way(around:$at)[highway][maxspeed];way(around:$at)[junction=roundabout];" +
                 "node(around:$at)[highway~\"^(stop|traffic_signals|give_way)$\"];);out geom;"
             for (endpoint in ENDPOINTS) {
-                val conn = URL("$endpoint?data=${URLEncoder.encode(query, "UTF-8")}").openConnection() as HttpURLConnection
-                conn.connectTimeout = 5_000
-                conn.readTimeout = 20_000
-                conn.setRequestProperty("User-Agent", "EcoDriveOBD/0.1 (+https://github.com/mickadoua/ecodrive-obd)")
                 try {
-                    if (conn.responseCode != 200) continue
-                    return parseArea(p, conn.inputStream.bufferedReader().readText())
+                    val response = http.get(endpoint) {
+                        parameter("data", query)
+                        timeout { connectTimeoutMillis = 5_000; socketTimeoutMillis = 20_000 }
+                    }
+                    if (response.status != HttpStatusCode.OK) continue
+                    return parseArea(p, response.bodyAsText())
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     continue
-                } finally {
-                    conn.disconnect()
                 }
             }
-            throw java.io.IOException("Overpass indisponible")
+            throw IllegalStateException("Overpass indisponible")
         }
     }
 }
