@@ -10,6 +10,16 @@ Working rules for anyone contributing to this repository on behalf of the mainta
 
 Everything in this repository is in English: commit messages, pull request titles and descriptions, code comments, README. No secrets, tokens, private URLs or host names in the repository or in pull requests.
 
+## Commit identity
+
+Every commit, by any contributor or agent, uses a GitHub email of the maintainer's account (`mickadoua`) as both author and committer email: `mickadoua@users.noreply.github.com`. The author name may be the contributor's own. Check before pushing:
+
+```bash
+git log -1 --format='%an <%ae> | %cn <%ce>'
+```
+
+A commit with any other email is not pushed.
+
 ## Test locally, then push
 
 There is no test CI. The only workflow is `pages.yml`, which publishes `site/` and runs no tests. Do not add a workflow, and never add an iOS CI on macOS runners, without the maintainer's written approval.
