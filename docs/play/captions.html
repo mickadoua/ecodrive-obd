@@ -97,7 +97,7 @@ function load(i, file) {
     }
     state[i].img = img; render(i);
   };
-  img.onerror = () => { m.className = 'msg err'; m.textContent = "Fichier illisible."; };
+  img.onerror = () => { m.className = 'msg err'; m.textContent = "Fichier illisible."; render(i); };
   img.src = URL.createObjectURL(file);
 }
 
