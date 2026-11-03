@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<!-- Renders the 4 Play Store screenshots. Open with ?s=1..4&lang=fr|en and capture at 1080x2160. Fonts: Inter (SIL OFL 1.1) and Roboto (Apache 2.0) are not included; load them locally. -->
+<title>EcoDrive OBD - Play Store screenshots (rendered from the app design)</title>
+<style>
+:root{--bg:#0B0F14;--surface:#141A22;--high:#1C2430;--outline:#263040;--text:#E8EDF3;--muted:#8A96A8;--green:#3DDC97;--yellow:#FFC857;--red:#FF5D73;--blue:#5AA9FF}
+html,body{margin:0;width:1080px;height:2160px;background:var(--bg);overflow:hidden}
+body{position:relative;font-family:Inter,sans-serif;color:var(--text)}
+.cap{position:absolute;left:90px;right:90px;top:84px;height:230px;font-weight:700;font-size:46px;line-height:58px;letter-spacing:-.5px}
+.cap.long{font-size:41px;line-height:52px}
+.demo{position:absolute;left:90px;top:322px;font:500 26px/1 Inter;color:var(--muted);background:var(--high);border-radius:999px;padding:12px 24px}
+.frame{position:absolute;left:90px;top:400px;width:900px;height:1700px;border-radius:56px;border:3px solid var(--outline);overflow:hidden;background:var(--bg)}
+.app{position:absolute;left:0;top:0;width:390px;height:737px;transform:scale(2.3077);transform-origin:0 0;font-family:Roboto,sans-serif;color:var(--text);overflow:hidden}
+.scroll{position:absolute;inset:0 0 80px 0;padding:12px 16px;display:flex;flex-direction:column;gap:14px;overflow:hidden}
+h1{margin:0;font-size:28px;line-height:34px;font-weight:700}
+.sub{font-size:13px;color:var(--muted);line-height:18px}
+.card{background:var(--surface);border-radius:24px;padding:18px}
+.st{font-size:13px;color:var(--text);display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block}
+.btn2{background:var(--high);border-radius:999px;padding:10px 16px;font-weight:600;font-size:15px;display:flex;gap:8px;align-items:center}
+.row{display:flex;justify-content:space-between;align-items:center}
+.stat .l{font-size:12px;color:var(--muted)}
+.stat .v{font-size:20px;font-weight:600}
+.stat .u{font-size:12px;color:var(--muted);font-weight:400;margin-left:3px}
+.sec{display:flex;align-items:baseline;gap:8px}
+.sec b{font-size:17px;font-weight:600}.sec span{font-size:12px;color:var(--muted)}
+.chip{display:inline-block;background:var(--high);color:var(--muted);font-size:12px;font-weight:500;border-radius:999px;padding:6px 12px}
+.chip.on{background:var(--green);color:var(--bg)}
+.chips{display:flex;gap:6px}
+.nav{position:absolute;left:0;right:0;bottom:0;height:80px;background:var(--surface);display:flex;justify-content:space-around;align-items:center}
+.nav div{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;font-weight:500;color:var(--muted);width:100px}
+.nav i{width:64px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center}
+.nav .on{color:var(--green)}.nav .on i{background:var(--green)}
+.field{border:1px solid var(--outline);border-radius:4px;height:52px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;font-size:16px;position:relative}
+.field small{position:absolute;top:-8px;left:10px;background:var(--surface);padding:0 4px;font-size:12px;color:var(--muted)}
+.note{font-size:11px;color:var(--muted);line-height:15px}
+.maprow{display:flex;gap:12px;align-items:center}
+</style>
+<div class="cap" id="cap"></div>
+<div class="demo" id="demo"></div>
+<div class="frame"><div class="app" id="app"></div></div>
+<script>
+const q=new URLSearchParams(location.search), S=+(q.get('s')||1), L=q.get('lang')||'fr';
+const T={
+ fr:{caps:["Consommation en direct et note d'éco-conduite qui tient compte du dénivelé (mode simulateur)","Le trajet : consommation colorée selon la note, avec le relief (mode simulateur)","La carte des routes où l'on a surconsommé (trajet simulé)","Profil du véhicule : seules la marque et l'année sont déduites du VIN, qui n'est ni stocké ni envoyé (détection simulée)"],
+  demo:"Données de démonstration",live:"Simulateur",stop:"Arrêter",avg:"Moyenne trajet",dist:"Distance",fuel:"Carburant",rpm:"Régime",rpmu:"tr/min",eco:"Éco-conduite",ecos:"tient compte du dénivelé",
+  msg:"Montée : surconsommation normale",alt:"alt. 210 m · simulateur",exp:"Attendu sur ce relief : 3.0 L/h",trip:"Trajet",tripsub:"consommation et relief",
+  hint:"Glissez pour naviguer · touchez ou appui long pour lire une valeur",leg1:"L/100 km, couleur = éco-conduite",leg2:"Relief",d7:"7 derniers jours",d7s:"4 km · 6.4 L/100 km",
+  days:["Mar.","Mer.","Jeu.","Ven.","Sam.","Dim.","Lun."],nav:["Direct","Carte","Véhicule"],
+  mapT:"Surconsommation",mapS:"Consommation réelle comparée à l'attendu selon vitesse et dénivelé",c1:"Dernier trajet",c2:"7 jours",c3:"Tout",
+  l1:"conforme",l2:"un peu au-dessus",l3:"nettement au-dessus",byroad:"Par route",byroads:"moyenne sur chaque route, pire en premier",vs:"L/100 vs attendu",
+  r1:"Rue des Tilleuls",r1s:"Exemple · 0.7 km · 6.7 réel / 2.0 attendu",r2:"Rue du Moulin",r2s:"Exemple · 0.3 km · 17.4 réel / 16.0 attendu",
+  veh:"Véhicule",mine:"Mes véhicules",add:"+ Ajouter",name:"Nom du véhicule actif",vnote:"Reconnu à la connexion par le VIN, sinon par le module OBD. Historique et carte suivent le véhicule actif.",
+  det:"Détecté via OBD",use:"Utiliser",vin:"Le numéro VIN n'est ni stocké ni envoyé : seuls la marque, l'année et une empreinte irréversible servant à reconnaître la voiture restent sur le téléphone.",
+  make:"Marque",model:"Modèle et motorisation",year:"Année",unit:"L/100 km"},
+ en:{caps:["Live consumption and an eco-driving score that accounts for gradient (simulator mode)","The trip: consumption coloured by score, with the terrain profile (simulator mode)","The map of roads where consumption ran high (simulated trip)","Vehicle profile: only make and year are derived from the VIN, which is never stored or sent (simulated detection)"],
+  demo:"Demo data",live:"Simulator",stop:"Stop",avg:"Trip average",dist:"Distance",fuel:"Fuel",rpm:"Engine speed",rpmu:"rpm",eco:"Eco-driving",ecos:"accounts for gradient",
+  msg:"Uphill: normal extra consumption",alt:"alt. 210 m · simulator",exp:"Expected on this terrain: 3.0 L/h",trip:"Trip",tripsub:"consumption and terrain",
+  hint:"Drag to navigate · tap or long-press to read a value",leg1:"L/100 km, colour = eco-driving",leg2:"Terrain",d7:"Last 7 days",d7s:"4 km · 6.4 L/100 km",
+  days:["Tue","Wed","Thu","Fri","Sat","Sun","Mon"],nav:["Live","Map","Vehicle"],
+  mapT:"Excess consumption",mapS:"Actual consumption compared with what speed and gradient call for",c1:"Last trip",c2:"7 days",c3:"All",
+  l1:"on target",l2:"a little above",l3:"well above",byroad:"By road",byroads:"average on each road, worst first",vs:"L/100 vs expected",
+  r1:"Rue des Tilleuls",r1s:"Example · 0.7 km · 6.7 actual / 2.0 expected",r2:"Rue du Moulin",r2s:"Example · 0.3 km · 17.4 actual / 16.0 expected",
+  veh:"Vehicle",mine:"My vehicles",add:"+ Add",name:"Active vehicle name",vnote:"Recognised on connection by VIN, otherwise by the OBD module. History and map follow the active vehicle.",
+  det:"Detected via OBD",use:"Use",vin:"The VIN is neither stored nor sent: only the make, the year and an irreversible fingerprint used to recognise the car stay on the phone.",
+  make:"Make",model:"Model and engine",year:"Year",unit:"L/100 km"}
+}[L];
+document.documentElement.lang=L;
+const cap=document.getElementById('cap');cap.textContent=T.caps[S-1];if(T.caps[S-1].length>100)cap.classList.add('long');
+document.getElementById('demo').textContent=T.demo;
+const P={green:'#3DDC97',yellow:'#FFC857',red:'#FF5D73'};
+const ic={
+ gauge:'<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M20.38 8.57l-1.23 1.85a8 8 0 0 1-.22 7.58H5.07A8 8 0 0 1 15.58 6.85l1.85-1.23A10 10 0 0 0 3.35 19a2 2 0 0 0 1.72 1h13.85a2 2 0 0 0 1.74-1 10 10 0 0 0-.27-10.44zM10.59 15.41a2 2 0 0 0 2.83 0l5.66-8.49-8.49 5.66a2 2 0 0 0 0 2.83z"/></svg>',
+ map:'<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5a.5.5 0 0 0 .5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5a.5.5 0 0 0-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/></svg>',
+ car:'<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h12v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.04 3H5.81l1.04-3zM19 17H5v-5h14v5z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg>',
+ pwr:'<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42A6.92 6.92 0 0 1 19 12c0 3.87-3.13 7-7 7A6.995 6.995 0 0 1 7.58 6.58L6.17 5.17A8.932 8.932 0 0 0 3 12a9 9 0 0 0 18 0c0-2.74-1.23-5.18-3.17-6.83z"/></svg>'
+};
+function gauge(size,stroke,frac,color,id){const r=size/2-stroke/2,C=2*Math.PI*r;
+ return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><defs><linearGradient id="g${id}" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="${color}" stop-opacity=".6"/><stop offset=".5" stop-color="${color}"/><stop offset="1" stop-color="${color}" stop-opacity=".6"/></linearGradient></defs>
+ <g transform="rotate(135 ${size/2} ${size/2})" fill="none" stroke-linecap="round" stroke-width="${stroke}"><circle cx="${size/2}" cy="${size/2}" r="${r}" stroke="#1C2430" stroke-dasharray="${.75*C} ${C}"/><circle cx="${size/2}" cy="${size/2}" r="${r}" stroke="url(#g${id})" stroke-dasharray="${.75*C*frac} ${C}"/></g></svg>`}
+function nav(i){return `<div class="nav">${[ic.gauge,ic.map,ic.car].map((s,k)=>`<div class="${k==i?'on':''}"><i style="color:${k==i?'#0B0F14':'inherit'}">${s}</i>${T.nav[k]}</div>`).join('')}</div>`}
+function rnd(seed){let s=seed;return()=>(s=(s*16807)%2147483647)/2147483647}
+const screens={};
+screens[1]=()=>`<div class="scroll"><div class="row"><div><h1>EcoDrive OBD</h1><div class="st"><span class="dot"></span>${T.live}</div></div><div class="btn2">${ic.pwr}${T.stop}</div></div>
+<div class="card" style="display:flex;gap:16px;align-items:center;padding:18px">
+ <div style="position:relative;width:180px;height:180px;flex:none">${gauge(180,28,.42,P.green,1)}<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:6px"><div style="font-size:46px;font-weight:700;line-height:50px">6.8</div><div style="font-size:13px;color:var(--muted)">${T.unit}</div><div style="font-size:13px;font-weight:700;color:var(--green);margin-top:6px">52 km/h</div></div></div>
+ <div style="display:flex;flex-direction:column;gap:14px"><div class="stat"><div class="l">${T.avg}</div><div class="v">6.4<span class="u">L/100</span></div></div><div class="stat"><div class="l">${T.dist}</div><div class="v">4.1<span class="u">km</span></div></div><div class="stat"><div class="l">${T.fuel}</div><div class="v">0.26<span class="u">L</span></div></div><div class="stat"><div class="l">${T.rpm}</div><div class="v">2100<span class="u">${T.rpmu}</span></div></div></div></div>
+<div class="card"><div class="sec"><b>${T.eco}</b><span>${T.ecos}</span></div>
+ <div style="display:flex;gap:18px;align-items:center;margin-top:14px"><div style="position:relative;width:96px;height:96px;flex:none">${gauge(96,18,.87,P.green,2)}<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700">87</div></div>
+ <div><div style="font-size:17px;font-weight:700;color:var(--green);line-height:22px">${T.msg}</div><div style="font-size:13px;margin-top:8px;color:var(--muted)"><b style="color:var(--text);font-weight:500;font-size:15px">+3.3 %</b>&nbsp; ${T.alt}</div><div style="font-size:12px;color:var(--muted);margin-top:8px">${T.exp}</div></div></div></div>
+<div class="card" style="height:200px"><div class="sec"><b>${T.trip}</b><span>${T.tripsub}</span></div><div class="chips" style="margin-top:14px"><span class="chip">1 min</span><span class="chip on">5 min</span><span class="chip">15 min</span><span class="chip">${T.trip}</span></div></div></div>${nav(0)}`;
+function chart(){const W=326,H=210,x0=34,x1=292,y0=10,y1=170,r=rnd(7),n=70;let pts=[],v=7;
+ for(let i=0;i<n;i++){v+= (r()-.5)*3.2; if(r()<.07)v=Math.max(v,15+r()*8); v=Math.min(Math.max(v,1.5),22); if(i>8&&r()<.06)v=1;pts.push(v);}
+ const X=i=>x0+(x1-x0)*i/(n-1),Y=v=>y1-(y1-y0)*Math.min(v,30)/30;
+ const col=v=>v>16?P.red:v>10?P.yellow:P.green;
+ let segs='';for(let i=1;i<n;i++)segs+=`<line x1="${X(i-1)}" y1="${Y(pts[i-1])}" x2="${X(i)}" y2="${Y(pts[i])}" stroke="${col((pts[i]+pts[i-1])/2)}" stroke-width="2.4" stroke-linecap="round"/>`;
+ let rel=`M${x0},${y1}`;for(let i=0;i<n;i++){const e=95+40*Math.sin(i/n*5.2)+22*Math.sin(i/n*13);rel+=` L${X(i)},${y1-e*0.62}`}rel+=` L${x1},${y1} Z`;
+ let grid='';for(let k=0;k<=6;k++){const y=Y(k*5);grid+=`<line x1="${x0}" x2="${x1}" y1="${y}" y2="${y}" stroke="#263040" stroke-width="1"/><text x="${x0-6}" y="${y+4}" text-anchor="end" font-size="10" fill="#8A96A8">${k*5}</text>`}
+ const tx=['20:50:19','20:51:59','20:53:39','20:55:19'].map((t,k)=>`<text x="${x0+k*(x1-x0)/3}" y="${y1+16}" text-anchor="middle" font-size="9.5" fill="#8A96A8">${t}</text>`).join('');
+ return `<svg width="${W}" height="${H-20}" viewBox="0 0 ${W} ${H-20}"><defs><linearGradient id="rl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1E3A5F" stop-opacity=".85"/><stop offset="1" stop-color="#1E3A5F" stop-opacity=".05"/></linearGradient></defs>${grid}<path d="${rel}" fill="url(#rl)"/>${segs}${tx}<text x="${x0}" y="12" font-size="10" fill="#8A96A8">L/100 km</text><text x="${x1+4}" y="60" font-size="10" fill="#5AA9FF">213 m</text><text x="${x1+4}" y="${y1}" font-size="10" fill="#5AA9FF">147 m</text></svg>`}
+screens[2]=()=>`<div class="scroll" style="padding-top:16px"><div class="card"><div class="sec"><b>${T.trip}</b><span>${T.tripsub}</span></div>
+<div class="chips" style="margin:14px 0 12px"><span class="chip">1 min</span><span class="chip on">5 min</span><span class="chip">15 min</span><span class="chip">${T.trip}</span></div>${chart()}
+<div class="note" style="font-size:12px;margin:2px 0 12px">${T.hint}</div>
+<div style="display:flex;gap:16px;font-size:12px;align-items:center"><span><span class="dot" style="margin-right:6px"></span>${T.leg1}</span><span><span class="dot" style="background:var(--blue);margin-right:6px"></span>${T.leg2}</span></div></div>
+<div class="card" style="height:300px"><div class="sec"><b>${T.d7}</b><span>${T.d7s}</span></div>
+<div style="display:flex;justify-content:space-between;align-items:flex-end;height:210px;margin-top:20px;font-size:12px;color:var(--muted)">${T.days.map((d,k)=>`<div style="display:flex;flex-direction:column;align-items:center;gap:6px;width:38px;justify-content:flex-end;height:100%">${k==6?`<span style="color:var(--text);font-size:12px">6.4</span><div style="width:32px;height:150px;border-radius:8px;background:linear-gradient(#A8D98B,#4C6B45)"></div>`:''}<span>${d}</span></div>`).join('')}</div></div></div>${nav(0)}`;
+screens[3]=()=>{const route=[[10,196],[40,180],[68,176],[100,185],[135,170],[160,140],[170,105],[150,72],[120,48],[100,30],[80,38],[70,60],[84,85],[112,100],[142,112],[160,135],[188,160],[222,150],[250,125],[272,95],[296,70],[330,42],[345,28]];
+ const colors=[P.green,P.green,P.green,P.green,P.yellow,P.green,P.red,P.green,P.green,P.green,P.red,P.green,P.green,P.green,P.green,P.yellow,P.green,P.green,P.yellow,P.green,P.green,P.green];
+ const path=(a,b)=>`M${a} L${b}`;let outline='',segs='';for(let i=1;i<route.length;i++){const a=route[i-1].join(','),b=route[i].join(',');outline+=`<path d="${path(a,b)}" stroke="#fff" stroke-width="9" stroke-linecap="round"/>`;segs+=`<path d="${path(a,b)}" stroke="${colors[i-1]}" stroke-width="6" stroke-linecap="round"/>`}
+ let roads='';const r=rnd(3);for(let i=0;i<26;i++){roads+=`<path d="M${r()*358},${r()*270} L${r()*358},${r()*270}" stroke="#1d2631" stroke-width="${1+r()*2}"/>`}
+ return `<div class="scroll" style="padding-top:12px;gap:10px"><h1>${T.mapT}</h1><div class="sub">${T.mapS}</div>
+<div class="chips"><span class="chip on" style="font-size:13px;padding:8px 14px">${T.c1}</span><span class="chip" style="font-size:13px;padding:8px 14px">${T.c2}</span><span class="chip" style="font-size:13px;padding:8px 14px">${T.c3}</span></div>
+<div style="position:relative;border-radius:24px;overflow:hidden;height:250px;background:#10151c"><svg width="358" height="250" viewBox="0 0 358 250" fill="none"><rect width="358" height="250" fill="#10151c"/><path d="M0,215 C70,190 140,225 220,200 C290,180 330,205 358,190 L358,250 L0,250Z" fill="#15202c"/><g>${roads}</g>${outline}${segs}</svg>
+<div style="position:absolute;left:12px;bottom:10px;background:rgba(20,26,34,.92);border-radius:16px;padding:8px 12px;display:flex;gap:10px;font-size:11px"><span><span class="dot" style="margin-right:5px;width:9px;height:9px"></span>${T.l1}</span><span><span class="dot" style="background:var(--yellow);margin-right:5px;width:9px;height:9px"></span>${T.l2}</span><span><span class="dot" style="background:var(--red);margin-right:5px;width:9px;height:9px"></span>${T.l3}</span></div></div>
+<div class="sec" style="margin-top:4px"><b>${T.byroad}</b><span>${T.byroads}</span></div>
+<div class="card" style="padding:14px 16px;border-radius:16px;display:flex;gap:14px;align-items:center"><div style="width:96px;flex:none"><div style="font-size:22px;font-weight:700;color:var(--red)">+4.7</div><div style="font-size:11px;color:var(--muted)">${T.vs}</div></div><div><div style="font-size:16px;font-weight:600">${T.r1}</div><div style="font-size:12.5px;color:var(--muted);margin-top:4px">${T.r1s}</div></div></div>
+<div class="card" style="padding:14px 16px;border-radius:16px;display:flex;gap:14px;align-items:center"><div style="width:96px;flex:none"><div style="font-size:22px;font-weight:700;color:var(--green)">+1.4</div><div style="font-size:11px;color:var(--muted)">${T.vs}</div></div><div><div style="font-size:16px;font-weight:600">${T.r2}</div><div style="font-size:12.5px;color:var(--muted);margin-top:4px">${T.r2s}</div></div></div></div>${nav(1)}`};
+screens[4]=()=>`<div class="scroll" style="gap:12px"><h1>${T.veh}</h1>
+<div class="card" style="padding:16px"><div style="font-weight:500;font-size:15px">${T.mine}</div><div class="chips" style="margin:8px 0 12px"><span class="chip on">Twingo</span><span class="chip">${T.add}</span></div><div class="field"><small>${T.name}</small>Twingo</div><div class="note" style="margin-top:8px">${T.vnote}</div></div>
+<div class="card" style="padding:16px"><div style="font-size:12px;color:var(--muted)">${T.det}</div><div style="font-size:18px;font-weight:600;margin:2px 0 8px">Renault · 2014</div><span class="chip on">${T.use}</span><div class="note" style="margin-top:8px">${T.vin}</div></div>
+<div class="card" style="padding:16px;display:flex;flex-direction:column;gap:14px"><div class="field"><small>${T.make}</small>Renault</div><div class="field"><small>${T.model}</small>Twingo 1.2 16V</div><div class="field"><small>${T.year}</small>2014</div></div></div>${nav(2)}`;
+document.getElementById('app').innerHTML=screens[S]();
+</script>
+</html>
