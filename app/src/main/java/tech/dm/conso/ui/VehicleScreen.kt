@@ -93,7 +93,7 @@ fun VehicleScreen(
                     yearText = (detected.modelYear ?: draft.year)?.toString() ?: ""
                 }
                 Spacer(Modifier.height(6.dp))
-                Text("Le numéro VIN n'est ni stocké ni envoyé : seuls la marque, l'année et une empreinte irréversible servant à reconnaître la voiture restent sur le téléphone.", color = Palette.Muted, fontSize = 11.sp)
+                Text("Le numéro VIN n'est jamais enregistré en clair ni envoyé : seuls la marque, l'année et une empreinte irréversible servant à reconnaître la voiture restent sur le téléphone.", color = Palette.Muted, fontSize = 11.sp)
             }
         }
 
