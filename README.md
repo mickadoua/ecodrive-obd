@@ -64,7 +64,7 @@ MICKA_APPROVED_ISSUE=ECO-123 scripts/play-publish.sh production
 ```
 
 - Secrets are read from the environment: `ECODRIVE_UPLOAD_KEYSTORE_B64` (keystore in base64), `ECODRIVE_UPLOAD_KEYSTORE_PASSWORD`, `ECODRIVE_UPLOAD_KEY_ALIAS`, `ECODRIVE_UPLOAD_KEY_PASSWORD` and `PLAY_SERVICE_ACCOUNT_JSON` (content of the service account key). The script writes them to a private temporary directory, deleted on exit, and never prints them.
-- `beta` (open testing) and `production` are public: the script refuses them without `MICKA_APPROVED_ISSUE`, the task that carries the maintainer's written approval.
+- `beta` (open testing) and `production` are public: the script refuses them without `MICKA_APPROVED_ISSUE`, the task that carries the maintainer's written approval. This is a procedural guard, not a technical control: the script only checks that the value looks like a task identifier, not that the approval exists, and makes no network call. The real lock is that only the CTO holds the Play service account key, and that `beta` and `production` uploads require the owner's written approval on the task named there.
 - `versionCode`: the one from git, or the next free one on Play if it is already used (`ResolutionStrategy.AUTO`).
 - Release notes: `app/src/main/play/release-notes/<language>/default.txt`. Store listing (`--listing`): `app/src/main/play/listings/<language>/`.
 - Without `PLAY_SERVICE_ACCOUNT_FILE` (set by the script), Gradle Play Publisher stays disabled: a regular build never calls Play.
