@@ -6,6 +6,12 @@
 #   internal (default) = internal testing, alpha = closed testing.
 #   beta (open testing) and production are public: they require MICKA_APPROVED_ISSUE=<ID>, the
 #   task that carries the maintainer's written approval for this version.
+#
+# MICKA_APPROVED_ISSUE is a procedural guard, not a technical control: the script only checks
+# that the value looks like a task identifier (e.g. ECO-123). It does not, and cannot, verify
+# that the approval exists. The real lock is elsewhere: only the CTO holds the Play service
+# account key, and beta/production uploads require the owner's written approval on the task
+# named here. The script makes no network call to check it.
 #   --release-status: draft by default (Play only accepts drafts until the app is published).
 #   --listing: also publishes the store listing (app/src/main/play).
 #
@@ -25,7 +31,9 @@ TRACK=internal; STATUS=draft; LISTING=0
 while [ $# -gt 0 ]; do
     case $1 in
         internal|alpha|beta|production) TRACK=$1 ;;
-        --release-status) STATUS=${2:-}; shift ;;
+        --release-status)
+            [ $# -ge 2 ] || die 2 "--release-status needs a value: draft or completed"
+            STATUS=$2; shift ;;
         --listing) LISTING=1 ;;
         *) die 2 "unknown argument '$1'" ;;
     esac
@@ -53,7 +61,7 @@ done
     die 5 "uncommitted changes in the app or the build files"
 
 umask 077
-TMP=$(mktemp -d "${PAPERCLIP_RUN_SCRATCH_DIR:-${TMPDIR:-/tmp}}/play-publish.XXXXXX")
+TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 printf '%s' "${!KS_B64}" | base64 -d > "$TMP/upload.keystore" 2>/dev/null ||
     die 4 "$KS_B64 is not valid base64"
