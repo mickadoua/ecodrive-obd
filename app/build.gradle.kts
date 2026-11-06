@@ -20,7 +20,8 @@ fun git(vararg args: String): String? = runCatching {
     }.standardOutput.asText.get().trim().ifEmpty { null }
 }.getOrNull()
 
-val appVersionCode = providers.environmentVariable("VERSION_CODE").orNull?.toInt()
+val appVersionCode = providers.environmentVariable("VERSION_CODE").orNull?.ifEmpty { null }
+    ?.let { it.toIntOrNull()?.takeIf { code -> code > 0 } ?: throw GradleException("VERSION_CODE must be a positive integer") }
     ?: git("rev-list", "--count", "HEAD")?.toIntOrNull()
     ?: 1
 val appVersionName = providers.environmentVariable("VERSION_NAME").orNull
@@ -28,8 +29,9 @@ val appVersionName = providers.environmentVariable("VERSION_NAME").orNull
     ?: "0.1.0"
 
 // Play upload key, read from the environment only. None of the variables set: the release
-// build stays unsigned (developer machines). Only some of them set: the build fails, so that a
-// half-configured release never goes out unsigned by mistake.
+// build stays unsigned (developer machines). Only some of them set: a build that runs a release
+// task fails, so that a half-configured release never goes out unsigned by mistake; debug
+// builds, tests and lintDebug are not affected by a stray UPLOAD_* variable in the shell.
 val uploadKeyEnv = listOf(
     "UPLOAD_KEYSTORE_PATH",
     "UPLOAD_KEYSTORE_PASSWORD",
@@ -38,7 +40,13 @@ val uploadKeyEnv = listOf(
 ).associateWith { providers.environmentVariable(it).orNull?.ifEmpty { null } }
 val uploadKeyMissing = uploadKeyEnv.filterValues { it == null }.keys
 if (uploadKeyMissing.isNotEmpty() && uploadKeyMissing.size < uploadKeyEnv.size) {
-    throw GradleException("Upload key: missing $uploadKeyMissing (set all four UPLOAD_* or none)")
+    // The task graph, not the command line: "assemble", "build" or "publishBundle" also run
+    // release tasks without naming them.
+    gradle.taskGraph.whenReady {
+        if (allTasks.any { it.project == project && it.name.contains("Release") }) {
+            throw GradleException("Upload key: missing $uploadKeyMissing (set all four UPLOAD_* or none)")
+        }
+    }
 }
 
 // Play service account key, as a file path (scripts/play-publish.sh writes it to a temporary
