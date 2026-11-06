@@ -19,8 +19,7 @@ The app UI is in French.
 - **Trip chart** coloured by eco score, scrollable, averaged according to the displayed time window.
 - **Over-consumption map** (OpenStreetMap), aggregated per road, with a per-day detail view.
 - **Trip kept while the engine runs** (PID 1F), even if the app restarts.
-- **Auto-start** when the phone connects to the car over Bluetooth.
-- **Android Auto** (Car App Library, IoT category).
+- **Auto-start** when the phone connects to the car over Bluetooth (without GPS while the app is not on screen: the app never asks for background location).
 
 ## Build
 
@@ -70,7 +69,3 @@ MICKA_APPROVED_ISSUE=ECO-123 scripts/play-publish.sh production
 - Release notes: `app/src/main/play/release-notes/<language>/default.txt`. Store listing (`--listing`): `app/src/main/play/listings/<language>/`.
 - Without `PLAY_SERVICE_ACCOUNT_FILE` (set by the script), Gradle Play Publisher stays disabled: a regular build never calls Play.
 - The very first upload of the app is done by hand in the Play Console (Play rejects the API before that).
-
-## Android Auto
-
-In a real car, Android Auto only shows Car App Library apps installed from a trusted source (Google Play, internal test track). For development, use the [Desktop Head Unit](https://developer.android.com/training/cars/testing/dhu).

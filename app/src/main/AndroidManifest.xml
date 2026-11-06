@@ -6,7 +6,6 @@
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
@@ -14,12 +13,11 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="androidx.car.app.MAP_TEMPLATES" />
-    <uses-permission android:name="androidx.car.app.ACCESS_SURFACE" />
 
     <application
         android:name=".ConsoApp"
-        android:allowBackup="true"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/Theme.Conso">
@@ -46,21 +44,5 @@
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
             </intent-filter>
         </receiver>
-
-        <service
-            android:name=".car.ConsoCarAppService"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="androidx.car.app.CarAppService" />
-                <category android:name="androidx.car.app.category.WEATHER" />
-            </intent-filter>
-        </service>
-
-        <meta-data
-            android:name="com.google.android.gms.car.application"
-            android:resource="@xml/automotive_app_desc" />
-        <meta-data
-            android:name="androidx.car.app.minCarApiLevel"
-            android:value="1" />
     </application>
 </manifest>

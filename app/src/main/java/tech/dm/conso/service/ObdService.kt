@@ -12,6 +12,7 @@ import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import androidx.annotation.RequiresApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -21,7 +22,6 @@ import kotlinx.coroutines.launch
 import tech.dm.conso.ConsoApp
 import tech.dm.conso.R
 import tech.dm.conso.auto.AutoStartStore
-import tech.dm.conso.car.TipAlert
 import tech.dm.conso.data.ConnectionStatus
 import tech.dm.conso.data.LiveState
 import tech.dm.conso.data.Vehicle
@@ -29,6 +29,7 @@ import tech.dm.conso.ui.MainActivity
 
 class ObdService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private var types = 0
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -68,10 +69,7 @@ class ObdService : Service() {
             startForeground(ID, notification)
             return
         }
-        val location = granted(Manifest.permission.ACCESS_FINE_LOCATION) &&
-            (!fromBackground || granted(Manifest.permission.ACCESS_BACKGROUND_LOCATION))
-        val types = ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE or
-            (if (location) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0)
+        types = nextForegroundTypes(types, granted(Manifest.permission.ACCESS_FINE_LOCATION), fromBackground)
         startForeground(ID, notification, types)
     }
 
@@ -105,9 +103,27 @@ class ObdService : Service() {
         private const val CHANNEL = "trip"
         private const val ID = 1
 
-        private const val ACTION_AUTO = "tech.dm.conso.AUTO_START"
+        internal const val ACTION_AUTO = "tech.dm.conso.AUTO_START"
         private const val EXTRA_OBD = "obd"
         private const val EXTRA_OBD_NAME = "obdName"
+
+        /**
+         * The app never asks for background location: a service started by the Bluetooth
+         * auto-start (app not on screen) runs as a connected device only, without GPS.
+         */
+        @RequiresApi(Build.VERSION_CODES.Q)
+        internal fun foregroundTypes(fineLocationGranted: Boolean, fromBackground: Boolean): Int =
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE or
+                (if (fineLocationGranted && !fromBackground) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0)
+
+        /**
+         * A Bluetooth auto-start received while a trip started from the app is running must not
+         * drop the location type already granted to the service: types are only ever added.
+         */
+        @RequiresApi(Build.VERSION_CODES.Q)
+        internal fun nextForegroundTypes(current: Int, fineLocationGranted: Boolean, fromBackground: Boolean): Int =
+            foregroundTypes(fineLocationGranted, fromBackground) or
+                (if (fineLocationGranted) current and ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0)
 
         fun start(context: Context) {
             context.startForegroundService(Intent(context, ObdService::class.java))

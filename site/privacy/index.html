@@ -97,7 +97,7 @@
 
   <main id="contenu">
     <h1>Politique de confidentialité d'EcoDrive OBD</h1>
-    <p class="meta">Dernière mise à jour : <time datetime="2026-10-17">17 octobre 2026</time></p>
+    <p class="meta">Dernière mise à jour : <time datetime="2026-11-06">6 novembre 2026</time></p>
     <nav class="toc" aria-label="Sur cette page">
       <p>Sur cette page</p>
       <ul>
@@ -130,12 +130,12 @@
   <li>Pas de compte. Pas de publicité. Pas de traceur. Pas d'outil de mesure d'audience. Pas de rapport de plantage envoyé.</li>
   <li>Nous n'avons pas de serveur. Nous ne recevons aucune de vos données.</li>
   <li>Vos trajets et votre historique restent sur votre téléphone.</li>
-  <li>Le numéro de série du véhicule (VIN) n'est jamais enregistré et jamais envoyé.</li>
+  <li>Le numéro de série du véhicule (VIN) n'est jamais enregistré en clair et jamais envoyé. Seule une empreinte illisible, gardée sur votre téléphone, sert à reconnaître la voiture.</li>
   <li>Trois services tiers peuvent recevoir des données de localisation quand vous utilisez certaines fonctions. Ils sont décrits plus bas.</li>
 </ul>
 <h2 id="ce-que-lapplication-lit">Ce que l'application lit</h2>
 <p><strong>Dans la voiture, par le module OBD-II (ELM327) en Bluetooth :</strong> régime moteur, vitesse, débit d'air, débit de carburant, temps écoulé depuis le démarrage du moteur, type de carburant. L'application s'en sert pour calculer votre consommation et votre note d'éco-conduite.</p>
-<p><strong>Le VIN (numéro d'identification du véhicule).</strong> L'application le lit une fois à la connexion pour en déduire la marque et l'année du modèle. Ensuite, le numéro complet est oublié. Il n'est écrit dans aucun fichier, il n'est envoyé à personne. Seules la marque et l'année restent en mémoire pendant la connexion, pour être affichées.</p>
+<p><strong>Le VIN (numéro d'identification du véhicule).</strong> L'application le lit à la connexion pour en déduire la marque et l'année du modèle, et pour reconnaître la voiture. Le numéro complet n'est jamais enregistré en clair et n'est envoyé à personne. Pour reconnaître la voiture d'une connexion à l'autre, l'application garde seulement une empreinte illisible du VIN : 16 caractères calculés par SHA-256 avec une valeur aléatoire propre à votre téléphone (« salage »). Cette empreinte reste dans l'espace privé de l'application, sur votre téléphone. Seules la marque et l'année restent en mémoire pendant la connexion, pour être affichées.</p>
 <p><strong>Sur le téléphone :</strong></p>
 <ul>
   <li>Votre <strong>position GPS</strong> (latitude, longitude, altitude), une fois par seconde, pendant un trajet.</li>
@@ -146,7 +146,7 @@
 <h2 id="la-localisation-pourquoi-quand">La localisation : pourquoi, quand</h2>
 <p>La position sert à deux choses : mesurer le dénivelé de la route (pour ne pas vous pénaliser en côte) et tracer sur une carte, route par route, où vous consommez plus que prévu.</p>
 <p>Elle est lue <strong>tant que l'application est connectée au module OBD</strong> (en pratique, tant que la voiture est sous contact). Cela continue quand l'application est en arrière-plan ou l'écran éteint : une notification « Trajet en cours » reste affichée pendant ce temps. La lecture s'arrête quand la connexion au module OBD s'arrête.</p>
-<p>Le trajet peut aussi démarrer <strong>sans que vous ouvriez l'application</strong>, si vous avez activé le « Démarrage automatique » : quand votre téléphone se connecte au Bluetooth de votre voiture, l'application se connecte au module OBD et enregistre le trajet. C'est la seule raison pour laquelle elle demande l'autorisation de position « Toujours autoriser ». Cette fonction est désactivée tant que vous ne l'activez pas, et vous pouvez retirer l'autorisation à tout moment.</p>
+<p>Le trajet peut aussi démarrer <strong>sans que vous ouvriez l'application</strong>, si vous avez activé le « Démarrage automatique » : quand votre téléphone se connecte au Bluetooth de votre voiture, l'application se connecte au module OBD et enregistre le trajet. L'application ne demande pas l'autorisation de position en arrière-plan (« Toujours autoriser ») : un trajet démarré ainsi est suivi sans position, donc sans carte ni correction de pente, tant que l'application n'est pas à l'écran. Cette fonction est désactivée tant que vous ne l'activez pas.</p>
 <p>L'accès à la localisation est facultatif. Sans lui, l'application fonctionne toujours, mais sans carte ni correction de pente. Vous pouvez le retirer à tout moment dans les réglages Android.</p>
 <h2 id="ce-qui-quitte-votre-telephone-et-vers-qui">Ce qui quitte votre téléphone, et vers qui</h2>
 <p>Nous n'envoyons rien à un serveur qui nous appartienne. Voici les seuls échanges réseau de l'application, tous liés à la localisation.</p>
@@ -185,10 +185,10 @@
 </tbody>
 </table>
 </div>
-<p><strong>Jamais enregistré : le VIN.</strong></p>
+<p><strong>Jamais enregistré en clair : le VIN.</strong> Seule son empreinte illisible (16 caractères, voir plus haut) est gardée avec le profil du véhicule, sur votre téléphone.</p>
 <p><strong>Ce que le code de l'application prévoit réellement.</strong> Une limite de durée n'existe que pour deux données : le trajet en cours (au plus 4 heures de mesures) et l'historique par jour (90 derniers jours). Pour les portions de route et les noms de rues, il n'y a pas de durée : l'application ne les supprime jamais d'elle-même. Les altitudes obtenues d'Open-Meteo sont gardées en mémoire vive pendant que l'application tourne et ne sont pas écrites dans un fichier. Chez DM Consulting, nous ne détenons aucune de ces données, donc nous n'avons aucune durée de conservation à annoncer. Pour les services tiers, les durées sont indiquées plus haut quand le service les donne (Open-Meteo : 90 jours pour ses journaux) ; pour les autres, nous n'avons pas de durée à indiquer.</p>
 <h2 id="sauvegarde-android">Sauvegarde Android</h2>
-<p>Android peut sauvegarder les données de l'application dans votre compte Google si la sauvegarde est activée sur votre téléphone. Cette sauvegarde est gérée par Android et Google, pas par nous. Vous la réglez dans les paramètres du téléphone (Système &gt; Sauvegarde). La restauration sur un nouveau téléphone peut remettre vos données dessus.</p>
+<p>L'application refuse la sauvegarde Android : ses données (trajets, historique, profils de véhicule) ne sont pas copiées dans votre compte Google, ni transférées vers un nouveau téléphone, même si la sauvegarde est activée sur votre téléphone. Elles restent sur ce téléphone.</p>
 <h2 id="base-legale-de-chaque-traitement">Base légale de chaque traitement</h2>
 <p>Le règlement européen sur la protection des données (RGPD) demande d'indiquer sur quel fondement repose chaque traitement. Voici celui que nous retenons, traitement par traitement. Rappel : l'application n'envoie rien vers un serveur de DM Consulting.</p>
 <div class="table-wrap">
@@ -196,8 +196,8 @@
 <thead><tr><th scope="col">Traitement</th><th scope="col">Ce qui se passe</th><th scope="col">Base légale</th></tr></thead>
 <tbody>
 <tr><th scope="row">Lecture des données du véhicule (OBD)</th><td data-label="Ce qui se passe">L'application lit régime, vitesse, débits et type de carburant par le module Bluetooth, sur votre téléphone, pour calculer consommation et note.</td><td data-label="Base légale">Fourniture du service que vous demandez en utilisant l'application (art. 6, 1, b du RGPD).</td></tr>
-<tr><th scope="row">Localisation (GPS, baromètre)</th><td data-label="Ce qui se passe">Lecture de la position pendant un trajet, sur votre téléphone, pour la pente et la carte.</td><td data-label="Base légale">Votre consentement (art. 6, 1, a), donné par l'autorisation de position d'Android et retirable à tout moment dans les réglages Android. L'application ne demande l'autorisation « Toujours autoriser » que si vous activez le démarrage automatique.</td></tr>
-<tr><th scope="row">Stockage local des trajets et de l'historique</th><td data-label="Ce qui se passe">Écriture des portions de route, du trajet en cours, de l'historique et du profil du véhicule dans l'espace privé de l'application.</td><td data-label="Base légale">Fourniture du service (art. 6, 1, b) : vous montrer votre historique et votre carte. Ces données ne quittent pas votre téléphone, sauf la sauvegarde Android si vous l'avez activée.</td></tr>
+<tr><th scope="row">Localisation (GPS, baromètre)</th><td data-label="Ce qui se passe">Lecture de la position pendant un trajet, sur votre téléphone, pour la pente et la carte.</td><td data-label="Base légale">Votre consentement (art. 6, 1, a), donné par l'autorisation de position d'Android et retirable à tout moment dans les réglages Android. L'application ne demande jamais l'autorisation de position en arrière-plan (« Toujours autoriser »).</td></tr>
+<tr><th scope="row">Stockage local des trajets et de l'historique</th><td data-label="Ce qui se passe">Écriture des portions de route, du trajet en cours, de l'historique et du profil du véhicule dans l'espace privé de l'application.</td><td data-label="Base légale">Fourniture du service (art. 6, 1, b) : vous montrer votre historique et votre carte. Ces données ne quittent pas votre téléphone.</td></tr>
 <tr><th scope="row">Module OBD et voiture (Bluetooth)</th><td data-label="Ce qui se passe">Mémorisation du nom et de l'adresse Bluetooth pour se reconnecter.</td><td data-label="Base légale">Fourniture du service (art. 6, 1, b).</td></tr>
 <tr><th scope="row">Requêtes à Open-Meteo</th><td data-label="Ce qui se passe">Envoi de coordonnées pour obtenir l'altitude du sol, seulement si le téléphone n'a pas de baromètre.</td><td data-label="Base légale">Fourniture du service (art. 6, 1, b) : l'altitude sert à la correction de pente. Cela ne se produit que si vous avez autorisé la localisation.</td></tr>
 <tr><th scope="row">Tuiles OpenStreetMap</th><td data-label="Ce qui se passe">Demande des images de la zone affichée quand vous ouvrez l'onglet Carte.</td><td data-label="Base légale">Fourniture du service (art. 6, 1, b) : afficher le fond de carte.</td></tr>
@@ -224,7 +224,7 @@
   <li><strong>Portabilité</strong> : l'application n'a pas de fonction d'export, et nous ne détenons pas vos données : nous ne pouvons pas vous les remettre.</li>
   <li><strong>Retrait du consentement</strong> : retirez l'autorisation de position dans les réglages Android, Applications &gt; EcoDrive OBD &gt; Autorisations, à tout moment. Ce retrait ne remet pas en cause ce qui a été fait avant. Vous pouvez aussi retirer de la même façon le Bluetooth et les notifications.</li>
 </ul>
-<p>Ce qui reste hors de l'application après suppression : une éventuelle sauvegarde Android (voir plus haut), à supprimer depuis votre compte Google, et les journaux chez Open-Meteo, OpenStreetMap et Google, qui relèvent de leurs politiques.</p>
+<p>Ce qui reste hors de l'application après suppression : les journaux chez Open-Meteo, OpenStreetMap et Google, qui relèvent de leurs politiques.</p>
 <p>Vous pouvez aussi nous écrire à <a href="mailto:mickael@dm-consulting.tech">mickael@dm-consulting.tech</a> pour toute demande sur ces droits. Nous ne détenons pas vos données : si vous nous demandez l'accès ou la suppression, nous ne pourrons que vous indiquer ces démarches. Pour exercer vos droits auprès des services tiers, écrivez-leur directement.</p>
 <h2 id="reclamation-aupres-de-la-cnil">Réclamation auprès de la CNIL</h2>
 <p>Si vous estimez que vos droits ne sont pas respectés, vous pouvez introduire une réclamation auprès de la Commission nationale de l'informatique et des libertés (CNIL) : <a href="https://www.cnil.fr/fr/plaintes">https://www.cnil.fr/fr/plaintes</a>. Vous pouvez aussi vous adresser à l'autorité de protection des données de votre pays de résidence.</p>
