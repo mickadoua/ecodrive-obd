@@ -1,13 +1,23 @@
-package tech.dm.conso.car
+package tech.dm.conso.service
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.SystemClock
-import androidx.car.app.notification.CarAppExtender
 import androidx.core.app.NotificationCompat
 import tech.dm.conso.R
 import tech.dm.conso.data.LiveState
+
+fun drivingTips(s: LiveState): List<String> = buildList {
+    s.gear?.let { g ->
+        when {
+            g.targetGear > g.currentGear -> add("Passez la ${g.targetGear}e")
+            g.targetGear < g.currentGear -> add("Rétrogradez en ${g.targetGear}e")
+        }
+    }
+    s.speedLimitKmh?.let { limit -> if (s.speedKmh > limit + 3) add("Limité à $limit km/h") }
+    s.eco?.message?.let(::add)
+}
 
 object TipAlert {
     private const val TIP_CHANNEL = "tips"
@@ -18,7 +28,7 @@ object TipAlert {
     private var lastTipAt = 0L
 
     fun update(context: Context, s: LiveState) {
-        val tip = carTips(s).firstOrNull() ?: return
+        val tip = drivingTips(s).firstOrNull() ?: return
         if (tip == lastTip) return
         val now = SystemClock.elapsedRealtime()
         if (now - lastTipAt < TIP_INTERVAL_MS) return
@@ -33,14 +43,6 @@ object TipAlert {
             .setContentTitle(tip)
             .setContentText(title)
             .setTimeoutAfter(TIP_INTERVAL_MS)
-            .extend(
-                CarAppExtender.Builder()
-                    .setContentTitle(tip)
-                    .setContentText(title)
-                    .setSmallIcon(R.drawable.ic_stat)
-                    .setImportance(NotificationManager.IMPORTANCE_HIGH)
-                    .build()
-            )
             .build()
         runCatching { nm.notify(TIP_ID, notification) }
     }

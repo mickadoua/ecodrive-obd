@@ -97,7 +97,7 @@
 
   <main id="contenu">
     <h1>EcoDrive OBD Privacy Policy</h1>
-    <p class="meta">Last updated: <time datetime="2026-10-17">17 October 2026</time></p>
+    <p class="meta">Last updated: <time datetime="2026-11-06">6 November 2026</time></p>
     <nav class="toc" aria-label="On this page">
       <p>On this page</p>
       <ul>
@@ -130,12 +130,12 @@
   <li>No account. No ads. No trackers. No analytics. No crash reports sent.</li>
   <li>We have no server. We receive none of your data.</li>
   <li>Your trips and history stay on your phone.</li>
-  <li>Your vehicle identification number (VIN) is never saved and never sent.</li>
+  <li>Your vehicle identification number (VIN) is never saved in readable form and never sent. Only an unreadable fingerprint, kept on your phone, is used to recognise the car.</li>
   <li>Three third-party services may receive location data when you use certain features. They are described below.</li>
 </ul>
 <h2 id="what-the-app-reads">What the app reads</h2>
 <p><strong>From the car, through the Bluetooth OBD-II (ELM327) adapter:</strong> engine speed, vehicle speed, air flow, fuel flow, time since engine start, fuel type. The app uses them to compute your fuel consumption and your eco-driving score.</p>
-<p><strong>The VIN (vehicle identification number).</strong> The app reads it once when it connects, to work out the make and model year. After that, the full number is discarded. It is written to no file and sent to no one. Only the make and year stay in memory while connected, to be displayed.</p>
+<p><strong>The VIN (vehicle identification number).</strong> The app reads it when it connects, to work out the make and model year and to recognise the car. The full number is never saved in readable form and is sent to no one. To recognise the car from one connection to the next, the app keeps only an unreadable fingerprint of the VIN: 16 characters computed with SHA-256 and a random value specific to your phone (a "salt"). This fingerprint stays in the app's private storage, on your phone. Only the make and year stay in memory while connected, to be displayed.</p>
 <p><strong>On the phone:</strong></p>
 <ul>
   <li>Your <strong>GPS position</strong> (latitude, longitude, altitude), once per second, during a trip.</li>
@@ -146,7 +146,7 @@
 <h2 id="location-why-and-when">Location: why and when</h2>
 <p>Location is used for two things: measuring the slope of the road (so you are not penalised on hills) and drawing a map, road by road, of where you use more fuel than expected.</p>
 <p>It is read <strong>while the app is connected to the OBD adapter</strong> (in practice, while the car's ignition is on). This continues when the app is in the background or the screen is off: a "Trip in progress" notification stays visible during that time. Reading stops when the connection to the OBD adapter ends.</p>
-<p>A trip can also start <strong>without you opening the app</strong>, if you have turned on "Automatic start": when your phone connects to your car's Bluetooth, the app connects to the OBD adapter and records the trip. This is the only reason it asks for the "Allow all the time" location permission. This feature is off until you turn it on, and you can withdraw the permission at any time.</p>
+<p>A trip can also start <strong>without you opening the app</strong>, if you have turned on "Automatic start": when your phone connects to your car's Bluetooth, the app connects to the OBD adapter and records the trip. The app does not ask for background location ("Allow all the time"): a trip started this way is recorded without your position, so without the map or the slope correction, while the app is not on screen. This feature is off until you turn it on.</p>
 <p>Location access is optional. Without it, the app still works, but without the map or the slope correction. You can remove it at any time in Android settings.</p>
 <h2 id="what-leaves-your-phone-and-where-it-goes">What leaves your phone, and where it goes</h2>
 <p>We send nothing to a server we own. These are the only network exchanges the app makes, and all relate to location.</p>
@@ -185,10 +185,10 @@
 </tbody>
 </table>
 </div>
-<p><strong>Never saved: the VIN.</strong></p>
+<p><strong>Never saved in readable form: the VIN.</strong> Only its unreadable fingerprint (16 characters, see above) is kept with the vehicle profile, on your phone.</p>
 <p><strong>What the app's code actually does.</strong> A time limit exists for only two kinds of data: the current trip (at most 4 hours of readings) and the daily history (last 90 days). For road stretches and street names there is no time limit: the app never deletes them on its own. The elevations obtained from Open-Meteo are kept in working memory while the app runs and are not written to a file. At DM Consulting we hold none of this data, so we have no retention period to announce. For third-party services, the periods are given above when the service states one (Open-Meteo: 90 days for its logs); for the others, we have no period to give.</p>
 <h2 id="android-backup">Android backup</h2>
-<p>Android may back up the app's data to your Google account if backup is turned on on your phone. This backup is managed by Android and Google, not by us. You control it in your phone settings (System &gt; Backup). Restoring onto a new phone may put your data back.</p>
+<p>The app opts out of Android backup: its data (trips, history, vehicle profiles) is not copied to your Google account or transferred to a new phone, even if backup is turned on on your phone. It stays on this phone.</p>
 <h2 id="legal-basis-for-each-processing">Legal basis for each processing</h2>
 <p>The European data protection regulation (GDPR) asks us to say what each processing relies on. Here is the basis we use, processing by processing. As a reminder: the app sends nothing to a DM Consulting server.</p>
 <div class="table-wrap">
@@ -196,8 +196,8 @@
 <thead><tr><th scope="col">Processing</th><th scope="col">What happens</th><th scope="col">Legal basis</th></tr></thead>
 <tbody>
 <tr><th scope="row">Reading vehicle data (OBD)</th><td data-label="What happens">The app reads engine speed, vehicle speed, flows and fuel type through the Bluetooth adapter, on your phone, to compute consumption and score.</td><td data-label="Legal basis">Providing the service you ask for by using the app (Art. 6(1)(b) GDPR).</td></tr>
-<tr><th scope="row">Location (GPS, barometer)</th><td data-label="What happens">The position is read during a trip, on your phone, for slope and the map.</td><td data-label="Legal basis">Your consent (Art. 6(1)(a)), given through Android's location permission and withdrawable at any time in Android settings. The app only asks for the "Allow all the time" permission if you turn on automatic start.</td></tr>
-<tr><th scope="row">Local storage of trips and history</th><td data-label="What happens">Road stretches, the current trip, the history and the vehicle profile are written to the app's private storage.</td><td data-label="Legal basis">Providing the service (Art. 6(1)(b)): showing you your history and your map. This data does not leave your phone, except through Android backup if you have turned it on.</td></tr>
+<tr><th scope="row">Location (GPS, barometer)</th><td data-label="What happens">The position is read during a trip, on your phone, for slope and the map.</td><td data-label="Legal basis">Your consent (Art. 6(1)(a)), given through Android's location permission and withdrawable at any time in Android settings. The app never asks for background location ("Allow all the time").</td></tr>
+<tr><th scope="row">Local storage of trips and history</th><td data-label="What happens">Road stretches, the current trip, the history and the vehicle profile are written to the app's private storage.</td><td data-label="Legal basis">Providing the service (Art. 6(1)(b)): showing you your history and your map. This data does not leave your phone.</td></tr>
 <tr><th scope="row">OBD adapter and car (Bluetooth)</th><td data-label="What happens">The Bluetooth name and address are remembered so the app can reconnect.</td><td data-label="Legal basis">Providing the service (Art. 6(1)(b)).</td></tr>
 <tr><th scope="row">Requests to Open-Meteo</th><td data-label="What happens">Coordinates are sent to get ground elevation, only if the phone has no barometer.</td><td data-label="Legal basis">Providing the service (Art. 6(1)(b)): elevation is used for the slope correction. This only happens if you have allowed location.</td></tr>
 <tr><th scope="row">OpenStreetMap tiles</th><td data-label="What happens">Images of the area shown are requested when you open the Map tab.</td><td data-label="Legal basis">Providing the service (Art. 6(1)(b)): showing the map background.</td></tr>
@@ -224,7 +224,7 @@
   <li><strong>Portability</strong>: the app has no export feature, and we do not hold your data: we cannot hand it over to you.</li>
   <li><strong>Withdrawing consent</strong>: remove the location permission in Android settings, Apps &gt; EcoDrive OBD &gt; Permissions, at any time. Withdrawal does not affect what was done before. You can remove Bluetooth and notifications the same way.</li>
 </ul>
-<p>What remains outside the app after deletion: any Android backup (see above), to be deleted from your Google account, and the logs held by Open-Meteo, OpenStreetMap and Google, which are covered by their own policies.</p>
+<p>What remains outside the app after deletion: the logs held by Open-Meteo, OpenStreetMap and Google, which are covered by their own policies.</p>
 <p>You can also write to us at <a href="mailto:mickael@dm-consulting.tech">mickael@dm-consulting.tech</a> about any request concerning these rights. We do not hold your data: if you ask us for access or deletion, we can only point you to these steps. To exercise your rights with the third-party services, write to them directly.</p>
 <h2 id="complaint-to-the-cnil">Complaint to the CNIL</h2>
 <p>If you believe your rights are not being respected, you can lodge a complaint with the French data protection authority, the Commission nationale de l'informatique et des libertés (CNIL): <a href="https://www.cnil.fr/fr/plaintes">https://www.cnil.fr/fr/plaintes</a> (page in French). You can also contact the data protection authority of your country of residence.</p>
