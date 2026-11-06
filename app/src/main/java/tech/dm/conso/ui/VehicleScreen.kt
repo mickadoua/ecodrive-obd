@@ -89,7 +89,7 @@ fun VehicleScreen(
                 )
                 Spacer(Modifier.height(8.dp))
                 Chip("Utiliser", true) {
-                    onSave(draft.copy(make = detected.make, year = detected.modelYear ?: draft.year))
+                    onSave(draft.copy(make = detected.make ?: draft.make, year = detected.modelYear ?: draft.year))
                     yearText = (detected.modelYear ?: draft.year)?.toString() ?: ""
                 }
                 Spacer(Modifier.height(6.dp))
