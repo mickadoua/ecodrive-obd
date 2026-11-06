@@ -6,3 +6,14 @@ local.properties
 .DS_Store
 captures/
 .claude/
+
+# Play release material: signing keys, service account keys and bundles never go in the repository
+*.jks
+*.keystore
+*.p12
+*.pem
+keystore.properties
+play-service-account*.json
+*service-account*.json
+*.aab
+*.apks
