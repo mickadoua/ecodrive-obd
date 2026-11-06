@@ -21,7 +21,6 @@ import kotlinx.coroutines.launch
 import tech.dm.conso.ConsoApp
 import tech.dm.conso.R
 import tech.dm.conso.auto.AutoStartStore
-import tech.dm.conso.car.TipAlert
 import tech.dm.conso.data.ConnectionStatus
 import tech.dm.conso.data.LiveState
 import tech.dm.conso.data.Vehicle

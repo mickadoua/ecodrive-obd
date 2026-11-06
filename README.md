@@ -20,7 +20,6 @@ The app UI is in French.
 - **Over-consumption map** (OpenStreetMap), aggregated per road, with a per-day detail view.
 - **Trip kept while the engine runs** (PID 1F), even if the app restarts.
 - **Auto-start** when the phone connects to the car over Bluetooth (without GPS while the app is not on screen: the app never asks for background location).
-- **Android Auto** (Car App Library, IoT category).
 
 ## Build
 
@@ -32,7 +31,3 @@ Requires JDK 17 and Android SDK 36.
 ```
 
 A built-in **ELM327 simulator** (*Connecter* → *Simulateur*) answers with real OBD frames, so the app can be tested on an emulator without a car.
-
-## Android Auto
-
-In a real car, Android Auto only shows Car App Library apps installed from a trusted source (Google Play, internal test track). For development, use the [Desktop Head Unit](https://developer.android.com/training/cars/testing/dhu).

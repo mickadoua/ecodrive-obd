@@ -22,10 +22,21 @@ class PlayComplianceTest {
     private fun packageInfo(flags: Int) = context.packageManager.getPackageInfo(context.packageName, flags)
 
     @Test
-    fun noBackgroundLocationPermission() {
+    fun noBackgroundLocationNorAndroidAutoPermission() {
         val requested = packageInfo(PackageManager.GET_PERMISSIONS).requestedPermissions.orEmpty().toList()
         assertFalse(requested.contains("android.permission.ACCESS_BACKGROUND_LOCATION"))
+        assertTrue(requested.none { it.startsWith("androidx.car.app.") })
         assertTrue(requested.contains("android.permission.ACCESS_FINE_LOCATION"))
+    }
+
+    @Test
+    fun noAndroidAutoServiceNorMetadata() {
+        val services = packageInfo(PackageManager.GET_SERVICES).services.orEmpty().map { it.name }
+        assertEquals(listOf(ObdService::class.java.name), services)
+        @Suppress("DEPRECATION")
+        val meta = context.packageManager.getApplicationInfo(context.packageName, PackageManager.GET_META_DATA).metaData
+        assertFalse(meta?.containsKey("com.google.android.gms.car.application") ?: false)
+        assertFalse(meta?.containsKey("androidx.car.app.minCarApiLevel") ?: false)
     }
 
     @Test
