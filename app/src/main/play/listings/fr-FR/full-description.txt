@@ -1,0 +1,31 @@
+EcoDrive OBD lit la vraie consommation de votre voiture par un petit module OBD-II Bluetooth, et note votre conduite en tenant compte de la route : monter une côte n'est pas pénalisé.
+
+Ce qu'il vous faut
+• Un module OBD-II ELM327 Bluetooth, à acheter à part. Sans module, pas de consommation réelle.
+• Un simulateur intégré permet d'essayer l'application sans voiture.
+
+Ce que fait l'application
+• Consommation en direct : litres aux 100 km en roulant, litres par heure à l'arrêt, lus dans les données de la voiture, pas devinés d'après le GPS.
+• Note d'éco-conduite qui tient compte de la pente : la note compare ce que vous consommez à ce que la route demande. Une montée n'abaisse pas la note ; en descente, l'application vous invite à lever le pied.
+• Graphe du trajet coloré selon la note.
+• Carte des routes où vous avez surconsommé : vous voyez où ça a coûté cher, pas seulement une moyenne.
+• Profil du véhicule : marque, carburant, cylindrée.
+
+Ce que l'application ne fait pas
+• Elle lit les données de la voiture, elle ne modifie rien. Elle ne promet aucune économie de carburant.
+• La note est une estimation fondée sur un modèle de voiture générique, pas sur une mesure de votre véhicule.
+• L'interface est en français.
+
+Voitures vérifiées
+Renault Trafic diesel et Renault Twingo essence, avec un module Vlink. Les autres voitures sont à tester : la consommation dépend de ce que la voiture expose par OBD-II.
+
+Localisation et vie privée
+• La position sert à mesurer le dénivelé et à tracer la carte. Elle est lue tant que l'application est connectée au module OBD (en pratique, tant que la voiture est sous contact), y compris en arrière-plan ; une notification permanente reste affichée. La localisation est facultative : sans elle, pas de carte ni de correction de pente.
+• Pas de compte, pas de publicité, pas de traceur, pas de rapport de plantage envoyé. Nous n'avons pas de serveur : vos trajets restent sur votre téléphone.
+• Le numéro de série du véhicule (VIN) n'est jamais envoyé. Il n'est pas conservé en clair : seule une empreinte locale illisible sert à reconnaître votre voiture.
+• Certaines fonctions envoient des coordonnées à trois services tiers : Open-Meteo (altitude, uniquement si le téléphone n'a pas de baromètre), OpenStreetMap (fonds de carte) et le service de noms de rues d'Android.
+Détails : https://mickadoua.github.io/ecodrive-obd/privacy/
+
+À propos
+EcoDrive OBD est gratuite, sans publicité ni achat intégré. Le code source est public : https://github.com/mickadoua/ecodrive-obd
+Un projet de DM Consulting. Contact : mickael@dm-consulting.tech
