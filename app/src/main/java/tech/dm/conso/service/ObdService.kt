@@ -12,6 +12,7 @@ import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import androidx.annotation.RequiresApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -110,6 +111,7 @@ class ObdService : Service() {
          * The app never asks for background location: a service started by the Bluetooth
          * auto-start (app not on screen) runs as a connected device only, without GPS.
          */
+        @RequiresApi(Build.VERSION_CODES.Q)
         internal fun foregroundTypes(fineLocationGranted: Boolean, fromBackground: Boolean): Int =
             ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE or
                 (if (fineLocationGranted && !fromBackground) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0)
@@ -118,6 +120,7 @@ class ObdService : Service() {
          * A Bluetooth auto-start received while a trip started from the app is running must not
          * drop the location type already granted to the service: types are only ever added.
          */
+        @RequiresApi(Build.VERSION_CODES.Q)
         internal fun nextForegroundTypes(current: Int, fineLocationGranted: Boolean, fromBackground: Boolean): Int =
             foregroundTypes(fineLocationGranted, fromBackground) or
                 (if (fineLocationGranted) current and ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0)
