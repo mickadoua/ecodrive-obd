@@ -50,11 +50,6 @@ private enum class Tab(val label: String, val icon: ImageVector) {
 class MainActivity : ComponentActivity() {
     private val autoStartStore by lazy { AutoStartStore(this) }
     private var autoStart by mutableStateOf(AutoStartSettings())
-    private var backgroundLocation by mutableStateOf(false)
-
-    private val backgroundLocationRequest = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-        backgroundLocation = it
-    }
     private val telemetry get() = ConsoApp.instance.telemetry
     private var showPicker by mutableStateOf(false)
 
@@ -137,12 +132,8 @@ class MainActivity : ComponentActivity() {
                                     settings = autoStart,
                                     vehicle = vehicle,
                                     bonded = bondedDevices(),
-                                    backgroundLocationGranted = backgroundLocation,
                                     onChange = { autoStart = it; autoStartStore.save(it) },
                                     onVehicleChange = telemetry::updateVehicle,
-                                    onRequestBackgroundLocation = {
-                                        backgroundLocationRequest.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                                    },
                                 )
                             }
                         }
@@ -187,12 +178,6 @@ class MainActivity : ComponentActivity() {
         val source = autoStartStore.savedObdSource(this) ?: return
         telemetry.connect(source, retry = true, maxAttempts = 3)
         ObdService.start(this)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        backgroundLocation = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
-            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
     }
 
     @SuppressLint("MissingPermission")

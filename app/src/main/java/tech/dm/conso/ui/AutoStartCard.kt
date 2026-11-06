@@ -28,10 +28,8 @@ fun AutoStartCard(
     settings: AutoStartSettings,
     vehicle: Vehicle,
     bonded: List<BondedDevice>,
-    backgroundLocationGranted: Boolean,
     onChange: (AutoStartSettings) -> Unit,
     onVehicleChange: (Vehicle) -> Unit,
-    onRequestBackgroundLocation: () -> Unit,
 ) {
     var picking by remember { mutableStateOf(false) }
     Card {
@@ -64,14 +62,12 @@ fun AutoStartCard(
                 }
             }
         }
-        if (settings.enabled && !backgroundLocationGranted) {
+        if (settings.enabled) {
             Spacer(Modifier.height(12.dp))
             Text(
-                "Pour la carte et le relief quand l'app démarre seule, la localisation doit être « Toujours autorisée ».",
-                color = Palette.Yellow, fontSize = 12.sp,
+                "Démarré seul, un trajet est suivi sans position GPS (carte et relief) tant que l'app n'est pas à l'écran.",
+                color = Palette.Muted, fontSize = 12.sp,
             )
-            Spacer(Modifier.height(6.dp))
-            Chip("Autoriser en arrière-plan", true, onRequestBackgroundLocation)
         }
     }
 }

@@ -68,11 +68,7 @@ class ObdService : Service() {
             startForeground(ID, notification)
             return
         }
-        val location = granted(Manifest.permission.ACCESS_FINE_LOCATION) &&
-            (!fromBackground || granted(Manifest.permission.ACCESS_BACKGROUND_LOCATION))
-        val types = ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE or
-            (if (location) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0)
-        startForeground(ID, notification, types)
+        startForeground(ID, notification, foregroundTypes(granted(Manifest.permission.ACCESS_FINE_LOCATION), fromBackground))
     }
 
     override fun onDestroy() {
@@ -108,6 +104,14 @@ class ObdService : Service() {
         private const val ACTION_AUTO = "tech.dm.conso.AUTO_START"
         private const val EXTRA_OBD = "obd"
         private const val EXTRA_OBD_NAME = "obdName"
+
+        /**
+         * The app never asks for background location: a service started by the Bluetooth
+         * auto-start (app not on screen) runs as a connected device only, without GPS.
+         */
+        internal fun foregroundTypes(fineLocationGranted: Boolean, fromBackground: Boolean): Int =
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE or
+                (if (fineLocationGranted && !fromBackground) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0)
 
         fun start(context: Context) {
             context.startForegroundService(Intent(context, ObdService::class.java))

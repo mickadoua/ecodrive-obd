@@ -19,7 +19,7 @@ The app UI is in French.
 - **Trip chart** coloured by eco score, scrollable, averaged according to the displayed time window.
 - **Over-consumption map** (OpenStreetMap), aggregated per road, with a per-day detail view.
 - **Trip kept while the engine runs** (PID 1F), even if the app restarts.
-- **Auto-start** when the phone connects to the car over Bluetooth.
+- **Auto-start** when the phone connects to the car over Bluetooth (without GPS while the app is not on screen: the app never asks for background location).
 - **Android Auto** (Car App Library, IoT category).
 
 ## Build
