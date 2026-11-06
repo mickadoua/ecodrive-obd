@@ -1,0 +1,31 @@
+EcoDrive OBD reads your car's real fuel consumption through a small Bluetooth OBD-II dongle and scores your driving against the road: climbing a hill isn't penalised.
+
+What you need
+• A Bluetooth ELM327 OBD-II dongle, bought separately. Without one, there is no real consumption data.
+• A built-in simulator lets you try the app without a car.
+
+What the app does
+• Live consumption: L/100 km while driving, L/h when stopped, read from the car's own data, not guessed from GPS.
+• An eco-driving score that accounts for gradient: it compares what you burn with what the road asks for. A climb doesn't lower your score; on a downhill, the app tells you to lift off.
+• A trip chart coloured by score.
+• A map of the roads where you over-consumed: you see where it cost you, not just an average.
+• Vehicle profile: make, fuel, engine size.
+
+What the app does not do
+• It reads the car's data and changes nothing. It doesn't promise any fuel savings.
+• The score is an estimate based on a generic car model, not a measurement of your vehicle.
+• The interface is in French.
+
+Verified cars
+Diesel Renault Trafic and petrol Renault Twingo, with a Vlink dongle. Other cars are untested: what you get depends on what the car exposes over OBD-II.
+
+Location and privacy
+• Location is used to measure gradient and draw the map. It is read while the app is connected to the OBD adapter (in practice, while the car's ignition is on), including in the background; a persistent notification stays visible. Location is optional: without it, no map and no gradient correction.
+• No account, no ads, no trackers, no crash reports sent. We have no server: your trips stay on your phone.
+• The vehicle identification number (VIN) is never sent. It is not kept in clear: only an unreadable local fingerprint is stored, to recognise your car.
+• Some features send coordinates to three third-party services: Open-Meteo (altitude, only if the phone has no barometer), OpenStreetMap (map tiles) and Android's street-name service.
+Details: https://mickadoua.github.io/ecodrive-obd/en/privacy/
+
+About
+EcoDrive OBD is free, with no ads and no in-app purchases. The source code is public: https://github.com/mickadoua/ecodrive-obd
+A DM Consulting project. Contact: mickael@dm-consulting.tech
