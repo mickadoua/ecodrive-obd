@@ -1,5 +1,6 @@
 package tech.dm.conso
 
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import org.junit.Assert.assertEquals
@@ -37,6 +38,11 @@ class PlayComplianceTest {
         val meta = context.packageManager.getApplicationInfo(context.packageName, PackageManager.GET_META_DATA).metaData
         assertFalse(meta?.containsKey("com.google.android.gms.car.application") ?: false)
         assertFalse(meta?.containsKey("androidx.car.app.minCarApiLevel") ?: false)
+    }
+
+    @Test
+    fun backupIsDisabled() {
+        assertEquals(0, context.applicationInfo.flags and ApplicationInfo.FLAG_ALLOW_BACKUP)
     }
 
     @Test
