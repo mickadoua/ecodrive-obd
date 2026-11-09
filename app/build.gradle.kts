@@ -54,11 +54,13 @@ if (uploadKeyMissing.isNotEmpty() && uploadKeyMissing.size < uploadKeyEnv.size) 
 val playCredentials = providers.environmentVariable("PLAY_SERVICE_ACCOUNT_FILE").orNull?.ifEmpty { null }
 
 android {
+    // namespace (R and BuildConfig classes) and the Kotlin packages keep the original
+    // tech.dm.conso: renaming them changes no behaviour and Play only reads applicationId.
     namespace = "tech.dm.conso"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "tech.dm.conso"
+        applicationId = "tech.dmconsulting.ecodrive"
         minSdk = 26
         targetSdk = 36
         versionCode = appVersionCode
