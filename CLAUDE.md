@@ -4,7 +4,7 @@ Working rules for anyone contributing to this repository on behalf of the mainta
 
 ## Repository
 
-- `app/`: the Android app (Kotlin, JDK 17, Android SDK 36, target API 36).
+- `app/`: the Android app (Kotlin, Android SDK 36, target API 36). Builds with JDK 17 or later; the bytecode targets Java 17.
 - `site/`: the presentation page (French and English). Anything merged into `main` under `site/` is published to GitHub Pages by `.github/workflows/pages.yml`.
 - `docs/`: Play Store material and screenshots.
 
