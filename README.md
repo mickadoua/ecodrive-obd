@@ -23,7 +23,7 @@ The app UI is in French.
 
 ## Build
 
-Requires JDK 17 and Android SDK 36.
+Requires JDK 17 or later (tested with JDK 21) and Android SDK 36.
 
 ```bash
 ./gradlew assembleDebug
