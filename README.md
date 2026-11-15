@@ -69,3 +69,7 @@ MICKA_APPROVED_ISSUE=ECO-123 scripts/play-publish.sh production
 - Release notes: `app/src/main/play/release-notes/<language>/default.txt`. Store listing (`--listing`): `app/src/main/play/listings/<language>/`.
 - Without `PLAY_SERVICE_ACCOUNT_FILE` (set by the script), Gradle Play Publisher stays disabled: a regular build never calls Play.
 - The very first upload of the app is done by hand in the Play Console (Play rejects the API before that).
+
+## License
+
+Apache-2.0, see [LICENSE](LICENSE) and [NOTICE](NOTICE).
