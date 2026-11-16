@@ -9,12 +9,12 @@ window.SITE = {
     // until the APK is published (DMC-586): apk: { url: 'https://www.dm-consulting.tech/downloads/ecodrive-obd.apk', sha256: '', size: '' }
     build: 'https://github.com/mickadoua/ecodrive-obd#build'
   },
-  shots: [{ src: 'direct.jpg' }, { src: 'trajet.jpg' }, { src: 'vehicule.jpg' }],
+  shots: [{ src: 'direct.jpg' }, { src: 'trajet.jpg' }, { src: 'carte-exemple.jpg' }, { src: 'vehicule.jpg' }],
   i18n: {
     en: { tagline: 'Real-time fuel consumption over OBD-II', eyebrow: 'Android app · Apache-2.0',
       h1: 'Eco-driving that <em>understands hills.</em>',
       lede: 'EcoDrive OBD measures your car’s fuel consumption in real time through a Bluetooth OBD-II module, and scores your driving while accounting for road gradient.',
-      shotCaptions: ['Live dashboard', 'Trip chart', 'Vehicle profile'],
+      shotCaptions: ['Live dashboard', 'Trip chart', 'Over-consumption map (simulated trip)', 'Vehicle profile'],
       shotNote: 'The app interface is in French.',
       featuresKicker: 'Features', featuresTitle: 'Fair to the driver.', featuresIntro: 'Climbing is not penalised. Accelerating downhill is.',
       features: [
@@ -29,7 +29,7 @@ window.SITE = {
     fr: { tagline: 'Consommation en temps réel via OBD-II', eyebrow: 'Appli Android · Apache-2.0',
       h1: 'Une éco-conduite qui <em>comprend les côtes.</em>',
       lede: 'EcoDrive OBD mesure la consommation de votre voiture en temps réel via un module OBD-II Bluetooth, et note votre conduite en tenant compte de la pente.',
-      shotCaptions: ['Tableau de bord en direct', 'Courbe du trajet', 'Profil du véhicule'],
+      shotCaptions: ['Tableau de bord en direct', 'Courbe du trajet', 'Carte des surconsommations (trajet simulé)', 'Profil du véhicule'],
       shotNote: 'L’interface de l’appli est en français.',
       featuresKicker: 'Fonctions', featuresTitle: 'Juste envers le conducteur.', featuresIntro: 'Monter une côte n’est pas pénalisé. Accélérer en descente, si.',
       features: [
