@@ -2,6 +2,8 @@
 
 Android app that measures a car's fuel consumption in real time through a Bluetooth OBD-II module (ELM327), and scores eco-driving **while accounting for road gradient**.
 
+[Website](https://mickadoua.github.io/ecodrive-obd/) · [Project page on dm-consulting.tech](https://www.dm-consulting.tech/en/open-source/ecodrive-obd) · [Apache-2.0](LICENSE)
+
 <p>
   <img src="docs/screenshots/direct.jpg" width="24%" alt="Live dashboard" />
   <img src="docs/screenshots/trajet.jpg" width="24%" alt="Trip chart" />
@@ -13,7 +15,7 @@ The app UI is in French.
 
 ## Download
 
-Signed APK of the latest version: [`ecodrive-obd.apk`](https://github.com/mickadoua/ecodrive-obd/releases/latest/download/ecodrive-obd.apk). Each release also carries `ecodrive-obd.apk.sha256`; check the file before installing:
+Signed APK of the latest version: [`ecodrive-obd.apk`](https://github.com/mickadoua/ecodrive-obd/releases/latest/download/ecodrive-obd.apk), also at https://www.dm-consulting.tech/downloads/ecodrive-obd.apk. Each release also carries `ecodrive-obd.apk.sha256`; check the file before installing:
 
 ```bash
 sha256sum -c ecodrive-obd.apk.sha256
@@ -88,4 +90,4 @@ MICKA_APPROVED_ISSUE=ECO-123 scripts/play-publish.sh production
 
 ## License
 
-Apache-2.0, see [LICENSE](LICENSE) and [NOTICE](NOTICE).
+Apache-2.0, see [LICENSE](LICENSE) and [NOTICE](NOTICE). EcoDrive OBD is a project of [DM Consulting](https://www.dm-consulting.tech).
