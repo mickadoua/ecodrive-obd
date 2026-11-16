@@ -2,12 +2,17 @@
 <!-- Deux langues : français par défaut à la racine, anglais sous en/.
      Chaque <url> déclare ses deux versions (xhtml:link), comme les balises
      hreflang des pages ; les deux blocs doivent rester symétriques.
-     Les pages d'accueil redirigent vers dm-consulting.tech depuis le
-     17/10/2026 : seules les pages de confidentialité restent listées.
+     L'accueil est une seule page (langue choisie par ?lang=, en/ redirige)
+     depuis le 15/11/2026 ; les pages de confidentialité suivent.
      Ajouter ici les mentions légales quand elles existent.
      Penser à mettre <lastmod> à jour. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://mickadoua.github.io/ecodrive-obd/</loc>
+    <lastmod>2026-11-15</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
   <url>
     <loc>https://mickadoua.github.io/ecodrive-obd/privacy/</loc>
     <xhtml:link rel="alternate" hreflang="fr" href="https://mickadoua.github.io/ecodrive-obd/privacy/"/>
