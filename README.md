@@ -5,7 +5,6 @@ Android app that measures a car's fuel consumption in real time through a Blueto
 <p>
   <img src="docs/screenshots/direct.jpg" width="24%" alt="Live dashboard" />
   <img src="docs/screenshots/trajet.jpg" width="24%" alt="Trip chart" />
-  <img src="docs/screenshots/carte.jpg" width="24%" alt="Over-consumption map" />
   <img src="docs/screenshots/vehicule.jpg" width="24%" alt="Vehicle profile" />
 </p>
 
