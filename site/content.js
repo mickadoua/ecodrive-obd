@@ -6,8 +6,8 @@ window.SITE = {
   common: { license: 'Apache-2.0', licenseUrl: 'https://github.com/mickadoua/ecodrive-obd/blob/main/LICENSE' },
   download: {
     // play: 'https://play.google.com/store/apps/details?id=tech.dmconsulting.ecodrive', playLive: false,   // enable when the Play listing is public (404 on 15/11/2026)
-    // until the APK is published (DMC-586): apk: { url: 'https://www.dm-consulting.tech/downloads/ecodrive-obd.apk', sha256: '', size: '' }
-    build: 'https://github.com/mickadoua/ecodrive-obd#build'
+    // APK of the latest release; the SHA-256 is the one in ecodrive-obd.apk.sha256 of that release.
+    apk: { url: 'https://www.dm-consulting.tech/downloads/ecodrive-obd.apk', sha256: '414931f2f471e44e87e442f594696f516a01bf77350c6ad4ddde9de99cfd9147', size: '' }
   },
   shots: [{ src: 'direct.jpg' }, { src: 'trajet.jpg' }, { src: 'carte-exemple.jpg' }, { src: 'vehicule.jpg' }],
   i18n: {
@@ -25,7 +25,7 @@ window.SITE = {
         chips: ['ELM327', 'OBD-II', 'OpenStreetMap', 'Barometer elevation'],
         checks: [['Trip kept.', 'The trip survives an app restart while the engine runs.'], ['Auto-start.', 'Starts when the phone connects to the car over Bluetooth.'], ['No background location.', 'The app never asks for it.']],
         facts: [['Platform', 'Android'], ['Adapter', 'Bluetooth ELM327'], ['License', 'Apache-2.0']] },
-      downloadTitle: 'Get EcoDrive OBD', downloadIntro: 'The signed APK is on its way. Until then, build the app from source.', buildText: 'Clone the repository and follow the build steps (Android Studio or Gradle).', downloadNote: 'Requires a Bluetooth OBD-II (ELM327) module for real driving.' },
+      downloadTitle: 'Get EcoDrive OBD', downloadIntro: 'Install the signed APK on an Android phone, after checking its SHA-256.', downloadNote: 'Requires a Bluetooth OBD-II (ELM327) module for real driving.' },
     fr: { tagline: 'Consommation en temps réel via OBD-II', eyebrow: 'Appli Android · Apache-2.0',
       h1: 'Une éco-conduite qui <em>comprend les côtes.</em>',
       lede: 'EcoDrive OBD mesure la consommation de votre voiture en temps réel via un module OBD-II Bluetooth, et note votre conduite en tenant compte de la pente.',
@@ -40,6 +40,6 @@ window.SITE = {
         chips: ['ELM327', 'OBD-II', 'OpenStreetMap', 'Altitude barométrique'],
         checks: [['Trajet conservé.', 'Le trajet survit à un redémarrage de l’appli, moteur en marche.'], ['Démarrage auto.', 'Démarre quand le téléphone se connecte à la voiture en Bluetooth.'], ['Pas de position en arrière-plan.', 'L’appli ne la demande jamais.']],
         facts: [['Plateforme', 'Android'], ['Adaptateur', 'ELM327 Bluetooth'], ['Licence', 'Apache-2.0']] },
-      downloadTitle: 'Obtenir EcoDrive OBD', downloadIntro: 'L’APK signé arrive bientôt. D’ici là, compilez l’appli depuis les sources.', buildText: 'Clonez le dépôt et suivez les étapes de compilation (Android Studio ou Gradle).', downloadNote: 'Un module OBD-II (ELM327) Bluetooth est nécessaire pour rouler.' }
+      downloadTitle: 'Obtenir EcoDrive OBD', downloadIntro: 'Installez l’APK signé sur un téléphone Android, après avoir vérifié sa somme SHA-256.', downloadNote: 'Un module OBD-II (ELM327) Bluetooth est nécessaire pour rouler.' }
   }
 };
