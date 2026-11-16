@@ -22,7 +22,7 @@ A commit with any other email is not pushed.
 
 ## Test locally, then push
 
-There is no test CI. The only workflow is `pages.yml`, which publishes `site/` and runs no tests. Do not add a workflow, and never add an iOS CI on macOS runners, without the maintainer's written approval.
+There is no test CI. `pages.yml` publishes `site/`; `release.yml` builds the signed APK on a version tag (approved by the maintainer on 15/11/2026). Neither runs on pull requests. Do not add a workflow, and never add an iOS CI on macOS runners, without the maintainer's written approval.
 
 Every change is tested locally before it is pushed. The task or pull request states which commands were run, where, and their result. For the app:
 

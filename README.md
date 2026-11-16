@@ -11,6 +11,16 @@ Android app that measures a car's fuel consumption in real time through a Blueto
 
 The app UI is in French.
 
+## Download
+
+Signed APK of the latest version: [`ecodrive-obd.apk`](https://github.com/mickadoua/ecodrive-obd/releases/latest/download/ecodrive-obd.apk). Each release also carries `ecodrive-obd.apk.sha256`; check the file before installing:
+
+```bash
+sha256sum -c ecodrive-obd.apk.sha256
+```
+
+The app is not public on Google Play yet. When it is, the store app and this APK will have the same package name but different signatures: a phone has one or the other, and switching means uninstalling.
+
 ## Features
 
 - **Instant and average consumption** (L/100 km, L/h when stopped), read over OBD-II: fuel rate (PID 5E), otherwise mass air flow (PID 10), otherwise manifold pressure (PID 0B).
@@ -51,6 +61,12 @@ export UPLOAD_KEYSTORE_PASSWORD=... UPLOAD_KEY_ALIAS=... UPLOAD_KEY_PASSWORD=...
 ```
 
 Output: `app/build/outputs/bundle/release/app-release.aab`. Without the four `UPLOAD_*` variables the release is built unsigned and debug builds are unaffected; with only some of them, the build fails.
+
+### GitHub release (off-store APK)
+
+Pushing a `vX.Y.Z` tag runs `.github/workflows/release.yml`: unit tests, then `assembleRelease` signed with the off-store key, then a GitHub release with `ecodrive-obd.apk` and `ecodrive-obd.apk.sha256`. A tag with a suffix (`v0.2.0-rc.1`) gives a draft release, for a dry run.
+
+The off-store key is not the Play upload key. It lives only in the repository's GitHub Actions secrets (`ECODRIVE_APK_KEYSTORE_BASE64`, `ECODRIVE_APK_KEYSTORE_PASSWORD`, `ECODRIVE_APK_KEY_ALIAS`, `ECODRIVE_APK_KEY_PASSWORD`) and in the maintainer's backup. It must stay the same from one version to the next: an APK signed with another key does not install as an update.
 
 ### Publish to Play
 
