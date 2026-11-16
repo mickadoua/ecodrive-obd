@@ -57,7 +57,9 @@ jobs:
       - name: Signature and checksum
         run: |
           apksigner=$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
-          "$apksigner" verify --print-certs ecodrive-obd.apk | grep -E "^Signer.* certificate (DN|SHA-256 digest):"
+          echo "$apksigner"
+          "$apksigner" verify --verbose --print-certs ecodrive-obd.apk > apksigner.txt 2>&1 || { cat apksigner.txt; exit 1; }
+          grep -E "Verified using|certificate (DN|SHA-256 digest):" apksigner.txt || { cat apksigner.txt; exit 1; }
           sha256sum ecodrive-obd.apk > ecodrive-obd.apk.sha256
           cat ecodrive-obd.apk.sha256
       # Fixed asset name: releases/latest/download/ecodrive-obd.apk stays valid from one version to the next.
