@@ -50,12 +50,15 @@
         '<ul class="checks">' + hl.checks.map(function (x) { return '<li><strong>' + esc(x[0]) + '</strong> ' + esc(x[1]) + '</li>'; }).join('') + '</ul></div>' +
         '<div class="aside">' + hl.facts.map(function (x) { return '<div class="row"><span class="k">' + esc(x[0]) + '</span><span>' + esc(x[1]) + '</span></div>'; }).join('') + '</div></div></section>';
     }
-    // Download: blocks are optional, driven by S.download = { play, apk:{url,sha256,size}, source }
+    // Download: blocks are optional, driven by S.download = { play, apk:{url,sha256,size,version,versionCode,builtOn}, source }
     var d = S.download || {}, blocks = '';
     if (d.play) blocks += '<div class="card"><span class="badge">Google Play</span><h3>' + esc(ui.playTitle) + '</h3><p>' + esc(d.playLive ? ui.playText : ui.playSoon) + '</p><a class="btn primary" href="' + d.play + '">' + ui.playBtn + '</a></div>';
     if (d.apk) {
       var sha = d.apk.sha256 ? '<code class="sha" id="sha">' + esc(d.apk.sha256) + '</code>' : '<p class="todo">' + esc(ui.shaTodo) + '</p>';
-      blocks += '<div class="card"><span class="badge">APK</span><h3>' + esc(ui.apkTitle) + '</h3><p>' + esc(ui.apkText) + '</p><a class="btn ' + (d.play ? 'ghost' : 'primary') + '" href="' + d.apk.url + '">' + ui.apkBtn + (d.apk.size ? ' (' + esc(d.apk.size) + ')' : '') + '</a>' +
+      // What the APK holds, under the button: version, versionCode and build day (UTC), written in the page language.
+      var ver = d.apk.version ? '<p class="note" style="margin-bottom:0">' + esc(ui.apkVersion.replace('{v}', d.apk.version).replace('{c}', d.apk.versionCode)
+        .replace('{d}', new Intl.DateTimeFormat(lang === 'fr' ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(d.apk.builtOn + 'T00:00:00Z')))) + '</p>' : '';
+      blocks += '<div class="card"><span class="badge">APK</span><h3>' + esc(ui.apkTitle) + '</h3><p>' + esc(ui.apkText) + '</p><a class="btn ' + (d.play ? 'ghost' : 'primary') + '" href="' + d.apk.url + '">' + ui.apkBtn + (d.apk.size ? ' (' + esc(d.apk.size) + ')' : '') + '</a>' + ver +
         '<p class="note" style="margin-bottom:0">SHA-256</p>' + sha + '</div>';
     }
     if (d.build) blocks += '<div class="card"><span class="badge">' + esc(ui.buildBadge) + '</span><h3>' + esc(ui.buildTitle) + '</h3><p>' + esc(t.buildText || '') + '</p><a class="btn ghost" href="' + d.build + '">' + ui.buildBtn + '</a></div>';
