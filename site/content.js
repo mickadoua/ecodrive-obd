@@ -6,8 +6,8 @@ window.SITE = {
   common: { license: 'Apache-2.0', licenseUrl: 'https://github.com/mickadoua/ecodrive-obd/blob/main/LICENSE' },
   download: {
     // play: 'https://play.google.com/store/apps/details?id=tech.dmconsulting.ecodrive', playLive: false,   // enable when the Play listing is public (404 on 15/11/2026)
-    // APK of the latest release; the SHA-256 is the one in ecodrive-obd.apk.sha256 of that release.
-    apk: { url: 'https://www.dm-consulting.tech/downloads/ecodrive-obd.apk', sha256: '414931f2f471e44e87e442f594696f516a01bf77350c6ad4ddde9de99cfd9147', size: '' }
+    // APK of the latest release; version and versionCode are read in the APK (aapt2 dump badging), builtOn is the day the CI attached it; the SHA-256 is the one in ecodrive-obd.apk.sha256 of that release.
+    apk: { url: 'https://www.dm-consulting.tech/downloads/ecodrive-obd.apk', sha256: '414931f2f471e44e87e442f594696f516a01bf77350c6ad4ddde9de99cfd9147', size: '', version: '0.1.0', versionCode: 67, builtOn: '2026-11-16' }
   },
   shots: [{ src: 'direct.jpg' }, { src: 'trajet.jpg' }, { src: 'carte-exemple.jpg' }, { src: 'vehicule.jpg' }],
   i18n: {
