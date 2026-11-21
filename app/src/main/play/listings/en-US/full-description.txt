@@ -23,7 +23,7 @@ Location and privacy
 • Location is used to measure gradient and draw the map. It is read while the app is connected to the OBD adapter (in practice, while the car's ignition is on), including in the background; a persistent notification stays visible. Location is optional: without it, no map and no gradient correction.
 • No account, no ads, no trackers, no crash reports sent. We have no server: your trips stay on your phone.
 • The vehicle identification number (VIN) is never sent. It is not kept in clear: only an unreadable local fingerprint is stored, to recognise your car.
-• Some features send coordinates to three third-party services: Open-Meteo (altitude, only if the phone has no barometer), OpenStreetMap (map tiles) and Android's street-name service.
+• Some features send coordinates to four third-party services: Open-Meteo (altitude, only if the phone has no barometer), OpenStreetMap (map tiles), Overpass (speed limits) and Android's street-name service.
 Details: https://mickadoua.github.io/ecodrive-obd/en/privacy/
 
 About

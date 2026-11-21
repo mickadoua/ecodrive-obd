@@ -97,7 +97,7 @@
 
   <main id="contenu">
     <h1>EcoDrive OBD Privacy Policy</h1>
-    <p class="meta">Last updated: <time datetime="2026-11-09">9 November 2026</time></p>
+    <p class="meta">Last updated: <time datetime="2026-11-21">21 November 2026</time></p>
     <nav class="toc" aria-label="On this page">
       <p>On this page</p>
       <ul>
@@ -168,9 +168,9 @@
   <li>Data sent: the coordinates of one point on each stretch of road, to get the street name. The app does not contact this service itself: it uses Android's geocoding feature. On most phones this service is provided by Google and follows Google's rules. On a phone without Google services it may not work, and street names are then not shown.</li>
   <li>Only the <strong>street name</strong> is kept in the app. Not the coordinates that were sent.</li>
 </ul>
-<h3>4. Overpass (speed limits and junctions) — during a trip, if location is allowed.</h3>
+<h3>4. Overpass (speed limits and junctions) — when the app is connected to the car (OBD adapter), if location is allowed.</h3>
 <ul>
-  <li>Data sent: your <strong>precise position</strong> (6 decimals, about 10 centimetres) and a radius of 1,000 metres, to get the speed limits, roundabouts, stop signs and traffic lights of the surrounding roads (OpenStreetMap data). The request is made when the trip starts, then about every 300 metres, and never more than once every 10 seconds. The service can see your IP address, and the app name (EcoDriveOBD) with the address of its GitHub repository are included in the request.</li>
+  <li>Data sent: your <strong>position</strong> (precise if you allowed it; 6 decimals, about 10 centimetres) and a radius of 1,000 metres, to get the speed limits, roundabouts, stop signs, give-way signs and traffic lights of the surrounding roads (OpenStreetMap data). The first request is made at the first position received, then about every 300 metres, and never more than once every 10 seconds. The service can see your IP address, and the app name (EcoDriveOBD) with the address of its GitHub repository are included in the request.</li>
   <li>The service is queried at <code>overpass-api.de</code>, then at <code>overpass.kumi.systems</code> if the first does not answer. These servers are run by third parties, not by us.</li>
   <li>Encrypted connection (HTTPS).</li>
   <li>On their side: we have not checked how long these servers keep their logs. Those are their rules, not ours.</li>

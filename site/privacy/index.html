@@ -97,7 +97,7 @@
 
   <main id="contenu">
     <h1>Politique de confidentialité d'EcoDrive OBD</h1>
-    <p class="meta">Dernière mise à jour : <time datetime="2026-11-09">9 novembre 2026</time></p>
+    <p class="meta">Dernière mise à jour : <time datetime="2026-11-21">21 novembre 2026</time></p>
     <nav class="toc" aria-label="Sur cette page">
       <p>Sur cette page</p>
       <ul>
@@ -168,9 +168,9 @@
   <li>Donnée envoyée : les coordonnées d'un point de chaque portion de route, pour obtenir le nom de la rue. L'application ne contacte pas ce service elle-même : elle passe par la fonction de géocodage d'Android. Sur la plupart des téléphones, ce service est fourni par Google et suit les règles de Google. Sur un téléphone sans services Google, il peut ne pas fonctionner, et les noms de rues ne s'affichent alors pas.</li>
   <li>Seul le <strong>nom de la rue</strong> est gardé dans l'application. Pas les coordonnées envoyées.</li>
 </ul>
-<h3>4. Overpass (limites de vitesse et carrefours) — pendant un trajet, si la position est autorisée.</h3>
+<h3>4. Overpass (limites de vitesse et carrefours) — quand l'application est connectée à la voiture (module OBD), si la position est autorisée.</h3>
 <ul>
-  <li>Donnée envoyée : votre <strong>position précise</strong> (6 décimales, soit environ 10 centimètres) et un rayon de 1 000 mètres, pour obtenir les limites de vitesse, les ronds-points, les stops et les feux des routes alentour (données OpenStreetMap). La demande part au début du trajet, puis environ tous les 300 mètres, et jamais plus d'une fois toutes les 10 secondes. Votre adresse IP est visible par le service, et le nom de l'application (EcoDriveOBD) avec l'adresse de son dépôt GitHub accompagnent la demande.</li>
+  <li>Donnée envoyée : votre <strong>position</strong> (précise si vous l'avez autorisée ; 6 décimales, soit environ 10 centimètres) et un rayon de 1 000 mètres, pour obtenir les limites de vitesse, les ronds-points, les stops, les cédez-le-passage et les feux des routes alentour (données OpenStreetMap). La première demande part à la première position reçue, puis environ tous les 300 mètres, et jamais plus d'une fois toutes les 10 secondes. Votre adresse IP est visible par le service, et le nom de l'application (EcoDriveOBD) avec l'adresse de son dépôt GitHub accompagnent la demande.</li>
   <li>Le service est interrogé sur <code>overpass-api.de</code>, puis sur <code>overpass.kumi.systems</code> si le premier ne répond pas. Ces serveurs sont gérés par des tiers, pas par nous.</li>
   <li>Connexion chiffrée (HTTPS).</li>
   <li>Chez eux : nous n'avons pas vérifié combien de temps ces serveurs gardent leurs journaux. Ce sont leurs règles, pas les nôtres.</li>
