@@ -138,7 +138,7 @@
 <p><strong>The VIN (vehicle identification number).</strong> The app reads it when it connects, to work out the make and model year and to recognise the car. The full number is never saved in readable form and is sent to no one. To recognise the car from one connection to the next, the app keeps only an unreadable fingerprint of the VIN: 16 characters computed with SHA-256 and a random value specific to your phone (a "salt"). This fingerprint stays in the app's private storage, on your phone. Only the make and year stay in memory while connected, to be displayed.</p>
 <p><strong>On the phone:</strong></p>
 <ul>
-  <li>Your <strong>GPS position</strong> (latitude, longitude, altitude), once per second, during a trip.</li>
+  <li>Your <strong>GPS position</strong> (latitude, longitude, altitude), once per second, while the app is connected to the OBD adapter.</li>
   <li><strong>Atmospheric pressure</strong>, if your phone has a barometer, to measure altitude.</li>
   <li>The <strong>name and Bluetooth address</strong> of the OBD adapter you choose, so the app can reconnect to it next time, and, if you turn on auto-start, those of the car.</li>
   <li>The <strong>vehicle details you type in</strong> yourself (make, model, year, fuel, engine size, segment).</li>
@@ -204,12 +204,13 @@
 <thead><tr><th scope="col">Processing</th><th scope="col">What happens</th><th scope="col">Legal basis</th></tr></thead>
 <tbody>
 <tr><th scope="row">Reading vehicle data (OBD)</th><td data-label="What happens">The app reads engine speed, vehicle speed, flows and fuel type through the Bluetooth adapter, on your phone, to compute consumption and score.</td><td data-label="Legal basis">Providing the service you ask for by using the app (Art. 6(1)(b) GDPR).</td></tr>
-<tr><th scope="row">Location (GPS, barometer)</th><td data-label="What happens">The position is read during a trip, on your phone, for slope and the map.</td><td data-label="Legal basis">Your consent (Art. 6(1)(a)), given through Android's location permission and withdrawable at any time in Android settings. The app never asks for background location ("Allow all the time").</td></tr>
+<tr><th scope="row">Location (GPS, barometer)</th><td data-label="What happens">The position is read while the app is connected to the OBD adapter, on your phone, for slope and the map.</td><td data-label="Legal basis">Your consent (Art. 6(1)(a)), given through Android's location permission and withdrawable at any time in Android settings. The app never asks for background location ("Allow all the time").</td></tr>
 <tr><th scope="row">Local storage of trips and history</th><td data-label="What happens">Road stretches, the current trip, the history and the vehicle profile are written to the app's private storage.</td><td data-label="Legal basis">Providing the service (Art. 6(1)(b)): showing you your history and your map. This data does not leave your phone.</td></tr>
 <tr><th scope="row">OBD adapter and car (Bluetooth)</th><td data-label="What happens">The Bluetooth name and address are remembered so the app can reconnect.</td><td data-label="Legal basis">Providing the service (Art. 6(1)(b)).</td></tr>
 <tr><th scope="row">Requests to Open-Meteo</th><td data-label="What happens">Coordinates are sent to get ground elevation, only if the phone has no barometer.</td><td data-label="Legal basis">Providing the service (Art. 6(1)(b)): elevation is used for the slope correction. This only happens if you have allowed location.</td></tr>
 <tr><th scope="row">OpenStreetMap tiles</th><td data-label="What happens">Images of the area shown are requested when you open the Map tab.</td><td data-label="Legal basis">Providing the service (Art. 6(1)(b)): showing the map background.</td></tr>
 <tr><th scope="row">Android geocoding</th><td data-label="What happens">A street name is requested for one point of each road stretch, through Android's geocoding feature.</td><td data-label="Legal basis">Providing the service (Art. 6(1)(b)): showing street names.</td></tr>
+<tr><th scope="row">Requests to Overpass</th><td data-label="What happens">Your position and a 1,000-metre radius are sent to get the surrounding speed limits and junctions.</td><td data-label="Legal basis">Providing the service (Art. 6(1)(b)): showing speed limits and junctions. This only happens if you have allowed location.</td></tr>
 </tbody>
 </table>
 </div>
