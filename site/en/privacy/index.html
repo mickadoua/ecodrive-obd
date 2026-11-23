@@ -97,7 +97,7 @@
 
   <main id="contenu">
     <h1>EcoDrive OBD Privacy Policy</h1>
-    <p class="meta">Last updated: <time datetime="2026-11-09">9 November 2026</time></p>
+    <p class="meta">Last updated: <time datetime="2026-11-21">21 November 2026</time></p>
     <nav class="toc" aria-label="On this page">
       <p>On this page</p>
       <ul>
@@ -131,14 +131,14 @@
   <li>We have no server. We receive none of your data.</li>
   <li>Your trips and history stay on your phone.</li>
   <li>Your vehicle identification number (VIN) is never saved in readable form and never sent. Only an unreadable fingerprint, kept on your phone, is used to recognise the car.</li>
-  <li>Three third-party services may receive location data when you use certain features. They are described below.</li>
+  <li>Four third-party services may receive location data when you use certain features. They are described below.</li>
 </ul>
 <h2 id="what-the-app-reads">What the app reads</h2>
 <p><strong>From the car, through the Bluetooth OBD-II (ELM327) adapter:</strong> engine speed, vehicle speed, air flow, fuel flow, time since engine start, fuel type. The app uses them to compute your fuel consumption and your eco-driving score.</p>
 <p><strong>The VIN (vehicle identification number).</strong> The app reads it when it connects, to work out the make and model year and to recognise the car. The full number is never saved in readable form and is sent to no one. To recognise the car from one connection to the next, the app keeps only an unreadable fingerprint of the VIN: 16 characters computed with SHA-256 and a random value specific to your phone (a "salt"). This fingerprint stays in the app's private storage, on your phone. Only the make and year stay in memory while connected, to be displayed.</p>
 <p><strong>On the phone:</strong></p>
 <ul>
-  <li>Your <strong>GPS position</strong> (latitude, longitude, altitude), once per second, during a trip.</li>
+  <li>Your <strong>GPS position</strong> (latitude, longitude, altitude), once per second, while the app is connected to the OBD adapter.</li>
   <li><strong>Atmospheric pressure</strong>, if your phone has a barometer, to measure altitude.</li>
   <li>The <strong>name and Bluetooth address</strong> of the OBD adapter you choose, so the app can reconnect to it next time, and, if you turn on auto-start, those of the car.</li>
   <li>The <strong>vehicle details you type in</strong> yourself (make, model, year, fuel, engine size, segment).</li>
@@ -168,6 +168,14 @@
   <li>Data sent: the coordinates of one point on each stretch of road, to get the street name. The app does not contact this service itself: it uses Android's geocoding feature. On most phones this service is provided by Google and follows Google's rules. On a phone without Google services it may not work, and street names are then not shown.</li>
   <li>Only the <strong>street name</strong> is kept in the app. Not the coordinates that were sent.</li>
 </ul>
+<h3>4. Overpass (speed limits and junctions) — when the app is connected to the car (OBD adapter), if location is allowed.</h3>
+<ul>
+  <li>Data sent: your <strong>position</strong> (precise if you allowed it; 6 decimals, about 10 centimetres) and a radius of 1,000 metres, to get the speed limits, roundabouts, stop signs, give-way signs and traffic lights of the surrounding roads (OpenStreetMap data). The first request is made at the first position received, then about every 300 metres, and never more than once every 10 seconds. The service can see your IP address, and the app name (EcoDriveOBD) with the address of its GitHub repository are included in the request.</li>
+  <li>The service is queried at <code>overpass-api.de</code>, then at <code>overpass.kumi.systems</code> if the first does not answer. These servers are run by third parties, not by us.</li>
+  <li>Encrypted connection (HTTPS).</li>
+  <li>On their side: we have not checked how long these servers keep their logs. Those are their rules, not ours.</li>
+  <li>The limits received are kept in memory only for the current area. The coordinates sent are not stored in the app.</li>
+</ul>
 <p>We do not sell any data. We receive none.</p>
 <h2 id="what-is-stored-on-your-phone-and-for-how-long">What is stored on your phone, and for how long</h2>
 <p>Everything sits in the app's private storage. Other apps cannot access it.</p>
@@ -196,21 +204,23 @@
 <thead><tr><th scope="col">Processing</th><th scope="col">What happens</th><th scope="col">Legal basis</th></tr></thead>
 <tbody>
 <tr><th scope="row">Reading vehicle data (OBD)</th><td data-label="What happens">The app reads engine speed, vehicle speed, flows and fuel type through the Bluetooth adapter, on your phone, to compute consumption and score.</td><td data-label="Legal basis">Providing the service you ask for by using the app (Art. 6(1)(b) GDPR).</td></tr>
-<tr><th scope="row">Location (GPS, barometer)</th><td data-label="What happens">The position is read during a trip, on your phone, for slope and the map.</td><td data-label="Legal basis">Your consent (Art. 6(1)(a)), given through Android's location permission and withdrawable at any time in Android settings. The app never asks for background location ("Allow all the time").</td></tr>
+<tr><th scope="row">Location (GPS, barometer)</th><td data-label="What happens">The position is read while the app is connected to the OBD adapter, on your phone, for slope and the map.</td><td data-label="Legal basis">Your consent (Art. 6(1)(a)), given through Android's location permission and withdrawable at any time in Android settings. The app never asks for background location ("Allow all the time").</td></tr>
 <tr><th scope="row">Local storage of trips and history</th><td data-label="What happens">Road stretches, the current trip, the history and the vehicle profile are written to the app's private storage.</td><td data-label="Legal basis">Providing the service (Art. 6(1)(b)): showing you your history and your map. This data does not leave your phone.</td></tr>
 <tr><th scope="row">OBD adapter and car (Bluetooth)</th><td data-label="What happens">The Bluetooth name and address are remembered so the app can reconnect.</td><td data-label="Legal basis">Providing the service (Art. 6(1)(b)).</td></tr>
 <tr><th scope="row">Requests to Open-Meteo</th><td data-label="What happens">Coordinates are sent to get ground elevation, only if the phone has no barometer.</td><td data-label="Legal basis">Providing the service (Art. 6(1)(b)): elevation is used for the slope correction. This only happens if you have allowed location.</td></tr>
 <tr><th scope="row">OpenStreetMap tiles</th><td data-label="What happens">Images of the area shown are requested when you open the Map tab.</td><td data-label="Legal basis">Providing the service (Art. 6(1)(b)): showing the map background.</td></tr>
 <tr><th scope="row">Android geocoding</th><td data-label="What happens">A street name is requested for one point of each road stretch, through Android's geocoding feature.</td><td data-label="Legal basis">Providing the service (Art. 6(1)(b)): showing street names.</td></tr>
+<tr><th scope="row">Requests to Overpass</th><td data-label="What happens">Your position and a 1,000-metre radius are sent to get the surrounding speed limits and junctions.</td><td data-label="Legal basis">Providing the service (Art. 6(1)(b)): showing speed limits and junctions. This only happens if you have allowed location.</td></tr>
 </tbody>
 </table>
 </div>
-<p>Open-Meteo, the OpenStreetMap Foundation and Google decide for themselves the legal basis of their own logs: see their policies, cited above. We hold none of your data and receive none.</p>
+<p>Open-Meteo, the OpenStreetMap Foundation, Google and the Overpass operators decide for themselves the legal basis of their own logs: see their policies, cited above. We hold none of your data and receive none.</p>
 <h2 id="transfers-outside-the-eu">Transfers outside the European Union</h2>
-<p>DM Consulting transfers no data outside the European Union, since we receive none. The three third-party services above receive data directly from your phone, without going through us:</p>
+<p>DM Consulting transfers no data outside the European Union, since we receive none. The four third-party services above receive data directly from your phone, without going through us:</p>
 <ul>
   <li><strong>Open-Meteo</strong>: a company based in Switzerland (OpenMeteo GmbH, Bürglen, according to its terms of use, read on 16 October 2026). We have not checked which countries its servers are in.</li>
   <li><strong>OpenStreetMap</strong>: according to the OpenStreetMap Foundation's policy (read on 16 October 2026), map tiles are served by a worldwide network of cache servers; the server that answers is chosen by that network at the time of the request, so it may be outside the European Union. That policy also states that the Foundation's other personal data is stored in the United Kingdom and the Netherlands.</li>
+  <li><strong>Overpass</strong>: servers <code>overpass-api.de</code> and <code>overpass.kumi.systems</code>, run by third parties. We have not checked which countries they are in.</li>
   <li><strong>Android's geocoding service</strong>: on most phones it is provided by Google, a US group. We have not checked where those requests are processed.</li>
 </ul>
 <p>We cannot vouch for the legal mechanisms these services use for their own transfers: read their policies. For visits to this website, see the section "This page and the project website".</p>

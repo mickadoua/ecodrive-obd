@@ -97,7 +97,7 @@
 
   <main id="contenu">
     <h1>Politique de confidentialité d'EcoDrive OBD</h1>
-    <p class="meta">Dernière mise à jour : <time datetime="2026-11-09">9 novembre 2026</time></p>
+    <p class="meta">Dernière mise à jour : <time datetime="2026-11-21">21 novembre 2026</time></p>
     <nav class="toc" aria-label="Sur cette page">
       <p>Sur cette page</p>
       <ul>
@@ -131,14 +131,14 @@
   <li>Nous n'avons pas de serveur. Nous ne recevons aucune de vos données.</li>
   <li>Vos trajets et votre historique restent sur votre téléphone.</li>
   <li>Le numéro de série du véhicule (VIN) n'est jamais enregistré en clair et jamais envoyé. Seule une empreinte illisible, gardée sur votre téléphone, sert à reconnaître la voiture.</li>
-  <li>Trois services tiers peuvent recevoir des données de localisation quand vous utilisez certaines fonctions. Ils sont décrits plus bas.</li>
+  <li>Quatre services tiers peuvent recevoir des données de localisation quand vous utilisez certaines fonctions. Ils sont décrits plus bas.</li>
 </ul>
 <h2 id="ce-que-lapplication-lit">Ce que l'application lit</h2>
 <p><strong>Dans la voiture, par le module OBD-II (ELM327) en Bluetooth :</strong> régime moteur, vitesse, débit d'air, débit de carburant, temps écoulé depuis le démarrage du moteur, type de carburant. L'application s'en sert pour calculer votre consommation et votre note d'éco-conduite.</p>
 <p><strong>Le VIN (numéro d'identification du véhicule).</strong> L'application le lit à la connexion pour en déduire la marque et l'année du modèle, et pour reconnaître la voiture. Le numéro complet n'est jamais enregistré en clair et n'est envoyé à personne. Pour reconnaître la voiture d'une connexion à l'autre, l'application garde seulement une empreinte illisible du VIN : 16 caractères calculés par SHA-256 avec une valeur aléatoire propre à votre téléphone (« salage »). Cette empreinte reste dans l'espace privé de l'application, sur votre téléphone. Seules la marque et l'année restent en mémoire pendant la connexion, pour être affichées.</p>
 <p><strong>Sur le téléphone :</strong></p>
 <ul>
-  <li>Votre <strong>position GPS</strong> (latitude, longitude, altitude), une fois par seconde, pendant un trajet.</li>
+  <li>Votre <strong>position GPS</strong> (latitude, longitude, altitude), une fois par seconde, tant que l'application est connectée au module OBD.</li>
   <li>La <strong>pression atmosphérique</strong>, si votre téléphone a un baromètre, pour mesurer l'altitude.</li>
   <li>Le <strong>nom et l'adresse Bluetooth</strong> du module OBD que vous choisissez, pour s'y reconnecter la fois suivante, et, si vous activez le démarrage automatique, ceux de la voiture.</li>
   <li>Les <strong>informations de véhicule que vous saisissez</strong> vous-même (marque, modèle, année, carburant, cylindrée, segment).</li>
@@ -168,6 +168,14 @@
   <li>Donnée envoyée : les coordonnées d'un point de chaque portion de route, pour obtenir le nom de la rue. L'application ne contacte pas ce service elle-même : elle passe par la fonction de géocodage d'Android. Sur la plupart des téléphones, ce service est fourni par Google et suit les règles de Google. Sur un téléphone sans services Google, il peut ne pas fonctionner, et les noms de rues ne s'affichent alors pas.</li>
   <li>Seul le <strong>nom de la rue</strong> est gardé dans l'application. Pas les coordonnées envoyées.</li>
 </ul>
+<h3>4. Overpass (limites de vitesse et carrefours) — quand l'application est connectée à la voiture (module OBD), si la position est autorisée.</h3>
+<ul>
+  <li>Donnée envoyée : votre <strong>position</strong> (précise si vous l'avez autorisée ; 6 décimales, soit environ 10 centimètres) et un rayon de 1 000 mètres, pour obtenir les limites de vitesse, les ronds-points, les stops, les cédez-le-passage et les feux des routes alentour (données OpenStreetMap). La première demande part à la première position reçue, puis environ tous les 300 mètres, et jamais plus d'une fois toutes les 10 secondes. Votre adresse IP est visible par le service, et le nom de l'application (EcoDriveOBD) avec l'adresse de son dépôt GitHub accompagnent la demande.</li>
+  <li>Le service est interrogé sur <code>overpass-api.de</code>, puis sur <code>overpass.kumi.systems</code> si le premier ne répond pas. Ces serveurs sont gérés par des tiers, pas par nous.</li>
+  <li>Connexion chiffrée (HTTPS).</li>
+  <li>Chez eux : nous n'avons pas vérifié combien de temps ces serveurs gardent leurs journaux. Ce sont leurs règles, pas les nôtres.</li>
+  <li>Les limites reçues ne sont gardées en mémoire que pour la zone en cours. Les coordonnées envoyées ne sont pas enregistrées dans l'application.</li>
+</ul>
 <p>Nous ne vendons aucune donnée. Nous n'en recevons aucune.</p>
 <h2 id="ce-qui-est-enregistre-sur-votre-telephone-et-combien-de-temps">Ce qui est enregistré sur votre téléphone, et combien de temps</h2>
 <p>Tout est dans l'espace privé de l'application. Les autres applications n'y ont pas accès.</p>
@@ -196,21 +204,23 @@
 <thead><tr><th scope="col">Traitement</th><th scope="col">Ce qui se passe</th><th scope="col">Base légale</th></tr></thead>
 <tbody>
 <tr><th scope="row">Lecture des données du véhicule (OBD)</th><td data-label="Ce qui se passe">L'application lit régime, vitesse, débits et type de carburant par le module Bluetooth, sur votre téléphone, pour calculer consommation et note.</td><td data-label="Base légale">Fourniture du service que vous demandez en utilisant l'application (art. 6, 1, b du RGPD).</td></tr>
-<tr><th scope="row">Localisation (GPS, baromètre)</th><td data-label="Ce qui se passe">Lecture de la position pendant un trajet, sur votre téléphone, pour la pente et la carte.</td><td data-label="Base légale">Votre consentement (art. 6, 1, a), donné par l'autorisation de position d'Android et retirable à tout moment dans les réglages Android. L'application ne demande jamais l'autorisation de position en arrière-plan (« Toujours autoriser »).</td></tr>
+<tr><th scope="row">Localisation (GPS, baromètre)</th><td data-label="Ce qui se passe">Lecture de la position tant que l'application est connectée au module OBD, sur votre téléphone, pour la pente et la carte.</td><td data-label="Base légale">Votre consentement (art. 6, 1, a), donné par l'autorisation de position d'Android et retirable à tout moment dans les réglages Android. L'application ne demande jamais l'autorisation de position en arrière-plan (« Toujours autoriser »).</td></tr>
 <tr><th scope="row">Stockage local des trajets et de l'historique</th><td data-label="Ce qui se passe">Écriture des portions de route, du trajet en cours, de l'historique et du profil du véhicule dans l'espace privé de l'application.</td><td data-label="Base légale">Fourniture du service (art. 6, 1, b) : vous montrer votre historique et votre carte. Ces données ne quittent pas votre téléphone.</td></tr>
 <tr><th scope="row">Module OBD et voiture (Bluetooth)</th><td data-label="Ce qui se passe">Mémorisation du nom et de l'adresse Bluetooth pour se reconnecter.</td><td data-label="Base légale">Fourniture du service (art. 6, 1, b).</td></tr>
 <tr><th scope="row">Requêtes à Open-Meteo</th><td data-label="Ce qui se passe">Envoi de coordonnées pour obtenir l'altitude du sol, seulement si le téléphone n'a pas de baromètre.</td><td data-label="Base légale">Fourniture du service (art. 6, 1, b) : l'altitude sert à la correction de pente. Cela ne se produit que si vous avez autorisé la localisation.</td></tr>
 <tr><th scope="row">Tuiles OpenStreetMap</th><td data-label="Ce qui se passe">Demande des images de la zone affichée quand vous ouvrez l'onglet Carte.</td><td data-label="Base légale">Fourniture du service (art. 6, 1, b) : afficher le fond de carte.</td></tr>
 <tr><th scope="row">Géocodage Android</th><td data-label="Ce qui se passe">Demande du nom de rue pour un point de chaque portion de route, par la fonction de géocodage d'Android.</td><td data-label="Base légale">Fourniture du service (art. 6, 1, b) : afficher les noms de rues.</td></tr>
+<tr><th scope="row">Requêtes à Overpass</th><td data-label="Ce qui se passe">Envoi de votre position et d'un rayon de 1 000 mètres pour obtenir les limites de vitesse et les carrefours alentour.</td><td data-label="Base légale">Fourniture du service (art. 6, 1, b) : afficher les limites de vitesse et les carrefours. Cela ne se produit que si vous avez autorisé la localisation.</td></tr>
 </tbody>
 </table>
 </div>
-<p>Open-Meteo, la Fondation OpenStreetMap et Google décident eux-mêmes de la base légale de leurs propres journaux : voir leurs politiques, citées plus haut. Nous ne détenons aucune de vos données et nous n'en recevons aucune.</p>
+<p>Open-Meteo, la Fondation OpenStreetMap, Google et les exploitants d'Overpass décident eux-mêmes de la base légale de leurs propres journaux : voir leurs politiques, citées plus haut. Nous ne détenons aucune de vos données et nous n'en recevons aucune.</p>
 <h2 id="transferts-hors-ue">Transferts hors de l'Union européenne</h2>
-<p>DM Consulting ne transfère aucune donnée hors de l'Union européenne, puisque nous n'en recevons aucune. Les trois services tiers ci-dessus reçoivent des données directement depuis votre téléphone, sans passer par nous :</p>
+<p>DM Consulting ne transfère aucune donnée hors de l'Union européenne, puisque nous n'en recevons aucune. Les quatre services tiers ci-dessus reçoivent des données directement depuis votre téléphone, sans passer par nous :</p>
 <ul>
   <li><strong>Open-Meteo</strong> : société établie en Suisse (OpenMeteo GmbH, Bürglen, d'après ses conditions d'utilisation, consultées le 16 octobre 2026). Nous n'avons pas vérifié dans quels pays se trouvent ses serveurs.</li>
   <li><strong>OpenStreetMap</strong> : d'après la politique de la Fondation OpenStreetMap (consultée le 16 octobre 2026), les tuiles de carte sont servies par un réseau mondial de serveurs-cache ; le serveur qui répond est choisi par ce réseau au moment de la demande, et peut donc se trouver hors de l'Union européenne. Cette politique indique aussi que les autres données personnelles de la Fondation sont stockées au Royaume-Uni et aux Pays-Bas.</li>
+  <li><strong>Overpass</strong> : serveurs <code>overpass-api.de</code> et <code>overpass.kumi.systems</code>, gérés par des tiers. Nous n'avons pas vérifié dans quels pays ils se trouvent.</li>
   <li><strong>Service de géocodage d'Android</strong> : sur la plupart des téléphones, il est fourni par Google, un groupe américain. Nous n'avons pas vérifié où ces demandes sont traitées.</li>
 </ul>
 <p>Nous ne pouvons pas vous garantir les mécanismes juridiques que ces services utilisent pour leurs propres transferts : lisez leurs politiques. Pour la visite de ce site web, voir la section « Cette page et le site du projet ».</p>

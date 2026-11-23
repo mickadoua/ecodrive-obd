@@ -23,7 +23,7 @@ Localisation et vie privée
 • La position sert à mesurer le dénivelé et à tracer la carte. Elle est lue tant que l'application est connectée au module OBD (en pratique, tant que la voiture est sous contact), y compris en arrière-plan ; une notification permanente reste affichée. La localisation est facultative : sans elle, pas de carte ni de correction de pente.
 • Pas de compte, pas de publicité, pas de traceur, pas de rapport de plantage envoyé. Nous n'avons pas de serveur : vos trajets restent sur votre téléphone.
 • Le numéro de série du véhicule (VIN) n'est jamais envoyé. Il n'est pas conservé en clair : seule une empreinte locale illisible sert à reconnaître votre voiture.
-• Certaines fonctions envoient des coordonnées à trois services tiers : Open-Meteo (altitude, uniquement si le téléphone n'a pas de baromètre), OpenStreetMap (fonds de carte) et le service de noms de rues d'Android.
+• Certaines fonctions envoient des coordonnées à quatre services tiers : Open-Meteo (altitude, uniquement si le téléphone n'a pas de baromètre), OpenStreetMap (fonds de carte), Overpass (limites de vitesse) et le service de noms de rues d'Android.
 Détails : https://mickadoua.github.io/ecodrive-obd/privacy/
 
 À propos
