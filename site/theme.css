@@ -1,2 +1,0 @@
-:root{--accent-text:#0A7048;--accent-btn:#0A7048;--on-accent:#ffffff;--accent-soft:rgba(10,112,72,.1);--accent-glow:rgba(63,224,154,.45);--grad:linear-gradient(120deg,#0f9a63,#0a7048)}
-@media (prefers-color-scheme:dark){:root{--accent-text:#3FE09A;--accent-btn:#3FE09A;--on-accent:#08100E;--accent-soft:rgba(63,224,154,.14);--grad:linear-gradient(120deg,#7dffc4,#3fe09a)}}
