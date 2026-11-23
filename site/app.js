@@ -1,82 +1,198 @@
-/* Renders the page from window.SITE (content.js). No framework, no build. */
+/* Home page: "the same trip, two drivers" (scroll-craft, split stage grammar).
+   Renders from window.SITE (content.js) and window.KIT_UI (ui.js); the drive
+   comes from window.EcoDrive (drive.js). The scroll-craft engine
+   (scrollcraft.js, copied unchanged, MIT) pins the act and publishes its
+   progress; everything specific to this page is here.
+
+   The act: one pinned stage, the commute strip on top, the usual driver on
+   the left (top on phones), the EcoDrive driver on the right (bottom). Scroll
+   moves both along the same 25 km. The divider carries the kilometre and the
+   fuel gap, which grows as they drive (signature). On arrival the divider
+   slides to the edge and the EcoDrive side takes the screen with the result
+   and the download. No framework, no build. */
 (function () {
-  var S = window.SITE, $ = function (s, r) { return (r || document).querySelector(s); };
-  var LANGS = Object.keys(S.i18n);                       // add a language = add a key in content.js
+  'use strict';
+  var S = window.SITE, D = window.EcoDrive, $ = function (s, r) { return (r || document).querySelector(s); };
+  var LANGS = Object.keys(S.i18n);
   var saved = null; try { saved = localStorage.getItem('lang'); } catch (e) {}
   var q = new URLSearchParams(location.search).get('lang');
   var nav = (navigator.language || 'en').slice(0, 2);
   var lang = [q, saved, nav].find(function (l) { return LANGS.indexOf(l) > -1; }) || 'en';
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var usual = D.run('usual'), eco = D.run('eco');
+  var A = S.assumptions;
 
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  var ICONS = {
-    mic: '<path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
-    bolt: '<path d="M13 3 5 14h6l-1 7 8-11h-6z"/>', lock: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
-    chart: '<path d="M4 20V4M4 20h16M8 16v-5M12 16V8M16 16v-3"/>', map: '<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>',
-    gauge: '<path d="M4 17a8 8 0 1 1 16 0"/><path d="m12 17 4-6"/>', text: '<path d="M4 7h16M4 12h10M4 17h7"/>',
-    keys: '<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6.5 10h.01M10 10h.01M13.5 10h.01M17 10h.01M8 14h8"/>', shield: '<path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6z"/>'
-  };
-  function icon(n) { return '<span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[n] || ICONS.bolt) + '</svg></span>'; }
+  function num(n, d) { return n.toLocaleString(lang === 'fr' ? 'fr-FR' : 'en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }); }
+  function clock(s) { var m = Math.floor(s / 60), r = Math.round(s % 60); if (r === 60) { m++; r = 0; } return m + ':' + (r < 10 ? '0' : '') + r; }
+  function duration(s) { var m = Math.floor(s / 60), r = Math.round(s % 60); return lang === 'fr' ? (m ? m + ' min ' : '') + (r < 10 && m ? '0' : '') + r + ' s' : (m ? m + ' min ' : '') + r + ' s'; }
+  function fill(str, vals) { return str.replace(/\{(\w+)\}/g, function (_, k) { return vals[k]; }); }
 
-  function render() {
-    var t = S.i18n[lang], c = S.common || {}, ui = (window.KIT_UI[lang] || window.KIT_UI.en);
-    document.documentElement.lang = lang;
-    document.title = S.name + ' — ' + t.tagline;
-    $('meta[name=description]').setAttribute('content', t.lede);
-    var h = '';
-    h += '<a class="skip" href="#main">' + ui.skip + '</a>';
-    h += '<nav><div class="wrap"><a class="brand" href="#">' + (S.logo ? '<img src="' + S.logo + '" alt="">' : '') + esc(S.name) + '</a><ul>' +
-      '<li><a href="#features">' + ui.features + '</a></li>' + (t.highlights ? '<li><a href="#details">' + ui.details + '</a></li>' : '') +
-      '<li><a href="#download">' + ui.download + '</a></li><li><a href="' + S.repo + '">GitHub</a></li></ul>' +
-      '<div class="lang" role="group" aria-label="' + ui.language + '">' + LANGS.map(function (l) { return '<button type="button" data-lang="' + l + '" aria-pressed="' + (l === lang) + '" lang="' + l + '">' + l.toUpperCase() + '</button>'; }).join('') + '</div></div></nav>';
-    h += '<main id="main"><header class="hero"><div class="wrap">' + (S.logo ? '<img class="logo" src="' + S.logo + '" alt="">' : '') +
-      '<span class="eyebrow">' + esc(t.eyebrow) + '</span><h1>' + t.h1 + '</h1><p class="lede">' + esc(t.lede) + '</p><div class="cta">' +
-      '<a class="btn primary" href="#download">' + ui.download + '</a><a class="btn ghost" href="' + S.repo + '">' + ui.source + '</a></div></div>';
-    if (S.shots && S.shots.length) {
-      h += '<div class="shots" role="list">' + S.shots.map(function (s, i) {
-        var cap = (t.shotCaptions || [])[i] || '';
-        var img = s.src ? '<img src="' + s.src.replace('{lang}', lang) + '" alt="' + esc(cap) + '" loading="lazy">' : '<div class="ph">' + esc(ui.placeholder) + '</div>';
-        if (s.srcDark) img = '<picture><source srcset="' + s.srcDark + '" media="(prefers-color-scheme: dark)">' + img + '</picture>';
-        return '<figure class="shot' + (s.wide ? ' wide' : '') + '" role="listitem">' + img + '<figcaption>' + esc(cap) + '</figcaption></figure>';
-      }).join('') + '</div>';
-      if (t.shotNote) h += '<p class="caption wrap">' + esc(t.shotNote) + '</p>';
+  // The app's messages are French; the English page translates them.
+  function hintText(fr) {
+    if (lang === 'fr') return fr;
+    var m;
+    if ((m = /^Levez le pied, limitation à (\d+) dans (\d+) m$/.exec(fr))) return 'Lift off, ' + m[1] + ' km/h limit in ' + m[2] + ' m';
+    if ((m = /^Levez le pied, (feu|stop|rond-point) dans (\d+) m$/.exec(fr))) return 'Lift off, ' + { feu: 'traffic light', stop: 'stop sign', 'rond-point': 'roundabout' }[m[1]] + ' in ' + m[2] + ' m';
+    if ((m = /^Limitée à (\d+) : /.exec(fr))) return 'Limit ' + m[1] + ': lift off, every extra km/h costs';
+    return {
+      'À l’arrêt': 'Stopped', 'Freinage brusque : anticipez': 'Harsh braking: anticipate',
+      'Descente : levez le pied pour couper l’injection': 'Downhill: lift off to cut injection',
+      'Accélération trop vive': 'Acceleration too hard', 'Accélération souple : normal de consommer plus': 'Smooth acceleration: higher consumption is normal',
+      'Montée : surconsommation normale': 'Climbing: higher consumption is normal', 'Conduite souple, continuez': 'Smooth driving, keep going'
+    }[fr] || fr;
+  }
+  function tone(fr) { return /Conduite souple|Montée|À l’arrêt|souple :/.test(fr) ? 'ok' : 'warn'; }
+
+  // Scroll to distance: town and country road get more room than the ring road.
+  var HOLD = 0.05, TRAVEL_END = 0.8, COLLAPSE_END = 0.92;
+  var WEIGHTS = [[0, 4000, 1.3], [4000, 16000, 1.1], [16000, 24000, 1.6], [24000, 25000, 0.7]];
+  var TOTAL_W = WEIGHTS.reduce(function (s, w) { return s + w[2]; }, 0);
+  function metresAt(p) {
+    var t = Math.min(Math.max((p - HOLD) / (TRAVEL_END - HOLD), 0), 1) * TOTAL_W, acc = 0;
+    for (var i = 0; i < WEIGHTS.length; i++) {
+      var w = WEIGHTS[i];
+      if (t <= acc + w[2]) return w[0] + (t - acc) / w[2] * (w[1] - w[0]);
+      acc += w[2];
     }
-    h += '</header>';
-    h += '<section id="features" class="alt"><div class="wrap"><p class="kicker">' + esc(t.featuresKicker) + '</p><h2>' + esc(t.featuresTitle) + '</h2><p class="intro">' + esc(t.featuresIntro) + '</p><div class="grid">' +
-      t.features.map(function (f) { return '<div class="card">' + icon(f.icon) + '<h3>' + esc(f.title) + '</h3><p>' + esc(f.text) + '</p></div>'; }).join('') + '</div></div></section>';
-    if (t.highlights) {
-      var hl = t.highlights;
-      h += '<section id="details"><div class="wrap split"><div><p class="kicker">' + esc(hl.kicker) + '</p><h2>' + esc(hl.title) + '</h2><p class="intro">' + esc(hl.intro) + '</p>' +
-        (hl.chips ? '<ul class="chips">' + hl.chips.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '') +
-        '<ul class="checks">' + hl.checks.map(function (x) { return '<li><strong>' + esc(x[0]) + '</strong> ' + esc(x[1]) + '</li>'; }).join('') + '</ul></div>' +
-        '<div class="aside">' + hl.facts.map(function (x) { return '<div class="row"><span class="k">' + esc(x[0]) + '</span><span>' + esc(x[1]) + '</span></div>'; }).join('') + '</div></div></section>';
-    }
-    // Download: blocks are optional, driven by S.download = { play, apk:{url,sha256,size,version,versionCode,builtOn}, source }
+    return D.LENGTH;
+  }
+  function collapseAt(p) { return Math.min(Math.max((p - TRAVEL_END) / (COLLAPSE_END - TRAVEL_END), 0), 1); }
+
+  function strip(t) {
+    var zones = D.ZONES.map(function (z) {
+      var w = (z[1] - z[0]) / D.LENGTH * 100;
+      return '<span class="z z-' + z[4] + '" style="width:' + w + '%"><span>' + esc(w > 9.5 ? t.zones[z[4]] : '') + '</span></span>';
+    }).join('');
+    var marks = D.EVENTS.slice(0, -1).map(function (e) { return '<i class="ev" style="left:' + (e[0] / D.LENGTH * 100) + '%" title="' + esc(e[1]) + '"></i>'; }).join('');
+    return '<div class="route" aria-hidden="true"><span class="end">A · ' + esc(t.from) + '</span><div class="track">' + zones + marks + '<i class="cursor" data-cursor></i></div><span class="end">B · ' + esc(t.to) + '</span></div>';
+  }
+
+  function side(which, t) {
+    var label = which === 'usual' ? t.usualLabel : t.ecoLabel, title = which === 'usual' ? t.usualTitle : t.ecoTitle;
+    return '<div class="side ' + which + '"><div class="inner">' +
+      '<p class="label">' + esc(label) + '</p><h2>' + esc(title) + '</h2>' +
+      '<dl class="gauges">' +
+      '<div><dt>' + esc(t.used) + '</dt><dd class="big"><span data-' + which + '-l>0,00</span> L</dd></div>' +
+      '<div><dt>' + esc(t.speed) + '</dt><dd><span data-' + which + '-v>0</span> km/h</dd></div>' +
+      '<div><dt>' + esc(t.time) + '</dt><dd><span data-' + which + '-t>0:00</span></dd></div></dl>' +
+      '<div class="hint"><p class="hint-l">' + esc(which === 'usual' ? t.usualHint : t.ecoHint) + '</p><p class="hint-t" data-' + which + '-h></p></div>' +
+      '</div></div>';
+  }
+
+  function result(t) {
+    var saved = usual.litres - eco.litres, pct = Math.round(saved / usual.litres * 100);
+    var yearL = saved * 2 * A.workDays;
+    return '<div class="win"><h2>' + esc(fill(t.resultTitle, { pct: pct })) + '</h2>' +
+      '<p class="win-text">' + esc(fill(t.resultText, { eco: num(eco.litres, 2), usual: num(usual.litres, 2), more: duration(eco.time - usual.time) })) + '</p>' +
+      '<p class="win-year">' + esc(fill(t.yearText, { days: A.workDays, liters: num(Math.round(yearL), 0), euros: num(Math.round(yearL * A.pricePerLiter), 0), co2: num(Math.round(yearL * A.co2PerLiter), 0) })) + '</p>' +
+      '<div class="cta"><a class="btn primary" href="#download">' + esc(window.KIT_UI[lang].apkBtn) + '</a><a class="btn ghost" href="' + S.repo + '">' + esc(window.KIT_UI[lang].source) + '</a></div></div>';
+  }
+
+  function downloadBlock(t, ui) {
     var d = S.download || {}, blocks = '';
-    if (d.play) blocks += '<div class="card"><span class="badge">Google Play</span><h3>' + esc(ui.playTitle) + '</h3><p>' + esc(d.playLive ? ui.playText : ui.playSoon) + '</p><a class="btn primary" href="' + d.play + '">' + ui.playBtn + '</a></div>';
     if (d.apk) {
-      var sha = d.apk.sha256 ? '<code class="sha" id="sha">' + esc(d.apk.sha256) + '</code>' : '<p class="todo">' + esc(ui.shaTodo) + '</p>';
-      // What the APK holds, under the button: version, versionCode and build day (UTC), written in the page language.
-      var ver = d.apk.version ? '<p class="note" style="margin-bottom:0">' + esc(ui.apkVersion.replace('{v}', d.apk.version).replace('{c}', d.apk.versionCode)
-        .replace('{d}', new Intl.DateTimeFormat(lang === 'fr' ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(d.apk.builtOn + 'T00:00:00Z')))) + '</p>' : '';
-      blocks += '<div class="card"><span class="badge">APK</span><h3>' + esc(ui.apkTitle) + '</h3><p>' + esc(ui.apkText) + '</p><a class="btn ' + (d.play ? 'ghost' : 'primary') + '" href="' + d.apk.url + '">' + ui.apkBtn + (d.apk.size ? ' (' + esc(d.apk.size) + ')' : '') + '</a>' + ver +
-        '<p class="note" style="margin-bottom:0">SHA-256</p>' + sha + '</div>';
+      var ver = '<p class="note">' + esc(ui.apkVersion.replace('{v}', d.apk.version).replace('{c}', d.apk.versionCode)
+        .replace('{d}', new Intl.DateTimeFormat(lang === 'fr' ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(d.apk.builtOn + 'T00:00:00Z')))) + '</p>';
+      blocks += '<div class="card"><span class="badge">APK</span><h3>' + esc(ui.apkTitle) + '</h3><p>' + esc(ui.apkText) + '</p><a class="btn primary" href="' + d.apk.url + '">' + ui.apkBtn + '</a>' + ver +
+        '<p class="note">SHA-256</p><code class="sha">' + esc(d.apk.sha256) + '</code></div>';
     }
-    if (d.build) blocks += '<div class="card"><span class="badge">' + esc(ui.buildBadge) + '</span><h3>' + esc(ui.buildTitle) + '</h3><p>' + esc(t.buildText || '') + '</p><a class="btn ghost" href="' + d.build + '">' + ui.buildBtn + '</a></div>';
-    h += '<section id="download" class="alt"><div class="wrap"><p class="kicker">' + esc(ui.download) + '</p><h2>' + esc(t.downloadTitle) + '</h2><p class="intro">' + esc(t.downloadIntro) + '</p><div class="dl">' + blocks + '</div>';
+    var h = '<section id="download"><div class="wrap"><h2>' + esc(t.downloadTitle) + '</h2><p class="intro">' + esc(t.downloadIntro) + '</p><div class="dl">' + blocks + '</div>';
     if (d.apk && d.apk.sha256) {
       var cmd = 'curl -LO ' + d.apk.url + '\necho "' + d.apk.sha256 + '  ' + d.apk.url.split('/').pop() + '" | sha256sum -c -';
       h += '<div class="term"><div class="bar"><span>' + esc(ui.verify) + '</span><button class="copy" type="button" data-copy>' + ui.copy + '</button></div><pre><code id="cmd">' + esc(cmd) + '</code></pre></div>';
     }
-    h += '<p class="note">' + esc(t.downloadNote || '') + '</p></div></section></main>';
-    h += '<footer><div class="wrap"><span>' + esc(S.name) + ' · ' + esc(ui.licensed) + ' <a href="' + c.licenseUrl + '">' + c.license + '</a></span>' +
-      '<span><a href="' + (typeof S.dmcPage === "object" ? S.dmcPage[lang] : S.dmcPage) + '">' + esc(ui.dmc) + '</a> · <a href="' + S.repo + '">GitHub</a> · <a href="' + S.repo + '/issues">' + esc(ui.issues) + '</a></span></div></footer>';
-    $('#app').innerHTML = h;
+    return h + '<p class="note">' + esc(t.downloadNote) + '</p></div></section>';
   }
+
+  var engine = null, raf = 0;
+
+  function render() {
+    var t = S.i18n[lang], ui = window.KIT_UI[lang] || window.KIT_UI.en, c = S.common;
+    document.documentElement.lang = lang;
+    document.title = S.name + ' · ' + t.tagline;
+    $('meta[name=description]').setAttribute('content', t.description);
+    var h = '<a class="skip" href="#main">' + ui.skip + '</a>';
+    h += '<nav class="top"><a class="brand" href="#main"><img src="' + S.logo + '" alt="">' + esc(S.name) + '</a>' +
+      '<ul><li><a href="#tips">' + esc(t.nav.app) + '</a></li><li><a href="#download">' + esc(t.nav.download) + '</a></li><li><a href="' + S.repo + '">GitHub</a></li></ul>' +
+      '<div class="lang" role="group" aria-label="' + ui.language + '">' + LANGS.map(function (l) { return '<button type="button" data-lang="' + l + '" aria-pressed="' + (l === lang) + '" lang="' + l + '">' + l.toUpperCase() + '</button>'; }).join('') + '</div></nav>';
+    h += '<main id="main"><div class="act-root"><section class="act" data-sc-act="pin" data-sc-span="6"><div class="stage" data-sc-stage>' +
+      '<header class="head"><h1>' + t.h1 + '</h1><p class="lede">' + esc(t.lede) + '</p>' + strip(t) + '</header>' +
+      '<div class="area" data-area>' + side('eco', t) + side('usual', t) +
+      '<div class="divider" data-divider aria-hidden="true"><span class="chip"><span><span data-km>0,0</span> ' + esc(t.km) + '</span><b>' + esc(t.gap) + ' <span data-gap>0,00</span> L</b></span></div>' +
+      result(t) + '</div>' +
+      '<p class="sim">' + esc(t.simulation) + '</p></div></section></div>';
+    // The app.
+    h += '<section id="tips" class="app"><div class="wrap"><h2>' + esc(t.appTitle) + '</h2><p class="intro">' + esc(t.appIntro) + '</p><div class="tips">' +
+      t.tips.map(function (tip) { return '<div class="tip"><h3>' + esc(tip.title) + '</h3><p>' + esc(tip.text) + '</p><blockquote>« ' + esc(lang === 'fr' ? tip.quote : tip.quoteEn) + ' »</blockquote></div>'; }).join('') +
+      '</div><p class="fair">' + esc(t.fair) + '</p><div class="shots" role="list">' +
+      S.shots.map(function (s, i) { var cap = t.shotCaptions[i] || ''; return '<figure class="shot" role="listitem"><img src="' + s.src + '" alt="' + esc(cap) + '" loading="lazy"><figcaption>' + esc(cap) + '</figcaption></figure>'; }).join('') +
+      '</div><p class="caption">' + esc(t.shotNote) + '</p></div></section>';
+    // Method.
+    h += '<section id="method" class="method"><div class="wrap"><h2>' + esc(t.howTitle) + '</h2><ul>' +
+      t.how.map(function (line) { return '<li>' + esc(fill(line, { days: A.workDays, price: num(A.pricePerLiter, 2), co2: num(A.co2PerLiter, 1) })) + '</li>'; }).join('') +
+      '</ul><p><a href="' + S.repo + '/blob/main/app/src/main/java/tech/dm/conso/eco/VehicleModel.kt">' + esc(t.howLink) + '</a></p></div></section>';
+    h += downloadBlock(t, ui) + '</main>';
+    h += '<footer><div class="wrap"><span>' + esc(S.name) + ' · ' + esc(ui.licensed) + ' <a href="' + c.licenseUrl + '">' + c.license + '</a></span>' +
+      '<span><a href="' + t.privacyUrl + '">' + esc(t.privacy) + '</a> · <a href="' + S.dmcPage[lang] + '">' + esc(ui.dmc) + '</a> · <a href="' + S.repo + '">GitHub</a> · <a href="' + S.repo + '/issues">' + esc(ui.issues) + '</a></span></div></footer>';
+    $('#app').innerHTML = h;
+    mount();
+  }
+
+  function mount() {
+    if (engine) { engine.destroy(); engine = null; }
+    cancelAnimationFrame(raf);
+    var act = $('.act'), area = $('[data-area]');
+    var els = {};
+    ['usual-l', 'usual-v', 'usual-t', 'usual-h', 'eco-l', 'eco-v', 'eco-t', 'eco-h'].forEach(function (k) { els[k] = $('[data-' + k + ']'); });
+    var km = $('[data-km]'), gap = $('[data-gap]'), cursor = $('[data-cursor]'), divider = $('[data-divider]');
+    var last = { x: -1, c: -1 };
+    function draw(p) {
+      var x = metresAt(p), col = collapseAt(p);
+      if (Math.abs(x - last.x) >= 1) {
+        last.x = x;
+        var u = D.at(usual, x), e = D.at(eco, x);
+        els['usual-l'].textContent = num(u.l, 2); els['eco-l'].textContent = num(e.l, 2);
+        els['usual-v'].textContent = num(Math.round(u.v), 0); els['eco-v'].textContent = num(Math.round(e.v), 0);
+        els['usual-t'].textContent = clock(u.t); els['eco-t'].textContent = clock(e.t);
+        var hu = D.hint(u, 'usual'), he = D.hint(e, 'eco');
+        els['usual-h'].textContent = hintText(hu); els['usual-h'].dataset.tone = tone(hu);
+        els['eco-h'].textContent = hintText(he); els['eco-h'].dataset.tone = tone(he);
+        km.textContent = num(x / 1000, 1);
+        gap.textContent = (u.l - e.l > 0.005 ? '−' : '') + num(Math.max(0, u.l - e.l), 2);
+        cursor.style.left = (x / D.LENGTH * 100) + '%';
+      }
+      if (col !== last.c) {
+        last.c = col;
+        area.style.setProperty('--collapse', col.toFixed(3));
+        area.classList.toggle('collapsed', col > 0.6);
+      }
+    }
+    draw(0);
+    function start() {
+      if (!window.ScrollCraft) return;
+      engine = window.ScrollCraft.mount($('.act-root'));
+      document.documentElement.classList.add('live');
+      (function frame() {
+        var a = engine && engine.acts.find(function (x) { return x.el === act; });
+        if (a) draw(a.p);
+        raf = requestAnimationFrame(frame);
+      })();
+    }
+    start();
+  }
+
   document.addEventListener('click', function (e) {
     var b = e.target.closest('[data-lang]');
-    if (b) { lang = b.dataset.lang; try { localStorage.setItem('lang', lang); } catch (x) {} render(); var nb = $('[data-lang="' + lang + '"]'); nb && nb.focus(); }
+    if (b) {
+      lang = b.dataset.lang; try { localStorage.setItem('lang', lang); } catch (x) {}
+      var u = new URL(location.href); u.searchParams.set('lang', lang); history.replaceState(null, '', u);
+      render(); var nb = $('[data-lang="' + lang + '"]'); nb && nb.focus();
+    }
     var c = e.target.closest('[data-copy]');
     if (c) { navigator.clipboard.writeText($('#cmd').textContent).then(function () { var o = c.textContent; c.textContent = '✓'; setTimeout(function () { c.textContent = o; }, 1500); }); }
   });
+  if (reduced) document.documentElement.classList.add('reduced');
   render();
 })();
